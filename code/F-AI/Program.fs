@@ -61,9 +61,6 @@ let bestClassifierByTest = classifiers |> Seq.sortBy (fun c -> c.TestError) |> S
 for c in classifiers do
     System.Console.WriteLine("Classifier: {0}. Training Error: {1:P3}. Test Error: {2:P3}.", c.Name, c.TrainingError, c.TestError)
     
-// print additional info
-for c in classifiers do
-    System.Console.WriteLine("Classifier: {0}. Details: \r\n{1}", c.Name, c.Classifier.ToString())
 
 // done. wait for input.
 let mutable key = Console.ReadLine()

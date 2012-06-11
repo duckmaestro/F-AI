@@ -1,26 +1,32 @@
 ﻿
 module kNN
 
+
 // namespaces
+
 open System
-open MathNet.Numerics.LinearAlgebra
+open MathNet
 open Classifiers
 
+
 // records
+
 type private SampleWithDistance = {
     Sample : SampleLabeled;
     Distance : float;
     }
 
-// methods
+
+// private functions
+
 let private EuclideanDistanceSquared (v1:Vector) (v2:Vector) =
-    if v1.Length = 0 || v2.Length = 0
+    if v1.Count = 0 || v2.Count = 0
         then failwith "one or both feature arrays empty."
-    if v1.Length <> v2.Length
+    if v1.Count <> v2.Count
         then failwith "feature arrays have unmatching lengths."
 
     let difference = v1 - v2
-    let distSquared = difference.Norm()
+    let distSquared = difference.DotProduct difference
     
     distSquared
 
@@ -41,7 +47,9 @@ let private NearestSamples (point:Vector) (samples: seq<_>) top =
 
     nearestSamples
 
+
 // types
+
 type kNNClassifier(n:int) =
     
     let mutable trainingSamples = Seq.empty<SampleLabeled>

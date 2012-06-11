@@ -1,30 +1,36 @@
 ﻿
 module Perceptron
 
+
 // namespaces
+
 open System
-open MathNet.Numerics.LinearAlgebra
+open MathNet
 open Classifiers
 
+
 // records
+
 type private NormalWithWeight = {
     Normal : Vector;
     Weight : float;
     }
 
-// methods
+
+// private functions
+
 let private OneExtend (v:Vector) = 
     let components = v :> seq<float>
     let componentsOneExtended = 
         v 
         |> Seq.append (Seq.singleton 1.0) 
-        |> Seq.toArray
 
-    let vExt = new Vector(componentsOneExtended);
+    let vExt = vector componentsOneExtended
     vExt
 
 
 // types
+
 type ClassificationMethod = 
     | Simple = 0
     | Voted = 1
@@ -59,7 +65,7 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
                 |> Seq.map (fun s -> { Features = OneExtend s.Features; Label = RemapLabel s.Label })
 
             // remember dimension
-            d <- samples1Extended |> Seq.head |> (fun s -> s.Features.Length)
+            d <- samples1Extended |> Seq.head |> (fun s -> s.Features.Count)
 
             // initialize normal history
             let mutable wListTemp = new System.Collections.Generic.List<NormalWithWeight>()
@@ -69,7 +75,7 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
             let sampleFirst = samples1Extended |> Seq.head
 
             // initialize w
-            let mutable w = sampleFirst.Features.Scale(float(sampleFirst.Label))
+            let mutable w = sampleFirst.Features.Multiply(float(sampleFirst.Label))
 
             // initialize success count
             let mutable c = 1.0
@@ -77,7 +83,7 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
 
             // main training loop
             for sample in samples1Extended |> Seq.skip(1) do
-                let dotProduct = sample.Features.ScalarMultiply w
+                let dotProduct = sample.Features.DotProduct w
 
                 let correctlyClassifies = Math.Sign (dotProduct * float(sample.Label))
 
@@ -88,7 +94,7 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
                     wListTemp.Add {Normal = w; Weight = c;}
 
                     // calculate new normal
-                    let sampleTimesLabel = sample.Features.Scale(float(sample.Label))
+                    let sampleTimesLabel = sample.Features.Multiply(float(sample.Label))
                     w <- w.Add sampleTimesLabel
                     
                     // reset count 
@@ -116,7 +122,7 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
             let classifySimple point = 
                 let pointExt = OneExtend point
                 let lastNormal = hyperplanes |> Seq.toArray |> Array.rev |> Seq.head
-                let strength = lastNormal.Normal.ScalarMultiply pointExt
+                let strength = lastNormal.Normal.DotProduct pointExt
                 floatToLabel strength
 
             let classifyVoted point =
@@ -125,7 +131,7 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
                 // sum the (signed) votes
                 let votesTotal = 
                     hyperplanes
-                    |> Seq.map (fun w -> int(w.Weight) * Math.Sign((w.Normal.ScalarMultiply pointExt)))
+                    |> Seq.map (fun w -> int(w.Weight) * Math.Sign((w.Normal.DotProduct pointExt)))
                     |> Seq.sum
                     |> float
 
@@ -136,10 +142,10 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
                 
                 let averageNormal =
                     hyperplanes
-                    |> Seq.map (fun w -> w.Normal.Scale(w.Weight))
-                    |> Seq.fold (fun (sum:Vector) w -> sum.Add w) (new Vector(d))
+                    |> Seq.map (fun w -> w.Normal.Multiply(w.Weight))
+                    |> Seq.fold (fun (sum:Vector) w -> sum.Add w) (vector <| Array.zeroCreate d)
 
-                let strength = averageNormal.ScalarMultiply pointExt
+                let strength = averageNormal.DotProduct pointExt
 
                 floatToLabel strength
            

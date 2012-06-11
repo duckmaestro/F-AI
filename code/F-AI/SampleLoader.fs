@@ -1,23 +1,24 @@
 ﻿
 module SampleLoader
 
+
 // namespaces
 
 open System
 open System.IO
 open System.Text
-open MathNet.Numerics.LinearAlgebra
+open MathNet
 open Classifiers
 
 
-// methods
+// private functions
 
 let private ParseSample (row:String) = 
     let components = row.Split(' ')
     let componentsNum = components |> Seq.length
 
     if componentsNum <= 1 then
-        let sample = { Features = new Vector(0) ; Label = Int32.MinValue }
+        let sample = { Features = vector [||] ; Label = Int32.MinValue }
         sample
 
     else
@@ -27,7 +28,7 @@ let private ParseSample (row:String) =
             |> Seq.take (componentsNum - 1)
             |> Seq.map (fun c -> Double.Parse(c))
             |> Seq.toArray
-            |> Vector.Create
+            |> vector
 
         let label =
             components
@@ -38,6 +39,8 @@ let private ParseSample (row:String) =
         let sample = { Features = features; Label = label }
         sample
 
+
+// functions
 
 let LoadFromFile filename =
     
