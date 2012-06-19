@@ -5,13 +5,13 @@
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{ae3d3bf8-4f2e-4c3f-bb5b-2621a51b6b63}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <RootNamespace>Problem_3</RootNamespace>
-    <AssemblyName>F-AI</AssemblyName>
+    <ProjectGuid>{403d6bdf-9cab-4773-b134-1b3fc527853d}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Demos</RootNamespace>
+    <AssemblyName>Demos</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
-    <Name>F-AI</Name>
+    <Name>Demos</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,9 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Debug\Problem_3.XML</DocumentationFile>
-    <StartWorkingDirectory>
-    </StartWorkingDirectory>
+    <DocumentationFile>bin\Debug\Demos.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <DebugType>pdbonly</DebugType>
@@ -34,29 +32,43 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
-    <DocumentationFile>bin\Release\Problem_3.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Demos.XML</DocumentationFile>
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="!Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition=" Exists('$(MSBuildBinPath)\Microsoft.Build.Tasks.v4.0.dll')" />
   <ItemGroup>
-    <Compile Include="MathNet.fs" />
-    <Compile Include="Classifiers.fs" />
-    <Compile Include="kNN.fs" />
-    <Compile Include="Perceptron.fs" />
-    <Compile Include="DecisionTree.fs" />
+    <Compile Include="SampleLoader.fs" />
+    <Compile Include="Program.fs" />
+    <Content Include="hw2test.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="hw2train.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="hw2validate.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="hw3test.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="hw3train.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MathNet.Numerics">
       <HintPath>..\Libraries\MathNet.Numerics.dll</HintPath>
-    </Reference>
-    <Reference Include="MathNet.Numerics.FSharp">
-      <HintPath>..\Libraries\MathNet.Numerics.FSharp.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <ProjectReference Include="..\F-AI\F-AI.fsproj">
+      <Name>F-AI</Name>
+      <Project>{ae3d3bf8-4f2e-4c3f-bb5b-2621a51b6b63}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
 	     Other similar extension points exist, see Microsoft.Common.targets.

@@ -27,6 +27,7 @@ type BootstrapRecord<'T> = {
 let defaultRecord = { Name = null; Classifier = new NullClassifier() :> IClassifier; TrainingError = 1.0; ValidationError = 1.0; TestError = 1.0; } 
 let mutable classifiers = [|
     { defaultRecord with Name = "1-NN"; Classifier = new kNNClassifier(1) :> IClassifier; }
+    { defaultRecord with Name = "5-NN"; Classifier = new kNNClassifier(5) :> IClassifier; }
     { defaultRecord with Name = "Perceptron Weighted"; Classifier = new PerceptronClassifier(0, 6, ClassificationMethod.Weighted) :> IClassifier; }
 |]
 
@@ -52,10 +53,6 @@ classifiers <-
         })
     |> Seq.toArray
 
-
-// find best classifers
-let bestClassifierByValidation = classifiers |> Seq.sortBy (fun c -> c.ValidationError) |> Seq.head
-let bestClassifierByTest = classifiers |> Seq.sortBy (fun c -> c.TestError) |> Seq.head
 
 // print classifiers and error
 for c in classifiers do
