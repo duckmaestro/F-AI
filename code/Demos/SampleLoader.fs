@@ -8,6 +8,7 @@ open System
 open System.IO
 open System.Text
 open MathNet
+open Primitives
 open Classifiers
 
 

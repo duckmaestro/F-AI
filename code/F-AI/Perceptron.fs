@@ -27,6 +27,7 @@ module Perceptron
 
 open System
 open MathNet
+open Primitives
 open Classifiers
 
 

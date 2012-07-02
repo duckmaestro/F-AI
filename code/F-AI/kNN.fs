@@ -27,6 +27,7 @@ module kNN
 
 open System
 open MathNet
+open Primitives
 open Classifiers
 
 

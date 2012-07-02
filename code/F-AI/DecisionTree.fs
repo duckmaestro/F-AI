@@ -26,7 +26,8 @@ module DecisionTree
 // namespaces
 
 open System
-open MathNet.Numerics.LinearAlgebra
+open MathNet
+open Primitives
 open Classifiers
 
 
@@ -35,12 +36,17 @@ open Classifiers
 type private DecisionNode = {
     FeatureId : int;
     Threshold : float;
+    LabelLT : int option;
+    LabelGT : int option;
+    ChildLT : DecisionNode option;
+    ChildGT : DecisionNode option;
     }
 
 type private CutEntropy = {
     FeatureId : int;
     Threshold : float;
-    Entropy : float;
+    EntropyLT : float;
+    EntropyGT : float;
     }
 
 
@@ -72,19 +78,18 @@ let private FindOptimalCutFeature samples featureId =
         candidateCuts 
         |> Seq.map (fun cut -> (cut, CutSampleSpace samples featureId cut))
 
-    let fnEntropyOfCut (s1,s2) = // by subspaces
-        (MeasureEntropy s1) + (MeasureEntropy s2)
-
     let entropyByCut =
         subsetsByCut
         |> Seq.map (
-            fun (cut, subspaces) -> cut, fnEntropyOfCut subspaces)
+            fun (cut, subspaces) -> cut, (MeasureEntropy (fst subspaces)), (MeasureEntropy (snd subspaces)))
 
     let optimalCut =
         entropyByCut
-        |> Seq.minBy (fun (cut,entropy) -> entropy)
+        |> Seq.minBy (fun (cut,entropyLT,entropyGT) -> entropyLT + entropyGT)
 
-    { FeatureId = featureId; Threshold = fst optimalCut; Entropy = snd optimalCut }
+
+    optimalCut |> fun(cut,entropyLT,entropyGT) ->
+        { FeatureId = featureId; Threshold = cut; EntropyLT = entropyLT; EntropyGT = entropyGT; }
 
 let private FindOptimalCut samples = 
     let dimensionality = samples |> Seq.head |> fun x -> x.Features.Count
@@ -93,17 +98,101 @@ let private FindOptimalCut samples =
         [0 .. dimensionality-1]
         |> Seq.map (fun featureId -> FindOptimalCutFeature samples featureId)
 
-    let optimalCut = optimalCutsByFeature |> Seq.minBy (fun cut -> cut.Entropy)
+    let optimalCut = optimalCutsByFeature |> Seq.minBy (fun cut -> cut.EntropyLT + cut.EntropyGT)
 
     optimalCut
+
+let rec private BuildDecisionNode samples currDepth maxDepth : DecisionNode =
+    let optimalCut = FindOptimalCut samples
+    let featureId = optimalCut.FeatureId
+    let threshold = optimalCut.Threshold
+    
+    let subsetLT = 
+        samples 
+        |> Seq.filter (fun s -> s.Features.Item(featureId) < threshold)
+    let subsetGT =
+        samples 
+        |> Seq.filter (fun s -> s.Features.Item(featureId) >= threshold)
+        
+    let fnMajorityLabel samples2 =
+        samples2 
+        |> Seq.groupBy (fun s -> s.Label)
+        |> Seq.map (fun (k,s) -> k, (Seq.length s))
+        |> Seq.maxBy (fun (k,s) -> s)
+        |> fun (k,s) -> k
+
+    let fnFirstLabel samples2 =
+        samples 
+        |> Seq.head
+        |> fun s -> s.Label
+
+    let labelLT = 
+        match optimalCut.EntropyLT with
+        | 0.0 -> Some(fnFirstLabel subsetLT)
+        | _ -> None
+    let labelGT = 
+        match optimalCut.EntropyGT with
+        | 0.0 -> Some(fnFirstLabel subsetGT)
+        | _ -> None
+
+    let childLT = 
+        match labelLT with
+        | None -> Some(BuildDecisionNode subsetLT (currDepth+1) maxDepth)
+        | _ -> None
+    let childGT = 
+        match labelGT with
+        | None -> Some(BuildDecisionNode subsetGT (currDepth+1) maxDepth)
+        | _ -> None
+
+
+    if currDepth+1 = maxDepth then 
+        {
+            DecisionNode.FeatureId = featureId;
+            DecisionNode.Threshold = threshold;
+            DecisionNode.LabelLT = Some(fnMajorityLabel subsetLT);
+            DecisionNode.LabelGT = Some(fnMajorityLabel subsetGT);
+            DecisionNode.ChildLT = None;
+            DecisionNode.ChildGT = None;
+        }
+    else
+        {
+            FeatureId = featureId;
+            Threshold = threshold;
+            LabelLT = labelLT;
+            LabelGT = labelGT;
+            ChildLT = childLT;
+            ChildGT = childGT;
+        }   
+
 
 
 // types
 
-type DecisionTreeClassifier() = 
+type DecisionTreeClassifier(maxDepth) = 
+
+    let mutable rootNode = { FeatureId = -1; Threshold = 0.0; LabelLT = None; LabelGT = None; ChildLT = None; ChildGT = None; }
+
     interface IClassifier with
         member self.Train samples =
+            rootNode <- BuildDecisionNode samples 0 maxDepth
             ()
 
         member self.Classify point =
-            0
+            if rootNode.FeatureId = -1 then failwith "Classifier not trained."
+            
+            let mutable node = rootNode
+            let mutable label = Option<int>.None
+            while label.IsNone do
+                let isGreaterThan = (point.Item(node.FeatureId) >= node.Threshold)
+
+                if isGreaterThan then
+                    if node.LabelGT.IsSome then
+                        label <- node.LabelGT
+                    else
+                        node <- node.ChildGT.Value
+                else
+                    if node.LabelLT.IsSome then
+                        label <- node.LabelLT
+                    else node <- node.ChildLT.Value
+
+            label.Value

@@ -26,15 +26,7 @@ module Classifiers
 // namespaces
 
 open MathNet
-
-
-// records
-
-type SampleLabeled = 
-    {
-        Features : Vector
-        Label : int
-    }
+open Primitives
 
 
 // interfaces
