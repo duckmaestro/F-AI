@@ -36,7 +36,7 @@ open Classifiers
 type private NormalWithWeight = {
     Normal : Vector;
     Weight : float;
-    }
+}
 
 
 // private functions

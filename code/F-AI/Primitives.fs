@@ -30,14 +30,12 @@ open MathNet
 
 // records
 
-type SampleLabeled = 
-    {
-        Features : Vector
-        Label : int
-    }
+type SampleLabeled = {
+    Features : Vector
+    Label : int
+}
 
-type Line =
-    {
-        Start : Vector
-        End : Vector
-    }
+type Line = {
+    Start : Vector
+    End : Vector
+}

@@ -6,6 +6,7 @@ open SampleLoader
 open Classifiers
 open kNN
 open Perceptron
+open DecisionTree
 
 
 // main
@@ -29,6 +30,9 @@ let mutable classifiers = [|
     { defaultRecord with Name = "1-NN"; Classifier = new kNNClassifier(1) :> IClassifier; }
     { defaultRecord with Name = "5-NN"; Classifier = new kNNClassifier(5) :> IClassifier; }
     { defaultRecord with Name = "Perceptron Weighted"; Classifier = new PerceptronClassifier(0, 6, ClassificationMethod.Weighted) :> IClassifier; }
+    { defaultRecord with Name = "Decision Tree (Max Depth 1)"; Classifier = new DecisionTreeClassifier(1) :> IClassifier; }
+    { defaultRecord with Name = "Decision Tree (Max Depth 3)"; Classifier = new DecisionTreeClassifier(3) :> IClassifier; }
+    { defaultRecord with Name = "Decision Tree (Max Depth 7)"; Classifier = new DecisionTreeClassifier(7) :> IClassifier; }
 |]
 
 // train

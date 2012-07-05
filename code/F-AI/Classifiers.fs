@@ -92,13 +92,13 @@ let MeasureConfusion (classifier:IClassifier) samples labels =
 
     confusionMatrix
 
+/// Measures the entropy of the given sample set.
 let MeasureEntropy samples =
     let sampleSize = samples |> Seq.length
     
     let probabilityOfDrawingLabel = 
         samples
-        |> Seq.groupBy (fun x -> x.Label)
-        |> Seq.map (fun (l,g) -> (l, g |> Seq.length))
+        |> Seq.countBy (fun x -> x.Label)
         |> Seq.map (fun (l,c) -> (l, float(c) / float(sampleSize)))
 
     let entropy = 
