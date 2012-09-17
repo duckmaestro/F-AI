@@ -41,7 +41,7 @@
   <ItemGroup>
     <Compile Include="MathNet.fs" />
     <Compile Include="Primitives.fs" />
-    <Compile Include="R.fs" />
+    <Compile Include="Statistics.fs" />
     <Compile Include="Classifiers.fs" />
     <Compile Include="kNN.fs" />
     <Compile Include="Perceptron.fs" />
