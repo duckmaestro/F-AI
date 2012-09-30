@@ -1,3 +1,15 @@
-F-AI
+******************************
+**          F-AI            **
+******************************
 
-Coming soon...
+F-AI is an artificial intelligence library for F#, currently in its early stages.
+
+Completed but not robustly tested:
+ * kNN (classifier)
+ * Perceptron (learner & classifier)
+ * Decision Tree (learner & classifer)
+
+Planned:
+ * k-means clustering
+ * PCA
+ * GMM
