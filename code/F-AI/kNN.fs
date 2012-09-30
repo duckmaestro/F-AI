@@ -34,7 +34,7 @@ open Classifiers
 // records
 
 type private SampleWithDistance = {
-    Sample : SampleLabeled;
+    Sample : Sample;
     Distance : float;
     }
 
@@ -74,19 +74,19 @@ let private NearestSamples (point:Vector) (samples: seq<_>) top =
 
 type kNNClassifier(n:int) =
     
-    let mutable trainingSamples = Seq.empty<SampleLabeled>
+    let mutable trainingSamples = Seq.empty<Sample>
 
     interface IClassifier with
         member self.Train samples =
             trainingSamples <- samples
             ()
 
-        member self.Classify point =
+        member self.Classify sample =
             if n <= 0 then failwith "n must be odd."
 
             let rand = new Random()
 
-            let nearestSamples = NearestSamples point trainingSamples n
+            let nearestSamples = NearestSamples sample.Features trainingSamples n
     
             let nearestSamplesByLabel = 
                 nearestSamples 

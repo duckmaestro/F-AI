@@ -17,30 +17,30 @@
 
 
 //
-//    Common primitives.
+//    PCA learner.
 //
 
-module Primitives
+module PCA
 
 
 // namespaces
 
+open System
 open MathNet
+open Primitives
+open RegressionPredictors
 
 
-// records
+// types
 
-/// A sample.
-type Sample = {
-    /// The observed or provided features of this sample.
-    /// If a feature was unobserved or not provided then
-    /// it shall have value NaN.
-    Features : Vector
-    /// A label (if provided or applicable).
-    Label : int 
-}
+type PCARegression =
+    
+    interface IRegressionPredictor with
+        member self.Train samples = 
+            () // todo
 
-type Line = {
-    Start : Vector
-    End : Vector
-}
+        member self.Predict sample =
+            sample // todo
+
+
+

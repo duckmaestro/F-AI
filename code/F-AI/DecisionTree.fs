@@ -17,7 +17,7 @@
 
 
 //
-//    Decision Tree learner. (WORK IN PROGRESS)
+//    Decision Tree learner.
 //
 
 module DecisionTree
@@ -278,13 +278,13 @@ type DecisionTreeClassifier(maxDepth) =
             
             ()
 
-        member self.Classify point =
+        member self.Classify sample =
             if rootNode.FeatureId = -1 then failwith "Classifier not trained."
             
             let mutable node = rootNode
             let mutable label = Option<int>.None
             while label.IsNone do
-                let isGreaterThan = (point.Item(node.FeatureId) >= node.Threshold)
+                let isGreaterThan = (sample.Features.Item(node.FeatureId) >= node.Threshold)
 
                 if isGreaterThan then
                     if node.LabelGT.IsSome then

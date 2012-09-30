@@ -17,30 +17,20 @@
 
 
 //
-//    Common primitives.
+//    Common functions and types for unlabeled  
 //
 
-module Primitives
+module RegressionPredictors
 
 
 // namespaces
 
 open MathNet
+open Primitives
 
 
-// records
+// interfaces
 
-/// A sample.
-type Sample = {
-    /// The observed or provided features of this sample.
-    /// If a feature was unobserved or not provided then
-    /// it shall have value NaN.
-    Features : Vector
-    /// A label (if provided or applicable).
-    Label : int 
-}
-
-type Line = {
-    Start : Vector
-    End : Vector
-}
+type IRegressionPredictor =
+    abstract member Train : seq<Sample> -> unit
+    abstract member Predict : Sample -> Sample

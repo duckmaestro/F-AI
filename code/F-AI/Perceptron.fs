@@ -172,9 +172,9 @@ type PerceptronClassifier(firstLabel, secondLabel, classificationMethod:Classifi
                 floatToLabel strength
            
             match classificationMethod with
-                | ClassificationMethod.Simple -> classifySimple point
-                | ClassificationMethod.Voted -> classifyVoted point 
-                | ClassificationMethod.Weighted -> classifyWeighted point
+                | ClassificationMethod.Simple -> classifySimple point.Features
+                | ClassificationMethod.Voted -> classifyVoted point.Features
+                | ClassificationMethod.Weighted -> classifyWeighted point.Features
                 | _ -> failwith "Unexpected classification method."
             
 

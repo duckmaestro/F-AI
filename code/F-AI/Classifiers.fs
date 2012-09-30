@@ -32,8 +32,8 @@ open Primitives
 // interfaces
 
 type IClassifier =
-    abstract member Train : seq<SampleLabeled> -> unit
-    abstract member Classify : Vector -> int
+    abstract member Train : seq<Sample> -> unit
+    abstract member Classify : Sample -> int
 
 
 // private functions
@@ -54,7 +54,7 @@ let MeasureError (classifier:IClassifier) samples =
     let mutable errorCount = 0
 
     for sample in samples do
-        let classifiedAs = classifier.Classify sample.Features
+        let classifiedAs = classifier.Classify sample
         let correctlyClassified = classifiedAs = sample.Label
         
         if correctlyClassified = false then
@@ -76,7 +76,7 @@ let MeasureConfusion (classifier:IClassifier) samples labels =
     // count (mis)classifications
     for sample in samples do
         let correctLabel = sample.Label
-        let classifiedLabel = classifier.Classify sample.Features
+        let classifiedLabel = classifier.Classify sample
 
         let i = labelsAsArray |> Seq.findIndex (fun label -> label = classifiedLabel)
         let j = labelsAsArray |> Seq.findIndex (fun label -> label = correctLabel)
