@@ -35,6 +35,68 @@ open MathNet.Numerics.LinearAlgebra.Double
 
 type Vector = Vector<float>
 type Matrix = Matrix<float>
+type MatrixDense = DenseMatrix
+type MatrixSparse = SparseMatrix
+
+
+// types
+
+//type MatrixEnumerated(rows:Vector seq) = 
+//    class
+//        inherit MathNet.Numerics.LinearAlgebra.Generic.Matrix<float>(
+//            rows |> Seq.length, 
+//            (rows |> Seq.head).Count)
+//        
+//        override self.DoDivide(scalar:float, matrix:Matrix) = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.DoPointwiseDivide(matrixA, matrixB) = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.DoSubtract(matrixA:Matrix, matrixB:Matrix) =
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.DoMultiply(matrixA:Matrix, matrixB:Matrix) = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.DoMultiply(scalar:float, matrix:Matrix) =
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.DoMultiply(vectorA:Vector, vectorB:Vector) = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//
+//        override self.DoAdd(matrixA:Matrix, matrixB:Matrix) =
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.At(i:int, j:int) =
+//            let value = rows |> Seq.skip(i) |> Seq.head |> (fun r -> r.Item(j))
+//            value
+//
+//        override self.At(i:int, j:int, value:float) = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.CreateMatrix(i, j) = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.CreateVector(size) = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.ConjugateTranspose() = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.L1Norm() =
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.FrobeniusNorm() =
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.InfinityNorm() = 
+//            raise (System.NotImplementedException("Not supported."))
+//
+//        override self.Trace() = 
+//            raise (System.NotImplementedException("Not supported."))
+//    end
 
 
 // functions
@@ -48,4 +110,15 @@ let vector (values:float seq) =
 let vectorFromCount (count:int) = 
     new DenseVector(count) :> Vector
 
+let matrixFromRows (rows:Vector seq) =
+    let numRows = rows |> Seq.length
+    let numCols = rows |> Seq.head |> (fun e->e.Count)
 
+    let matrix = new MatrixDense(numRows, numCols)
+    for indexedRow in rows |> Seq.mapi (fun i r -> i,r) do
+        let index = fst indexedRow
+        let row = snd indexedRow
+        matrix.SetRow(index, row)
+    
+    matrix
+    

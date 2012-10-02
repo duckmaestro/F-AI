@@ -34,6 +34,10 @@ open Primitives
 
 /// Calculates covariance between two variables.
 let Covariance (variable1:seq<_>) (variable2:seq<_>) =
+    
+    // todo: allow mean to be passed in, instead of being calculated here each time.
+    
+
     let n = float (variable1 |> Seq.length)
     assert ((n) = float (variable2 |> Seq.length))
     

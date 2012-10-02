@@ -115,5 +115,5 @@ type NullClassifier() =
     interface IClassifier with
         member self.Train samples =
             ()
-        member self.Classify point =
+        member self.Classify sample =
             failwith "Not implemented"

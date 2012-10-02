@@ -51,7 +51,7 @@
     <Compile Include="kNN.fs" />
     <Compile Include="Perceptron.fs" />
     <Compile Include="DecisionTree.fs" />
-    <Compile Include="PCA.fs" />
+    <Compile Include="PCARegression.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MathNet.Numerics">

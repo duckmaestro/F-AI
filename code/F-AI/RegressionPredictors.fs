@@ -34,3 +34,13 @@ open Primitives
 type IRegressionPredictor =
     abstract member Train : seq<Sample> -> unit
     abstract member Predict : Sample -> Sample
+
+
+// types
+
+type NullRegressionPredictor() = 
+    interface IRegressionPredictor with
+        member self.Train samples =
+            ()
+        member self.Predict sample =
+            failwith "Not implemented"
