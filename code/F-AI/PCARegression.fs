@@ -29,7 +29,7 @@ open System
 open MathNet
 open Primitives
 open Statistics
-open RegressionPredictors
+open Predictors
 
 
 // types
@@ -39,7 +39,7 @@ type PCARegressionPredictor() =
     let mutable eigenVectors = Array.empty<Vector>
     let mutable eigenValues = Array.empty<float>
 
-    interface IRegressionPredictor with
+    interface IPredictor with
         member self.Train samples = 
             
             // convert samples to matrix

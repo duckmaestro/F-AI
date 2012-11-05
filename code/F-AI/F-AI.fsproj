@@ -47,7 +47,7 @@
     <Compile Include="Primitives.fs" />
     <Compile Include="Statistics.fs" />
     <Compile Include="Classifiers.fs" />
-    <Compile Include="RegressionPredictors.fs" />
+    <Compile Include="Predictors.fs" />
     <Compile Include="kNN.fs" />
     <Compile Include="Perceptron.fs" />
     <Compile Include="DecisionTree.fs" />

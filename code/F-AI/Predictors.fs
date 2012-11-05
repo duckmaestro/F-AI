@@ -20,7 +20,7 @@
 //    Common functions and types for unlabeled  
 //
 
-module RegressionPredictors
+module Predictors
 
 
 // namespaces
@@ -31,7 +31,7 @@ open Primitives
 
 // interfaces
 
-type IRegressionPredictor =
+type IPredictor =
     abstract member Train : seq<Sample> -> unit
     abstract member Predict : Sample -> Sample
 
@@ -39,7 +39,7 @@ type IRegressionPredictor =
 // types
 
 type NullRegressionPredictor() = 
-    interface IRegressionPredictor with
+    interface IPredictor with
         member self.Train samples =
             ()
         member self.Predict sample =

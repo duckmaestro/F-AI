@@ -4,7 +4,7 @@
 open System
 open SampleLoader
 open Classifiers
-open RegressionPredictors
+open Predictors
 open kNN
 open Perceptron
 open DecisionTree
@@ -16,7 +16,7 @@ open PCARegression
 type BootstrapRecord<'T> = {
     Name : string;
     Classifier : IClassifier;
-    RegressionPredictor  : IRegressionPredictor;
+    RegressionPredictor  : IPredictor;
     TrainingError : 'T
     ValidationError : 'T
     TestError : 'T
@@ -25,7 +25,7 @@ let defaultRecord =
     { 
         Name = null; 
         Classifier = new NullClassifier() :> IClassifier; 
-        RegressionPredictor = new NullRegressionPredictor() :> IRegressionPredictor; 
+        RegressionPredictor = new NullRegressionPredictor() :> IPredictor; 
         TrainingError = 1.0; 
         ValidationError = 1.0; 
         TestError = 1.0; 
@@ -97,7 +97,7 @@ if performSupervisedTests then
 if performUnsupervisedTests then
 
     let mutable regressionPredictor = [|
-        { defaultRecord with Name = "PCA"; RegressionPredictor = new PCARegressionPredictor() :> IRegressionPredictor; }
+        { defaultRecord with Name = "PCA"; RegressionPredictor = new PCARegressionPredictor() :> IPredictor; }
     |]
 
 
