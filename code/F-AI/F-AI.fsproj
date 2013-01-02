@@ -45,11 +45,13 @@
   <ItemGroup>
     <Compile Include="MathNet.fs" />
     <Compile Include="Primitives.fs" />
+    <Compile Include="LogProbabilities.fs" />
     <Compile Include="Statistics.fs" />
     <Compile Include="Classifiers.fs" />
     <Compile Include="Predictors.fs" />
     <Compile Include="kNN.fs" />
     <Compile Include="Perceptron.fs" />
+    <Compile Include="NoisyOr.fs" />
     <Compile Include="DecisionTree.fs" />
     <Compile Include="PCARegression.fs" />
   </ItemGroup>
