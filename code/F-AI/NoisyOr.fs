@@ -62,9 +62,9 @@ let private ProbOfYGivenX (y:float) (x:Vector) (p:Vector) =
 ///    P(Z_i = 1 | X_i = 1) = p_i
 
 /// </remarks>
-type NoisyOrClassifier(?iterations, ?haltIfConvergent, ?initialProbabilities:Vector, ?randomSampleCountTraining, ?randomSampleCountMeasuring) =
+type NoisyOrClassifier(?maxIterations, ?haltIfConvergent, ?initialProbabilities:Vector, ?randomSampleCountTraining, ?randomSampleCountMeasuring) =
 
-    let iterations = defaultArg iterations 1000
+    let maxIterations = defaultArg maxIterations 1000
     let haltIfConvergent = defaultArg haltIfConvergent true
     let randomSampleCountTraining = defaultArg randomSampleCountTraining 0
     let randomSampleCountMeasuring = defaultArg randomSampleCountMeasuring 0
@@ -95,7 +95,7 @@ type NoisyOrClassifier(?iterations, ?haltIfConvergent, ?initialProbabilities:Vec
                 else 
                     initialProbabilities
 
-            assert (iterations >= 1)
+            assert (maxIterations >= 1)
             assert (initialProbabilities.Count = numFeatures)
     
             pAfterEachStep <- new List<Vector>()
@@ -153,7 +153,7 @@ type NoisyOrClassifier(?iterations, ?haltIfConvergent, ?initialProbabilities:Vec
 
             // EM iteration
             let mutable isConvergent = false
-            for iter in [|1..iterations|] do
+            for iter in [|1..maxIterations|] do
                 if isConvergent = false then
 
                     // The latest p.
@@ -225,6 +225,6 @@ type NoisyOrClassifier(?iterations, ?haltIfConvergent, ?initialProbabilities:Vec
             let probYeq0 = ProbOfYGivenX 0.0 features pValues
             let probYeq1 = ProbOfYGivenX 1.0 features pValues
             
-            let classification = if probYeq0 > probYeq0 then 0 else 1
+            let classification = if probYeq0 > probYeq1 then 0 else 1
             
             classification

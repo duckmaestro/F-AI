@@ -51,18 +51,17 @@ let performUnsupervisedTests = false
 
 
 //
-// supervised
+// Supervised learners.
 //
-
 if performSupervisedTests then
     let reduceVectorToBinary v threshold =
         let asSeq = v :> seq<float>
         let finalValue = MathNet.vector (v |> Seq.map (fun x -> if x >= threshold then 1.0 else 0.0))
         finalValue
 
-    let reduceSamplesToBinary samples = 
+    let reduceSamplesToBinary labelOfInterest samples = 
         samples 
-        |> Seq.map (fun s-> { Features = reduceVectorToBinary s.Features 128.0; Label = if s.Label = 0 then 0 else 1 })
+        |> Seq.map (fun s-> { Features = reduceVectorToBinary s.Features 128.0; Label = if s.Label = labelOfInterest then 1 else 0 })
         |> Seq.cache
 
     let mutable classifiers = [|
@@ -72,14 +71,25 @@ if performSupervisedTests then
         { defaultRecord with Name = "Decision Tree (Max Depth 1)"; Classifier = new DecisionTreeClassifier(1) :> IClassifier; }
         { defaultRecord with Name = "Decision Tree (Max Depth 3)"; Classifier = new DecisionTreeClassifier(3) :> IClassifier; }
         { defaultRecord with Name = "Decision Tree (Max Depth 7)"; Classifier = new DecisionTreeClassifier(7) :> IClassifier; }
-        { defaultRecord with Name = "Noisy-Or (*inputs reduced to {0,1})"; Classifier = new NoisyOrClassifier(12, true) :> IClassifier; SampleMapper = reduceSamplesToBinary; }
+        { defaultRecord with Name = "Noisy-Or (*\"Zero Detector\": inputs reduced to {other, 0})"; 
+                             Classifier = new NoisyOrClassifier(5, true) :> IClassifier; 
+                             SampleMapper = reduceSamplesToBinary 0; }
     |]
 
-    // train
+
+    //
+    // Train.
+    //
+    System.Console.WriteLine("Training classifiers...");
     for c in classifiers do
+        System.Console.WriteLine("Training '" + c.Name + "'...");
         c.Classifier.Train (c.SampleMapper samplesTraining)
 
-    // measure training error
+
+    //
+    // Measure training error.
+    //
+    System.Console.WriteLine("Measuring training error...");
     classifiers <-
         classifiers
         |> Seq.map (fun c -> 
@@ -88,7 +98,11 @@ if performSupervisedTests then
             })
         |> Seq.toArray
 
-    // measure test error
+
+    //
+    // Measure test error.
+    //
+    System.Console.WriteLine("Measuring test error...");
     classifiers <-
         classifiers
         |> Seq.map (fun c ->
@@ -98,16 +112,18 @@ if performSupervisedTests then
         |> Seq.toArray
 
 
-    // print classifiers and error
+    //
+    // Print classifiers and error.
+    //
+    System.Console.WriteLine("Printing results...");
     for c in classifiers do
         System.Console.WriteLine("Classifier: {0}. Training Error: {1:P3}. Test Error: {2:P3}.", c.Name, c.TrainingError, c.TestError)
     
 
 
 //
-// unsupervised
+// Unsupervised learners.
 //
-
 if performUnsupervisedTests then
 
     let mutable regressionPredictor = [|
@@ -123,7 +139,7 @@ if performUnsupervisedTests then
 
 
 //
-// done. 
+// Done. 
 // 
 
 // wait for input.
