@@ -49,6 +49,7 @@
     <Compile Include="Statistics.fs" />
     <Compile Include="Classifiers.fs" />
     <Compile Include="Predictors.fs" />
+    <Compile Include="StochasticGradientAscent.fs" />
     <Compile Include="kNN.fs" />
     <Compile Include="Perceptron.fs" />
     <Compile Include="NoisyOr.fs" />

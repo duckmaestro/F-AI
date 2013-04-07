@@ -5,6 +5,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "F-AI", "F-AI\F-AI.fsproj", 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Demos", "Demos\Demos.fsproj", "{403D6BDF-9CAB-4773-B134-1B3FC527853D}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj", "{1846D297-6894-4DF3-9447-71A4F35B1E82}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -19,6 +21,10 @@ Global
 		{403D6BDF-9CAB-4773-B134-1B3FC527853D}.Debug|x86.Build.0 = Debug|x86
 		{403D6BDF-9CAB-4773-B134-1B3FC527853D}.Release|x86.ActiveCfg = Release|x86
 		{403D6BDF-9CAB-4773-B134-1B3FC527853D}.Release|x86.Build.0 = Release|x86
+		{1846D297-6894-4DF3-9447-71A4F35B1E82}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1846D297-6894-4DF3-9447-71A4F35B1E82}.Debug|x86.Build.0 = Debug|Any CPU
+		{1846D297-6894-4DF3-9447-71A4F35B1E82}.Release|x86.ActiveCfg = Release|Any CPU
+		{1846D297-6894-4DF3-9447-71A4F35B1E82}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -44,15 +44,20 @@ type MatrixSparse = SparseMatrix
 
 // conversion functions
 
+
+/// Creates a new dense matrix using the provided dimensions.
 let matrix rows columns = 
     new DenseMatrix(rows, columns) :> Matrix
 
+/// Creates a new vector using the provided sequence.
 let vector (values:float seq) =
     DenseVector.ofSeq values :> Vector
 
+/// Creates a new vector using the provided dimension.
 let vectorFromCount (count:int) = 
     new DenseVector(count) :> Vector
 
+/// Creates a new matrix using the provided sequence of rows.
 let matrixFromRows (rows:Vector seq) =
     let numRows = rows |> Seq.length
     let numCols = rows |> Seq.head |> (fun e->e.Count)
