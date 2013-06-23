@@ -68,6 +68,11 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+    <ProjectReference Include="..\F-AI.Bayesian\F-AI.Bayesian.fsproj">
+      <Name>F-AI.Bayesian</Name>
+      <Project>{452394ed-b330-40a4-b84a-5208b41d2eae}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\F-AI\F-AI.fsproj">
       <Name>F-AI</Name>
       <Project>{ae3d3bf8-4f2e-4c3f-bb5b-2621a51b6b63}</Project>
