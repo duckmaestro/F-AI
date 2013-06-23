@@ -9,8 +9,9 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Tests</RootNamespace>
     <AssemblyName>Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>Tests</Name>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -55,6 +56,11 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\F-AI.Bayesian\F-AI.Bayesian.fsproj">
+      <Name>F-AI.Bayesian</Name>
+      <Project>{452394ed-b330-40a4-b84a-5208b41d2eae}</Project>
+      <Private>True</Private>
+    </ProjectReference>
     <ProjectReference Include="..\F-AI\F-AI.fsproj">
       <Name>F-AI</Name>
       <Project>{ae3d3bf8-4f2e-4c3f-bb5b-2621a51b6b63}</Project>
