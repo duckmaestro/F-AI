@@ -17,29 +17,34 @@
 
 namespace FAI.Bayesian
 
-open LearnStructure
-open LearnDistributions
 open System.Collections.Generic
 
 
 ///
-/// A Bayesian network
+/// A discrete probability distribution.
 ///
-type public BayesianNetwork() =
-    let rvs = new List<RandomVariable>()
+type DiscreteDistribution() = 
+    
+    /// Internal storage of the probability masses, indexed by
+    /// random variable value.
+    let masses = new Dictionary<Real, Real>()
 
-    member public self.RandomVariables
-        with get() = rvs :> seq<RandomVariable>
+    /// Assign a probability mass to a particular value.
+    member public self.SetMass value mass =
 
-    member public self.AddRandomVariable (rv:RandomVariable) =
-        if (rvs.Contains rv) = false then 
-            rvs.Add rv
+        if Real.IsNaN value then 
+            invalidArg "value" "Value must not be missing." 
+        else 
+            masses.Item value <- mass
 
-    member public self.RemoveRandomVariable rv =
-        rvs.Remove rv |> ignore
+    /// Get the probability mass of a particular value.
+    member public self.GetMass value =
 
-    member public self.LearnStructure observations =
-        failwith "Not implemented yet."
+        let mutable mass = 0.0
 
-    member public self.LearnDistributions observations = 
-        failwith "Not implemented yet."
+        if masses.TryGetValue(value, ref mass) then 
+            mass
+        else 
+            invalidArg "value" "The given value does not have a known mass."
+
+

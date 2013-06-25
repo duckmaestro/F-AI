@@ -34,15 +34,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
-    <Reference Include="FSharp.Core, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <Private>True</Private>
-    </Reference>
+    <Reference Include="FSharp.Core" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LabelMap.fs" />
+    <Compile Include="BasicTypes.fs" />
+    <Compile Include="Observation.fs" />
+    <Compile Include="Distributions.fs" />
+    <Compile Include="RandomVariable.fs" />
+    <Compile Include="LearnStructure.fs" />
+    <Compile Include="LearnDistributions.fs" />
     <Compile Include="BayesianNetwork.fs" />
   </ItemGroup>
   <PropertyGroup>

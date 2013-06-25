@@ -17,29 +17,17 @@
 
 namespace FAI.Bayesian
 
-open LearnStructure
-open LearnDistributions
+open System
 open System.Collections.Generic
 
 
+/// A collection of observed values, indexed by random variable name.
+type Observation = Dictionary<String, Real>
+
 ///
-/// A Bayesian network
+/// Describes access to an observation data.
 ///
-type public BayesianNetwork() =
-    let rvs = new List<RandomVariable>()
+type IObservationSet = 
+    abstract Size : Integer with get
+    abstract Next : Observation
 
-    member public self.RandomVariables
-        with get() = rvs :> seq<RandomVariable>
-
-    member public self.AddRandomVariable (rv:RandomVariable) =
-        if (rvs.Contains rv) = false then 
-            rvs.Add rv
-
-    member public self.RemoveRandomVariable rv =
-        rvs.Remove rv |> ignore
-
-    member public self.LearnStructure observations =
-        failwith "Not implemented yet."
-
-    member public self.LearnDistributions observations = 
-        failwith "Not implemented yet."

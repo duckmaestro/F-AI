@@ -15,20 +15,5 @@
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
 
-namespace FAI.Bayesian
+module internal LearnStructure
 
-
-type LabelMap(labels) =
-    static member public MissingValue = 0    
-
-    member private  this._Labels = labels |> (fun ls -> Seq.singleton "MissingValue" |> Seq.append ls) |> Seq.toArray
-    member public   this.ToLabel id = 
-        let label = if id < 0 || id >= this._Labels.Length then
-                        "UnknownLabel"
-                    else
-                        this._Labels.[id]
-        label
-    member public   this.ToId label =
-        match this._Labels |> Seq.tryFindIndex (fun l -> l.Equals label) with
-            | Some(id)  -> id
-            | None      -> -1

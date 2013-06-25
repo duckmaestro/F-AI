@@ -15,31 +15,18 @@
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
 
-namespace FAI.Bayesian
+module internal LearnDistributions
 
-open LearnStructure
-open LearnDistributions
 open System.Collections.Generic
-
+open FAI.Bayesian
 
 ///
-/// A Bayesian network
-///
-type public BayesianNetwork() =
-    let rvs = new List<RandomVariable>()
+/// Uses the given Bayesian network structure to learn
+/// conditional probability distributions. Returns a dictionary
+/// of distributions indexed by variable.
+/// 
+let LearnDistributions bayesianNetwork observationSet =
+    
+    let distributions = new Dictionary<RandomVariable, DiscreteDistribution>()
 
-    member public self.RandomVariables
-        with get() = rvs :> seq<RandomVariable>
-
-    member public self.AddRandomVariable (rv:RandomVariable) =
-        if (rvs.Contains rv) = false then 
-            rvs.Add rv
-
-    member public self.RemoveRandomVariable rv =
-        rvs.Remove rv |> ignore
-
-    member public self.LearnStructure observations =
-        failwith "Not implemented yet."
-
-    member public self.LearnDistributions observations = 
-        failwith "Not implemented yet."
+    failwith "Not implemented yet."

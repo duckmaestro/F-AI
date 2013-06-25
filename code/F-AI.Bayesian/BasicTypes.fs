@@ -17,29 +17,9 @@
 
 namespace FAI.Bayesian
 
-open LearnStructure
-open LearnDistributions
-open System.Collections.Generic
 
+/// A continous-valued number. NaN if missing.
+type Real = System.Double
 
-///
-/// A Bayesian network
-///
-type public BayesianNetwork() =
-    let rvs = new List<RandomVariable>()
-
-    member public self.RandomVariables
-        with get() = rvs :> seq<RandomVariable>
-
-    member public self.AddRandomVariable (rv:RandomVariable) =
-        if (rvs.Contains rv) = false then 
-            rvs.Add rv
-
-    member public self.RemoveRandomVariable rv =
-        rvs.Remove rv |> ignore
-
-    member public self.LearnStructure observations =
-        failwith "Not implemented yet."
-
-    member public self.LearnDistributions observations = 
-        failwith "Not implemented yet."
+/// An integer.
+type Integer = System.Int32
