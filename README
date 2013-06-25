@@ -9,8 +9,11 @@ Completed but not robustly tested:
  * Perceptron
  * Decision Tree
  * Noisy-Or
+ 
+In progress summer '13:
+ * Bayesian networks
 
-Planned:
+Desired:
  * k-means clustering
  * PCA
  * GMM
