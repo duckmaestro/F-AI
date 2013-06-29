@@ -26,8 +26,10 @@ open Perceptron
 open DecisionTree
 open NoisyOr
 open PCARegression
+open FAI.Bayesian
 
 open DataLoaderUSPS9
+open DataLoaderTraffic
 
 
 // records
@@ -56,15 +58,18 @@ let defaultRecord = {
 // main
 //
 
-// load training samples
-let samplesTraining = DataLoaderUSPS9.LoadFromFile "hw3train.txt" :> seq<Sample>
+// load usps9 data set
+let dataSetUSPS9Training = DataLoaderUSPS9.LoadFromFile "hw3train.txt" :> seq<Sample>
+let dataSetUSPS9Test = DataLoaderUSPS9.LoadFromFile "hw3test.txt" :> seq<Sample>
 
-// load test samples
-let samplesTest = DataLoaderUSPS9.LoadFromFile "hw3test.txt" :> seq<Sample>
+// load traffic data set
+let dataSetTraffic = DataLoaderTraffic.LoadFromFile "traffic.txt" :> IObservationSet
+
 
 // options
 let performSupervisedTests = true
 let performUnsupervisedTests = false
+let performBayesianNetworkTests = false
 
 
 //
@@ -100,7 +105,7 @@ if performSupervisedTests then
     System.Console.WriteLine("Training classifiers...");
     for c in classifiers do
         System.Console.WriteLine("Training '" + c.Name + "'...");
-        c.Classifier.Train (c.SampleMapper samplesTraining)
+        c.Classifier.Train (c.SampleMapper dataSetUSPS9Training)
 
 
     //
@@ -111,7 +116,7 @@ if performSupervisedTests then
         classifiers
         |> Seq.map (fun c -> 
             { 
-                c with TrainingError = MeasureError c.Classifier (c.SampleMapper samplesTraining); 
+                c with TrainingError = MeasureError c.Classifier (c.SampleMapper dataSetUSPS9Training); 
             })
         |> Seq.toArray
 
@@ -124,7 +129,7 @@ if performSupervisedTests then
         classifiers
         |> Seq.map (fun c ->
             {
-                c with TestError = MeasureError c.Classifier (c.SampleMapper samplesTest)
+                c with TestError = MeasureError c.Classifier (c.SampleMapper dataSetUSPS9Test)
             })
         |> Seq.toArray
 
@@ -150,8 +155,19 @@ if performUnsupervisedTests then
 
     // train
     for c in regressionPredictor do
-        c.RegressionPredictor.Train samplesTraining
+        c.RegressionPredictor.Train dataSetUSPS9Training
 
+
+
+//
+// Bayesian networks.
+//
+if performBayesianNetworkTests then
+    
+    let firstSample = dataSetTraffic.Next ()
+    printfn "%f" firstSample.["a5"]
+
+    ()
 
 
 
