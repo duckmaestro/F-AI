@@ -21,6 +21,13 @@ open System
 open System.Collections.Generic
 
 
+
+/// Describes a space of permitted values.
+type RandomVariableSpace = 
+    | Continuous of Real * Real     // The min, max bounds on the region.
+    | Discrete of array<Real>       // A list of valid values.
+
+
 ///
 /// A table of distributions, indexed by observation.
 ///
@@ -104,25 +111,22 @@ type ConditionalProbabilityTable() =
         ()
 
 
-/// The variable type.
-type VariableType = Discrete | Continuous
-
 ///
 /// A random variable.
 /// Exposes mutable dependency list and mutable distribution.
 ///
-type public RandomVariable(name', type', distribution') =
+type public RandomVariable(name', space', distribution') =
     
     let mutable distribution = distribution'
     let mutable name = name'
-    let mutable rvtype = type'
+    let mutable space = space'
     let dependencies = new HashSet<RandomVariable>()
 
     member public self.Name 
         with get() : String = name
 
-    member public self.Type 
-        with get() : VariableType = rvtype
+    member public self.Space 
+        with get() : RandomVariableSpace = space
 
     member public self.Distribution 
         with get() : DiscreteDistribution = distribution
@@ -132,6 +136,9 @@ type public RandomVariable(name', type', distribution') =
 
     member public self.RemoveDependency rv =
         dependencies.Remove rv |> ignore
+
+    member public self.Dependencies
+        with get() = dependencies :> seq<_>
     
 //    interface IComparable 
 //        with member self.CompareTo other = 
