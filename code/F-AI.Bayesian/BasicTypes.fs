@@ -18,6 +18,9 @@
 namespace FAI.Bayesian
 
 
+/// An identifier for a random variable.
+type VariableName = System.String
+
 /// A continous-valued number. NaN if missing.
 type Real = System.Double
 

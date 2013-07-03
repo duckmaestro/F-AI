@@ -18,8 +18,17 @@
 namespace FAI.Bayesian
 
 ///
-/// A collection of observed values, indexed by variable name.
+/// Exposes access to a set of observations.
 ///
-type public Observation = Map<VariableName,Real>
+type public IObservationSet = 
+
+    // The size of the set, if known.
+    abstract Size : Option<Integer> with get
+
+    // Read the next observation and advance the internal position.
+    abstract Next : unit -> Option<Observation>
+
+    // Reset the internal position.
+    abstract Reset : unit -> unit
 
 

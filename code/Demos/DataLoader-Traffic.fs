@@ -44,7 +44,7 @@ let private ParseSample (variableNames:seq<String>) (row:String) =
                 | "a3" -> 3.
                 | _ -> Real.NaN 
             )
-        |> dict
+        |> Map.ofSeq
 
     values
 
@@ -74,7 +74,7 @@ let LoadFromFile filename =
         |> Seq.map (fun r -> ParseSample header r)
         |> Seq.toArray
 
-    new BasicObservationSet(samples)
+    new InMemoryObservationSet(samples)
     
 
 

@@ -42,7 +42,10 @@
   <ItemGroup>
     <Compile Include="BasicTypes.fs" />
     <Compile Include="Observation.fs" />
+    <Compile Include="IObservationSet.fs" />
+    <Compile Include="InMemoryObservationSet.fs" />
     <Compile Include="Distributions.fs" />
+    <Compile Include="ConditionalProbabilityTable.fs" />
     <Compile Include="RandomVariable.fs" />
     <Compile Include="LearnStructure.fs" />
     <Compile Include="LearnDistributions.fs" />

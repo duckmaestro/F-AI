@@ -17,9 +17,26 @@
 
 namespace FAI.Bayesian
 
-///
-/// A collection of observed values, indexed by variable name.
-///
-type public Observation = Map<VariableName,Real>
+open System.Collections.Generic
 
 
+///
+/// A simple, in-memory observation set.
+/// 
+type public InMemoryObservationSet(observations') =
+    let mutable position = 0
+
+    let observations = observations' |> Seq.toArray
+
+    interface IObservationSet with
+        member self.Size with get() = Some observations.Length
+
+        member self.Next () =     
+            let value = 
+                if position >= observations.Length then None
+                else Some observations.[position]
+            if Option.isSome value then position <- position + 1
+            value
+
+        member self.Reset () =
+            position <- 0

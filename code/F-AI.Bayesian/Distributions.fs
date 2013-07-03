@@ -25,26 +25,19 @@ open System.Collections.Generic
 ///
 type DiscreteDistribution() = 
     
-    /// Internal storage of the probability masses, indexed by
-    /// random variable value.
-    let masses = new Dictionary<Real, Real>()
+    // Internal storage of the probability masses, indexed by
+    // random variable value.
+    let mutable masses = Map.empty
 
     /// Assign a probability mass to a particular value.
     member public self.SetMass value mass =
-
         if Real.IsNaN value then 
             invalidArg "value" "Value must not be missing." 
         else 
-            masses.Item value <- mass
+            masses <- masses |> Map.add value mass
 
     /// Get the probability mass of a particular value.
     member public self.GetMass value =
-
-        let mutable mass = 0.0
-
-        if masses.TryGetValue(value, ref mass) then 
-            mass
-        else 
-            invalidArg "value" "The given value does not have a known mass."
+        masses |> Map.tryFind value
 
 
