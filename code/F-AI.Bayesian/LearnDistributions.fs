@@ -24,9 +24,13 @@ open FAI.Bayesian
 /// Learns a set of conditional distributions.
 /// Assumes no missing information.
 /// 
-let learnConditionalDistributions conditionalVariable independentVariables observationSet =
+let learnConditionalDistributions (dependentVariable:RandomVariable) independentVariables (observationSet:IObservationSet) =
     
-    // Helpers
+    //
+    // Support functions.
+    //
+
+    // From a list of random variables, generates each possible instantiation.
     let rec enumeratePermutations' (variableList:list<RandomVariable>) : Real list list =
         match variableList with
         | [ ]       ->  [ ]
@@ -49,12 +53,69 @@ let learnConditionalDistributions conditionalVariable independentVariables obser
                     p 
                     |> Seq.zip (variableList |> Seq.map (fun rv -> rv.Name))
                     |> Map.ofSeq
+                    |> (fun x -> new Observation(x))
                 )
         namedPermutations
         
 
+    // Initializes a new occurrence counter. For each possible value
+    // of the random variable, initializes a 0 count.
+    let emptyOccurrenceCounter (rv:RandomVariable) =
+        let permutations = 
+            match rv.Space with 
+            | Discrete vals ->  vals 
+            | _             ->  failwith "Variable must be discrete-valued."
+
+        let occurrenceCounter =
+            permutations
+            |> Seq.map (fun p -> p, 0)
+            |> Map.ofSeq
+        occurrenceCounter
+
+    // Increases the occurrence counter's value for the
+    // given occurrence value.
+    let addOccurrence occurrenceCounter occurrenceValue =
+        let oldCount = occurrenceCounter |> Map.find occurrenceValue
+        let newCount = oldCount + 1
+        occurrenceCounter |> Map.add occurrenceValue newCount
+
+
+    //let subtract obs1 obs2 =
+
+    //
+    // Algorithm.
+    //
+
+    let dv = dependentVariable
+    let ivs = independentVariables
+
     // Enumerate permutations of independent variables.
-    let parentPermutations = enumeratePermutations independentVariables
+    let parentConfigs = enumeratePermutations ivs
+    let mutable dvCountsByParentConfig = 
+        parentConfigs
+        |> Seq.map (fun p -> p, emptyOccurrenceCounter dv)
+        |> Map.ofSeq
+
+    // Step over each observation.
+    let mutable observation0 = observationSet.Next ()
+    while Option.isSome observation0 do
+        let observation = observation0.Value
+
+        // Prepare observation using parent nodes only.
+        let ivsObservation = observation - dv.Name
+
+        // Lookup counts for the parent config for this observation.
+        let dvCountsForParentConfig = 
+            dvCountsByParentConfig 
+            |> Map.find ivsObservation
+
+        // Lookup observation value for dependent variable.
+        let valForDV = Option.get (observation.TryValueForVariable dv.Name)
+
+        // Increase count for this observation
+        let dvCountsForParentConfig' = addOccurrence dvCountsForParentConfig valForDV
+        dvCountsByParentConfig <- dvCountsByParentConfig |> Map.add ivsObservation dvCountsForParentConfig'
+        
 
     // Todo:
     failwith "Not implemented yet."

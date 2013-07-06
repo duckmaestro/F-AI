@@ -28,32 +28,10 @@ type ConditionalProbabilityTable() =
     
     // Ensures the observation has no null variable names or missing values.
     let ensureStrictObservation (observation:Observation) =
-        if observation |> Map.containsKey null then
-            failwith "Missing variable name encountered in observation"
-        else if observation |> Seq.exists (fun kvp -> Real.IsNaN kvp.Value) then
+        if observation |> Seq.exists (fun kvp -> Real.IsNaN kvp.Value) then
             failwith "Observation value cannot be missing." 
         else
             ()
-
-    // Checks whether two observations are equivalent.
-    let isMatchingObservation (obs1:Observation) (obs2:Observation) =
-        if (obs1.Count <> obs2.Count) then
-            false
-        else
-            let sorter (kvp:KeyValuePair<_,_>) = kvp.Key
-
-            let zippedPairs = 
-                (obs1 |> Seq.sortBy sorter) 
-                |> Seq.zip <| 
-                (obs2 |> Seq.sortBy sorter)
-
-            let firstMismatch = 
-                zippedPairs 
-                |> Seq.tryFind 
-                    (fun (p1,p2) -> p1.Key <> p2.Key || p1.Value <> p2.Value)
-
-            let doesMatch = Option.isNone firstMismatch
-            doesMatch
 
 
     // Internal storage of each distribution, indexed by observation.

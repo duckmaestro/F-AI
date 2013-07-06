@@ -45,6 +45,7 @@ let private ParseSample (variableNames:seq<String>) (row:String) =
                 | _ -> Real.NaN 
             )
         |> Map.ofSeq
+        |> fun s -> new Observation(s)
 
     values
 

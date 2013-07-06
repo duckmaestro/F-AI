@@ -17,9 +17,79 @@
 
 namespace FAI.Bayesian
 
+open System.Collections
+open System.Collections.Generic
+
+
 ///
 /// A collection of observed values, indexed by variable name.
+/// Immutable, and has some operator overloads.
 ///
-type public Observation = Map<VariableName,Real>
+type public Observation(?variableValues) =
+//[<CustomEqualityAttribute;CustomComparisonAttribute>]
+
+    member private self._variableValues = defaultArg variableValues Map.empty
+
+    /// Adds variable values, returning a new observation.
+    static member (+) (o1:Observation, o2:Observation) =
+        let mutable o1' = o1._variableValues
+        for kvp in o2._variableValues do
+            o1' <- o1' |> Map.add kvp.Key kvp.Value
+        new Observation(o1')
+
+    /// Adds a new variable and value, returning a new observation.
+    static member (+) (o1:Observation, (name, value)) =
+        let o1' = o1._variableValues |> Map.add name value
+        new Observation(o1')
+
+    /// Removes variable values from this observation.
+    static member (-) (o1:Observation, o2:Observation) =
+        let mutable o1' = o1._variableValues
+        for kvp in o2._variableValues do
+            o1'  <- o1' |> Map.remove kvp.Key
+        new Observation(o1')
+
+    /// Removes variable values from this observation.
+    static member (-) (o1:Observation, name:VariableName) =
+        let o1' = 
+            o1._variableValues
+            |> Map.remove name
+        new Observation(o1')
+
+    /// If both observations have the same keys and values, then they are equal.
+    override o1.Equals o2 =
+        let o2' = o2 :?> Observation
+
+        let countsDiffer = o1._variableValues.Count <> o2'._variableValues.Count
+        if countsDiffer then
+            false
+        else
+            let hasDifference = 
+                o1._variableValues
+                |> Seq.zip o2'._variableValues
+                |> Seq.exists (fun z -> (fst z).Key <> (snd z).Key || (fst z).Value <> (snd z).Value)
+            hasDifference = false
+
+    interface System.IComparable with
+      member o1.CompareTo o2 =
+          match o2 with
+          | :? Observation as o2'   ->  Unchecked.compare o1._variableValues o2'._variableValues
+          | _                       ->  failwith "Invalid argument type."
+
+    override o1.GetHashCode () =
+        Unchecked.hash o1._variableValues
+
+    interface IEnumerable<KeyValuePair<VariableName, Real>> with
+        member self.GetEnumerator () =
+            let vv = self._variableValues :> IEnumerable<KeyValuePair<VariableName, Real>>
+            vv.GetEnumerator ()
+
+    interface IEnumerable with
+        member self.GetEnumerator () =
+            let vv = self._variableValues :> IEnumerable
+            vv.GetEnumerator ()
+
+    member self.TryValueForVariable name =
+        self._variableValues.TryFind name
 
 

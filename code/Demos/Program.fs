@@ -165,7 +165,7 @@ if performUnsupervisedTests then
 if performBayesianNetworkTests then
     
     let firstSample = Option.get (dataSetTraffic.Next ())
-    printfn "%f" (firstSample |> Map.find "a5")
+    printfn "%f" (firstSample.TryValueForVariable "a5" |> Option.get)
 
     ()
 
