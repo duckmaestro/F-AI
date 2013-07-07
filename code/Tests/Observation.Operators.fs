@@ -30,6 +30,8 @@ let Run =
     let obs3xy = new Observation() + ("X", 3.00) + ("Y", 0.00)
     let obs3nxny = obs3xy - "X" - "Y"
 
+    let obs1xx = obs1x + ("X", 33.0)
+
     assert (obs1 = obs2)
     assert (obs1x = obs2x)
     assert (obs2nx = obs2)
@@ -38,5 +40,8 @@ let Run =
     assert (obs3xy <> obs3nxny)
     assert (obs3nxny = obs1)
     assert (obs3nxny = obs2)
+
+    assert (obs1xx <> obs1x)
+    assert (obs1xx <> obs2x)
 
     ()
