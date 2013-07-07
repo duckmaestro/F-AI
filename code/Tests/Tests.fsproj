@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="SGA.fs" />
     <Compile Include="L-BGFS.fs" />
+    <Compile Include="Observation.Operators.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
   </ItemGroup>

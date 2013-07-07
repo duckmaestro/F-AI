@@ -14,11 +14,21 @@
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
+module TestObservation
 
-open TestSGA
-open TestLBFGS
-open TestObservation
+open FAI.Bayesian
 
-let sga = TestSGA.Run
-let lbfgs = TestLBFGS.Run
-let observation = TestObservation.Run
+let Run =
+    let obs1 = new Observation()
+    let obs1x = obs1 + ("X", 2.0)
+
+    let obs2 = new Observation()
+    let obs2x = obs2 + ("X", 2.00)
+
+    let obs2nx = obs2x - "X"
+
+    assert (obs1 = obs2)
+    assert (obs1x = obs2x)
+    assert (obs2nx = obs2)
+
+    ()
