@@ -17,27 +17,10 @@
 
 namespace FAI.Bayesian
 
-open System.Collections.Generic
-
-
 ///
-/// A discrete probability distribution.
+/// A probability distribution.
 ///
-type DiscreteDistribution() = 
-    
-    // Internal storage of the probability masses, indexed by
-    // random variable value.
-    let mutable masses = Map.empty
-
-    /// Assign a probability mass to a particular value.
-    member public self.SetMass value mass =
-        if Real.IsNaN value then 
-            invalidArg "value" "Value must not be missing." 
-        else 
-            masses <- masses |> Map.add value mass
-
-    /// Get the probability mass of a particular value.
-    member public self.GetMass value =
-        masses |> Map.tryFind value
-
+type Distribution =
+    | Discrete              of DiscreteDistribution
+    | ConditionalDiscrete   of ConditionalProbabilityTable
 

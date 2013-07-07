@@ -15,7 +15,7 @@
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
 
-module internal LearnDistributions
+module LearnDistributions
 
 open System.Collections.Generic
 open FAI.Bayesian
@@ -24,14 +24,15 @@ open FAI.Bayesian
 /// Learns a set of conditional distributions.
 /// Assumes no missing information.
 /// 
-let learnConditionalDistributions (dependentVariable:RandomVariable) independentVariables (observationSet:IObservationSet) =
+let public learnConditionalDistributions (dependentVariable:RandomVariable) independentVariables (observationSet:IObservationSet) =
     
     //
     // Support functions.
     //
 
-    // From a list of random variables, generates each possible instantiation.
-    let rec enumeratePermutations' (variableList:list<RandomVariable>) : Real list list =
+    // From a list of random variables, generates each possible instantiation
+    // as a sequence values in corresponding order to the random variable list.
+    let rec enumeratePermutations' (variableList:list<RandomVariable>) =
         match variableList with
         | [ ]       ->  [ ]
         | v :: vs   ->  let v1_perms =  match v.Space with 
@@ -44,14 +45,18 @@ let learnConditionalDistributions (dependentVariable:RandomVariable) independent
                             |> List.collect
                                 (fun v1 -> vs_perms |> List.map (fun vs -> List.append v1 vs))
                         cross
-    let enumeratePermutations variableList =
-        let barePermutations = enumeratePermutations' variableList
+    
+    // From a list of random variables, generates each possible instantiation
+    // in an Observation.
+    let enumeratePermutations variables =
+        let variablesAsList = variables |> List.ofSeq
+        let barePermutations = enumeratePermutations' variablesAsList
         let namedPermutations =
             barePermutations
             |> Seq.map (
                 fun p -> 
                     p 
-                    |> Seq.zip (variableList |> Seq.map (fun rv -> rv.Name))
+                    |> Seq.zip (variablesAsList |> Seq.map (fun rv -> rv.Name))
                     |> Map.ofSeq
                     |> (fun x -> new Observation(x))
                 )
@@ -79,8 +84,18 @@ let learnConditionalDistributions (dependentVariable:RandomVariable) independent
         let newCount = oldCount + 1
         occurrenceCounter |> Map.add occurrenceValue newCount
 
-
-    //let subtract obs1 obs2 =
+    // Given a map of variable values to counts, forms a 
+    // discrete distribution.
+    let makeDistribution (counts:Map<Real,Integer>) =
+        let total = counts |> Map.fold (fun s k v -> s + float v) 0.0
+        if total = 0.0 then None
+        else
+            let distribution = new DiscreteDistribution ()
+            for kvp in counts do
+                let rvValue = kvp.Key
+                let rvValueCount = float kvp.Value
+                distribution.SetMass rvValue (rvValueCount / total)
+            Some distribution
 
     //
     // Algorithm.
@@ -116,6 +131,10 @@ let learnConditionalDistributions (dependentVariable:RandomVariable) independent
         let dvCountsForParentConfig' = addOccurrence dvCountsForParentConfig valForDV
         dvCountsByParentConfig <- dvCountsByParentConfig |> Map.add ivsObservation dvCountsForParentConfig'
         
+    // Prepare conditional distributions.
+    let distributions =
+        dvCountsByParentConfig 
+        |> Map.map (fun key value -> makeDistribution value)
 
-    // Todo:
-    failwith "Not implemented yet."
+    // Done.
+    distributions

@@ -26,37 +26,48 @@ open System.Collections.Generic
 /// Immutable, and has some operator overloads.
 ///
 type public Observation(?variableValues) =
-//[<CustomEqualityAttribute;CustomComparisonAttribute>]
 
     member private self._variableValues = defaultArg variableValues Map.empty
 
+    ///
     /// Adds variable values, returning a new observation.
+    ///
     static member (+) (o1:Observation, o2:Observation) =
         let mutable o1' = o1._variableValues
         for kvp in o2._variableValues do
             o1' <- o1' |> Map.add kvp.Key kvp.Value
         new Observation(o1')
 
+    ///
     /// Adds a new variable and value, returning a new observation.
+    ///
     static member (+) (o1:Observation, (name, value)) =
         let o1' = o1._variableValues |> Map.add name value
         new Observation(o1')
 
-    /// Removes variable values from this observation.
+    ///
+    /// Removes the right operand variables from the left operand,
+    /// returning a new observation.
+    ///
     static member (-) (o1:Observation, o2:Observation) =
         let mutable o1' = o1._variableValues
         for kvp in o2._variableValues do
             o1'  <- o1' |> Map.remove kvp.Key
         new Observation(o1')
 
-    /// Removes variable values from this observation.
+    ///
+    /// Removes the named variable from the observation, 
+    /// returning a new observation.
+    ///
     static member (-) (o1:Observation, name:VariableName) =
         let o1' = 
             o1._variableValues
             |> Map.remove name
         new Observation(o1')
 
+    ///
     /// If both observations have the same keys and values, then they are equal.
+    ///
     override o1.Equals o2 =
         let o2' = o2 :?> Observation
 
@@ -89,6 +100,9 @@ type public Observation(?variableValues) =
             let vv = self._variableValues :> IEnumerable
             vv.GetEnumerator ()
 
+    ///
+    /// Returns the value associated with the given variable name.
+    ///
     member self.TryValueForVariable name =
         self._variableValues.TryFind name
 

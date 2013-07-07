@@ -26,20 +26,48 @@ open System.Collections.Generic
 /// A Bayesian network
 ///
 type public BayesianNetwork() =
-    let rvs = new List<RandomVariable>()
+    let mutable rvs = List.empty
 
     member public self.RandomVariables
-        with get() = rvs :> seq<RandomVariable>
+        with get() = rvs
 
     member public self.AddRandomVariable (rv:RandomVariable) =
-        if (rvs.Contains rv) = false then 
-            rvs.Add rv
+        if rvs |> List.exists (fun rv' -> rv' = rv) then
+            ()
+        else
+            rvs <- rv :: rvs
 
     member public self.RemoveRandomVariable rv =
-        rvs.Remove rv |> ignore
+        rvs <- rvs |> List.partition (fun rv' -> rv' <> rv) |> fst
 
     member public self.LearnStructure observations =
         failwith "Not implemented yet."
 
-    member public self.LearnDistributions observations = 
-        failwith "Not implemented yet."
+    member public self.LearnDistributions (observations:IObservationSet) = 
+        
+        // For each random variable, learn its conditional distributions.
+        for dv in self.RandomVariables do
+            let ivs = dv.Dependencies
+
+            // HACK: The current learning algorithm is not friendly to
+            //       observation set streaming, and the observation
+            //       set position must be reset before each variable.
+            observations.Reset ()
+
+            // Learn conditional distributions for this variable.
+            let conditionalDistributions = learnConditionalDistributions dv ivs observations
+
+            // Copy distributions into a CPT.
+            let cpt = new ConditionalProbabilityTable()
+            for conditionalDistribution in conditionalDistributions do
+                let parentInstantiation = conditionalDistribution.Key
+                let distribution = conditionalDistribution.Value
+
+                match distribution with
+                    | Some d    ->  cpt.SetConditionalDistribution parentInstantiation d
+                    | _         ->  failwith "A neccessary distribution was not learned." 
+                                    (* TODO: Decide how to fill in missing distributions. *) 
+                
+
+            // Associate CPT with this variable.
+            dv.Distribution <- ConditionalDiscrete cpt

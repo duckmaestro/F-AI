@@ -49,7 +49,8 @@ type public RandomVariable(name', space', distribution') =
         with get() : RandomVariableSpace = space
 
     member public self.Distribution 
-        with get() : DiscreteDistribution = distribution
+        with get() : Distribution   =   distribution
+        and set(value)              =   distribution <- value
 
     member public self.AddDependency rv = 
         dependencies.Add rv
@@ -60,12 +61,5 @@ type public RandomVariable(name', space', distribution') =
     member public self.Dependencies
         with get() = dependencies :> seq<_>
     
-//    interface IComparable 
-//        with member self.CompareTo other = 
-//            match other with
-//            | :? RandomVariable as other' -> String.Compare(self.Name, other'.Name)
-//            | _                           -> -1
-
-
         
 

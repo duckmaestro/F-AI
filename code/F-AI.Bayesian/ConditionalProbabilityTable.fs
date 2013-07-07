@@ -53,7 +53,7 @@ type ConditionalProbabilityTable() =
     ///
     /// Stores a conditional distribution for the given observation.
     ///
-    member public   self.SetConditionalDistribution observation distribution =
+    member public   self.SetConditionalDistribution observation (distribution:DiscreteDistribution) =
         
         // Check observation.
         ensureStrictObservation observation
