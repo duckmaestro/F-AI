@@ -15,42 +15,22 @@
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
 
+module Bayesian
+
 // namespaces
 
 open System
+open FAI.Bayesian
+
+open DataLoaderTraffic
 
 
-// options
-let performSupervisedTests = true
-let performUnsupervisedTests = false
-let performBayesianNetworkTests = false
+let doDemoBayesian = 
 
+    // load traffic data set
+    let dataSetTraffic = DataLoaderTraffic.LoadFromFile "traffic.txt" :> IObservationSet
 
-//
-// Supervised learners.
-//
-if performSupervisedTests then
-    do Supervised.doDemoSupervised
+    let firstSample = Option.get (dataSetTraffic.Next ())
+    printfn "%f" (firstSample.TryValueForVariable "a5" |> Option.get)
 
-
-//
-// Unsupervised learners.
-//
-if performUnsupervisedTests then
-    do Unsupervised.doDemoUnsupervised
-
-
-//
-// Bayesian networks.
-//
-if performBayesianNetworkTests then
-    do Bayesian.doDemoBayesian
-
-
-//
-// Done. 
-// 
-
-// wait for input.
-let mutable key = Console.ReadLine()
-
+    ()

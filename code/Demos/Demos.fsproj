@@ -43,6 +43,9 @@
   <ItemGroup>
     <Compile Include="DataLoader-USPS9.fs" />
     <Compile Include="DataLoader-Traffic.fs" />
+    <Compile Include="Supervised.fs" />
+    <Compile Include="Unsupervised.fs" />
+    <Compile Include="Bayesian.fs" />
     <Compile Include="Program.fs" />
     <Content Include="hw2test.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
