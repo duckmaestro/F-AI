@@ -25,14 +25,17 @@ open System.Collections.Generic
 /// A collection of observed values, indexed by variable name.
 /// Immutable, and has some operator overloads.
 ///
+[<System.Diagnostics.DebuggerDisplayAttribute("Variables: {_variableValues}")>]
 type public Observation(?variableValues) =
 
     member private self._variableValues = defaultArg variableValues Map.empty
 
     ///
-    /// Adds variable values, returning a new observation.
+    /// Performs the union of this observation with another, 
+    /// returning a new observation. Right operand
+    /// values take precedence.
     ///
-    static member (+) (o1:Observation, o2:Observation) =
+    static member (.|.) (o1:Observation, o2:Observation) =
         let mutable o1' = o1._variableValues
         for kvp in o2._variableValues do
             o1' <- o1' |> Map.add kvp.Key kvp.Value
@@ -41,7 +44,7 @@ type public Observation(?variableValues) =
     ///
     /// Adds a new variable and value, returning a new observation.
     ///
-    static member (+) (o1:Observation, (name, value)) =
+    static member (.+.) (o1:Observation, (name, value)) =
         let o1' = o1._variableValues |> Map.add name value
         new Observation(o1')
 
@@ -49,7 +52,7 @@ type public Observation(?variableValues) =
     /// Removes the right operand variables from the left operand,
     /// returning a new observation.
     ///
-    static member (-) (o1:Observation, o2:Observation) =
+    static member (.-.) (o1:Observation, o2:Observation) =
         let mutable o1' = o1._variableValues
         for kvp in o2._variableValues do
             o1'  <- o1' |> Map.remove kvp.Key
@@ -59,11 +62,23 @@ type public Observation(?variableValues) =
     /// Removes the named variable from the observation, 
     /// returning a new observation.
     ///
-    static member (-) (o1:Observation, name:VariableName) =
+    static member (.-.) (o1:Observation, name:VariableName) =
         let o1' = 
             o1._variableValues
             |> Map.remove name
         new Observation(o1')
+
+    /// 
+    /// Performs the intersection of this observation with the 
+    /// list of provided variable names.
+    /// 
+    static member (.&.) (o1:Observation, names:VariableName seq) = 
+        let mutable o1' = o1._variableValues
+        for kvp in o1' do
+            if (Seq.exists (fun n -> n = kvp.Key) names) = false then
+                o1' <- o1' |> Map.remove kvp.Key
+        new Observation(o1')
+        
 
     ///
     /// If both observations have the same keys and values, then they are equal.
@@ -106,4 +121,8 @@ type public Observation(?variableValues) =
     member self.TryValueForVariable name =
         self._variableValues.TryFind name
 
-
+    ///
+    /// Returns the list of variable names in this observation
+    ///
+    member self.VariableNames with
+        get() : VariableName seq = self._variableValues |> Seq.map (fun kvp -> kvp.Key)

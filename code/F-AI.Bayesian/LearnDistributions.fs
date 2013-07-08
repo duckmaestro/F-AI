@@ -24,7 +24,10 @@ open FAI.Bayesian
 /// Learns a set of conditional distributions.
 /// Assumes no missing information.
 /// 
-let public learnConditionalDistributions (dependentVariable:RandomVariable) independentVariables (observationSet:IObservationSet) =
+let public learnConditionalDistributions 
+            (dependentVariable:RandomVariable) 
+            (independentVariables:RandomVariable seq)
+            (observationSet:IObservationSet) =
     
     //
     // Support functions.
@@ -35,15 +38,22 @@ let public learnConditionalDistributions (dependentVariable:RandomVariable) inde
     let rec enumeratePermutations' (variableList:list<RandomVariable>) =
         match variableList with
         | [ ]       ->  [ ]
-        | v :: vs   ->  let v1_perms =  match v.Space with 
-                                        | Discrete xs   ->  xs |> Seq.map (fun x -> [x]) |> List.ofSeq
+        | v :: vs   ->  // Promote each value to a singleton list.
+                        let v1_perms =  match v.Space with 
+                                        | Discrete xs   ->  xs |> Seq.map (fun x -> [x]) |> List.ofSeq 
                                         | _             ->  failwith "Continous variables not supported."
-                        let vs_perms =  enumeratePermutations' (variableList |> List.tail)
                         
+                        // Recurse.
+                        let vs_perms =  enumeratePermutations' (variableList |> List.tail) 
+                        
+                        // Build cross product.
                         let cross = 
-                            v1_perms
-                            |> List.collect
-                                (fun v1 -> vs_perms |> List.map (fun vs -> List.append v1 vs))
+                            match vs_perms with
+                            | [ ]       ->  v1_perms
+                            | vs_perms  ->  v1_perms
+                                            |> List.collect
+                                                (fun v1_perm -> vs_perms |> List.map (fun vs -> List.append v1_perm vs))
+                        // Done.
                         cross
     
     // From a list of random variables, generates each possible instantiation
@@ -62,7 +72,6 @@ let public learnConditionalDistributions (dependentVariable:RandomVariable) inde
                 )
         namedPermutations
         
-
     // Initializes a new occurrence counter. For each possible value
     // of the random variable, initializes a 0 count.
     let emptyOccurrenceCounter (rv:RandomVariable) =
@@ -97,39 +106,49 @@ let public learnConditionalDistributions (dependentVariable:RandomVariable) inde
                 distribution.SetMass rvValue (rvValueCount / total)
             Some distribution
 
+
     //
     // Algorithm.
     //
 
     let dv = dependentVariable
     let ivs = independentVariables
+    let ivsNames = ivs |> Seq.map (fun rv -> rv.Name)
 
     // Enumerate permutations of independent variables.
     let parentConfigs = enumeratePermutations ivs
     let mutable dvCountsByParentConfig = 
-        parentConfigs
-        |> Seq.map (fun p -> p, emptyOccurrenceCounter dv)
-        |> Map.ofSeq
+        if (parentConfigs |> Seq.length) <> 0 then
+            parentConfigs
+            |> Seq.map (fun p -> p, emptyOccurrenceCounter dv)
+            |> Map.ofSeq
+        else
+            Seq.singleton (new Observation(), emptyOccurrenceCounter dv)
+            |> Map.ofSeq
 
     // Step over each observation.
-    let mutable observation0 = observationSet.Next ()
-    while Option.isSome observation0 do
-        let observation = observation0.Value
+    let mutable doLoop = true
+    while doLoop do
+        let observation0 = observationSet.Next ()
+        if Option.isNone observation0 then
+            doLoop <- false
+        else
+            let observation = observation0.Value
 
-        // Prepare observation using parent nodes only.
-        let ivsObservation = observation - dv.Name
+            // Prepare observation using parent nodes only.
+            let ivsObservation = observation .&. ivsNames
 
-        // Lookup counts for the parent config for this observation.
-        let dvCountsForParentConfig = 
-            dvCountsByParentConfig 
-            |> Map.find ivsObservation
+            // Lookup counts for the parent config for this observation.
+            let dvCountsForParentConfig = 
+                dvCountsByParentConfig 
+                |> Map.find ivsObservation
 
-        // Lookup observation value for dependent variable.
-        let valForDV = Option.get (observation.TryValueForVariable dv.Name)
+            // Lookup observation value for dependent variable.
+            let valForDV = Option.get (observation.TryValueForVariable dv.Name)
 
-        // Increase count for this observation
-        let dvCountsForParentConfig' = addOccurrence dvCountsForParentConfig valForDV
-        dvCountsByParentConfig <- dvCountsByParentConfig |> Map.add ivsObservation dvCountsForParentConfig'
+            // Increase count for this observation
+            let dvCountsForParentConfig' = addOccurrence dvCountsForParentConfig valForDV
+            dvCountsByParentConfig <- dvCountsByParentConfig |> Map.add ivsObservation dvCountsForParentConfig'
         
     // Prepare conditional distributions.
     let distributions =

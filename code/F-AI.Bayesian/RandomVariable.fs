@@ -53,7 +53,7 @@ type public RandomVariable(name', space', distribution') =
         and set(value)              =   distribution <- value
 
     member public self.AddDependency rv = 
-        dependencies.Add rv
+        dependencies.Add rv |> ignore
 
     member public self.RemoveDependency rv =
         dependencies.Remove rv |> ignore

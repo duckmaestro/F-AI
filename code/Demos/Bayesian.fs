@@ -27,10 +27,50 @@ open DataLoaderTraffic
 
 let doDemoBayesian = 
 
-    // load traffic data set
+    // Load traffic data set.
     let dataSetTraffic = DataLoaderTraffic.LoadFromFile "traffic.txt" :> IObservationSet
 
+    // Print first sample's value for 'a5'.
     let firstSample = Option.get (dataSetTraffic.Next ())
     printfn "%f" (firstSample.TryValueForVariable "a5" |> Option.get)
 
+    // Grab variable names.
+    let variableNames = firstSample.VariableNames
+
+    // Set state space.
+    let stateSpace = RandomVariableSpace.Discrete [| 0. .. 3. |]
+
+    // Build a Bayesian network.
+    let bn = new BayesianNetwork ()
+    for variableName in variableNames do
+        let dist = Distribution.ConditionalDiscrete (new ConditionalProbabilityTable ())
+        let rv = new RandomVariable (variableName, stateSpace, dist)
+        bn.AddVariable rv
+    ()
+
+    // Connections (arbitrary test).
+    for variablePair in 
+        bn.Variables 
+        |> Seq.skip 1
+        |> Seq.sortBy (fun v -> v.Name)
+        |> Seq.pairwise 
+        |> Seq.mapi (fun i v -> i,v)
+        |> Seq.filter (fun i_v -> fst i_v % 2 = 0)
+        |> Seq.map (fun i_v -> snd i_v) 
+        do
+        
+        //let v0 = bn.Variables |> Seq.head
+        let v1 = fst variablePair
+        let v2 = snd variablePair
+        
+        //v2.AddDependency v0
+        v2.AddDependency v1
+        
+
+
+
+    // Learn CPTs.
+    bn.LearnDistributions dataSetTraffic
+
+    // Done.
     ()

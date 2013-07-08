@@ -23,21 +23,21 @@ open System.Collections.Generic
 
 
 ///
-/// A Bayesian network
+/// A Bayesian network.
 ///
 type public BayesianNetwork() =
     let mutable rvs = List.empty
 
-    member public self.RandomVariables
+    member public self.Variables
         with get() = rvs
 
-    member public self.AddRandomVariable (rv:RandomVariable) =
+    member public self.AddVariable (rv:RandomVariable) =
         if rvs |> List.exists (fun rv' -> rv' = rv) then
             ()
         else
             rvs <- rv :: rvs
 
-    member public self.RemoveRandomVariable rv =
+    member public self.RemoveVariable rv =
         rvs <- rvs |> List.partition (fun rv' -> rv' <> rv) |> fst
 
     member public self.LearnStructure observations =
@@ -46,7 +46,7 @@ type public BayesianNetwork() =
     member public self.LearnDistributions (observations:IObservationSet) = 
         
         // For each random variable, learn its conditional distributions.
-        for dv in self.RandomVariables do
+        for dv in self.Variables do
             let ivs = dv.Dependencies
 
             // HACK: The current learning algorithm is not friendly to
