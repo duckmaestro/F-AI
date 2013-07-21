@@ -14,7 +14,7 @@
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
-module DataLoaderTraffic
+module FAI.Loaders.TrafficLoader
 
 
 // namespaces

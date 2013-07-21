@@ -21,14 +21,13 @@ module Bayesian
 
 open System
 open FAI.Bayesian
-
-open DataLoaderTraffic
+open FAI.Loaders
 
 
 let doDemoBayesian = 
 
     // Load traffic data set.
-    let dataSetTraffic = DataLoaderTraffic.LoadFromFile "traffic.txt" :> IObservationSet
+    let dataSetTraffic = TrafficLoader.LoadFromFile "traffic.txt" :> IObservationSet
 
     // Print first sample's value for 'a5'.
     let firstSample = Option.get (dataSetTraffic.Next ())

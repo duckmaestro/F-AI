@@ -41,8 +41,6 @@
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets" Condition="(!Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')) And (Exists('$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets'))" />
   <Import Project="$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets" Condition="(!Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets')) And (!Exists('$(MSBuildExtensionsPath32)\..\Microsoft F#\v4.0\Microsoft.FSharp.Targets')) And (Exists('$(MSBuildExtensionsPath32)\FSharp\1.0\Microsoft.FSharp.Targets'))" />
   <ItemGroup>
-    <Compile Include="DataLoader-USPS9.fs" />
-    <Compile Include="DataLoader-Traffic.fs" />
     <Compile Include="Supervised.fs" />
     <Compile Include="Unsupervised.fs" />
     <Compile Include="Bayesian.fs" />
@@ -75,9 +73,16 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\F-AI.Bayesian\F-AI.Bayesian.fsproj">
       <Name>F-AI.Bayesian</Name>
       <Project>{452394ed-b330-40a4-b84a-5208b41d2eae}</Project>
+      <Private>True</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\F-AI.Loaders\F-AI.Loaders.fsproj">
+      <Name>F-AI.Loaders</Name>
+      <Project>{5d8328d8-bfc4-4a5a-a9f6-fbf6a7503467}</Project>
       <Private>True</Private>
     </ProjectReference>
     <ProjectReference Include="..\F-AI\F-AI.fsproj">

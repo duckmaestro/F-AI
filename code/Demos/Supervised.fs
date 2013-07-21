@@ -29,9 +29,7 @@ open DecisionTree
 open NoisyOr
 open PCARegression
 open FAI.Bayesian
-
-open DataLoaderUSPS9
-open DataLoaderTraffic
+open FAI.Loaders
 
 
 // records
@@ -60,8 +58,8 @@ let doDemoSupervised =
 
 
     // load usps9 data set
-    let dataSetUSPS9Training = DataLoaderUSPS9.LoadFromFile "hw3train.txt" :> seq<Sample>
-    let dataSetUSPS9Test = DataLoaderUSPS9.LoadFromFile "hw3test.txt" :> seq<Sample>
+    let dataSetUSPS9Training = LoaderUSPS9.LoadFromFile "hw3train.txt" :> seq<Sample>
+    let dataSetUSPS9Test = LoaderUSPS9.LoadFromFile "hw3test.txt" :> seq<Sample>
 
     let reduceVectorToBinary v threshold =
         let asSeq = v :> seq<float>

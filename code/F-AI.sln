@@ -9,6 +9,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tests", "Tests\Tests.fsproj
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "F-AI.Bayesian", "F-AI.Bayesian\F-AI.Bayesian.fsproj", "{452394ED-B330-40A4-B84A-5208B41D2EAE}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "F-AI.Loaders", "F-AI.Loaders\F-AI.Loaders.fsproj", "{5D8328D8-BFC4-4A5A-A9F6-FBF6A7503467}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{452394ED-B330-40A4-B84A-5208B41D2EAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{452394ED-B330-40A4-B84A-5208B41D2EAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{452394ED-B330-40A4-B84A-5208B41D2EAE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D8328D8-BFC4-4A5A-A9F6-FBF6A7503467}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D8328D8-BFC4-4A5A-A9F6-FBF6A7503467}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D8328D8-BFC4-4A5A-A9F6-FBF6A7503467}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D8328D8-BFC4-4A5A-A9F6-FBF6A7503467}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
