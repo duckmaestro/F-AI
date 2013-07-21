@@ -124,5 +124,5 @@ type public Observation(?variableValues) =
     ///
     /// Returns the list of variable names in this observation
     ///
-    member self.VariableNames with
-        get() : VariableName seq = self._variableValues |> Seq.map (fun kvp -> kvp.Key)
+    member self.VariableNames 
+        with get() : VariableName seq = self._variableValues |> Seq.map (fun kvp -> kvp.Key)
