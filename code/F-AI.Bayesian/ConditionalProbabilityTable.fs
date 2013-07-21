@@ -63,3 +63,10 @@ type ConditionalProbabilityTable() =
 
         // Done.
         ()
+
+    ///
+    /// Returns a sequence over the distributions in this table.
+    ///
+    member public   self.EnumerateDistributions () =
+        table
+        |> Map.toSeq
