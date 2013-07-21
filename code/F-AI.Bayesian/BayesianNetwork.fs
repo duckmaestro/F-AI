@@ -21,28 +21,73 @@ open LearnStructure
 open LearnDistributions
 open System.Collections.Generic
 
+type GenerateStructureMode = | Sequential | Random | PairwiseSingle
 
 ///
 /// A Bayesian network.
 ///
 type public BayesianNetwork() =
+
+    // The variables in this network.
     let mutable rvs = List.empty
 
+    ///
+    /// The list of variables in this network.
+    ///
     member public self.Variables
         with get() = rvs
 
+    ///
+    /// Adds a variable to this network.
+    ///
     member public self.AddVariable (rv:RandomVariable) =
         if rvs |> List.exists (fun rv' -> rv' = rv) then
             ()
         else
             rvs <- rv :: rvs
-
+    
+    ///
+    /// Removes a variable from the network.
+    ///
     member public self.RemoveVariable rv =
         rvs <- rvs |> List.partition (fun rv' -> rv' <> rv) |> fst
 
+    ///
+    /// Generates an arbitrary structure over the
+    /// variables currently in this network.
+    ///
+    member public self.GenerateStructure mode =
+        let generatePairwiseSingle =
+            for variablePair in 
+                self.Variables 
+                |> Seq.sortBy (fun v -> v.Name)
+                |> Seq.pairwise 
+                |> Seq.mapi (fun i v -> i,v)
+                |> Seq.filter (fun i_v -> fst i_v % 2 = 0)
+                |> Seq.map (fun i_v -> snd i_v) 
+                do
+                    let v1 = fst variablePair
+                    let v2 = snd variablePair
+                    v2.AddDependency v1
+
+        match mode with
+            | Sequential        ->  failwith "Not implemented yet."
+            | Random            ->  failwith "Not implemented yet."
+            | PairwiseSingle    ->  generatePairwiseSingle
+
+    ///
+    /// Learns a structure for the variables in this
+    /// network based on the given training set of
+    /// observations.
+    ///
     member public self.LearnStructure observations =
         failwith "Not implemented yet."
 
+    ///
+    /// Learns conditional distributions for the variables
+    /// in this network based on the currently configured
+    /// network structure.
+    ///
     member public self.LearnDistributions (observations:IObservationSet) = 
         
         // For each random variable, learn its conditional distributions.

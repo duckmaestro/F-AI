@@ -47,25 +47,7 @@ let doDemoBayesian =
         bn.AddVariable rv
     ()
 
-    // Connections (arbitrary test).
-    for variablePair in 
-        bn.Variables 
-        |> Seq.skip 1
-        |> Seq.sortBy (fun v -> v.Name)
-        |> Seq.pairwise 
-        |> Seq.mapi (fun i v -> i,v)
-        |> Seq.filter (fun i_v -> fst i_v % 2 = 0)
-        |> Seq.map (fun i_v -> snd i_v) 
-        do
-        
-        //let v0 = bn.Variables |> Seq.head
-        let v1 = fst variablePair
-        let v2 = snd variablePair
-        
-        //v2.AddDependency v0
-        v2.AddDependency v1
-        
-
+    bn.GenerateStructure PairwiseSingle
 
 
     // Learn CPTs.
