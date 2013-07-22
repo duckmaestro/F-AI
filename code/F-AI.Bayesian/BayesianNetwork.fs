@@ -68,7 +68,7 @@ type public BayesianNetwork() =
                 do
                     let v1 = fst variablePair
                     let v2 = snd variablePair
-                    v2.AddDependency v1
+                    v2.AddParent v1
 
         match mode with
             | Sequential        ->  failwith "Not implemented yet."
@@ -92,7 +92,7 @@ type public BayesianNetwork() =
         
         // For each random variable, learn its conditional distributions.
         for dv in self.Variables do
-            let ivs = dv.Dependencies
+            let ivs = dv.Parents
 
             // HACK: The current learning algorithm is not friendly to
             //       observation set streaming, and the observation

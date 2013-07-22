@@ -25,7 +25,7 @@ open System.Collections.Generic
 /// Describes a space of permitted values.
 ///
 type RandomVariableSpace = 
-    | Continuous of Real * Real     // The min, max bounds on the region.
+    | Continuous of Real * Real     // The min and max bounds on the region.
     | Discrete of array<Real>       // A list of valid values.
 
 
@@ -40,26 +40,85 @@ type public RandomVariable(name', space', distribution') =
     let mutable distribution = distribution'
     let mutable name = name'
     let mutable space = space'
-    let dependencies = new HashSet<RandomVariable>()
+    
+    let parents = new HashSet<RandomVariable>()
+    let children = new HashSet<RandomVariable>()
 
+    ///
+    /// The name of this variable, e.g. Earthquake.
+    ///
     member public self.Name 
         with get() : String = name
 
+    ///
+    /// The space of possible values for this variable.
+    ///
     member public self.Space 
         with get() : RandomVariableSpace = space
 
+    ///
+    /// The probability distribution associated with this
+    /// variable.
+    ///
     member public self.Distribution 
         with get() : Distribution   =   distribution
         and set(value)              =   distribution <- value
 
-    member public self.AddDependency rv = 
-        dependencies.Add rv |> ignore
+    ///
+    /// Links two variables together, using the given
+    /// variable as a parent.
+    ///
+    member public self.AddParent rv = 
+        self.AddParent' rv
+        rv.AddChild' self
 
-    member public self.RemoveDependency rv =
-        dependencies.Remove rv |> ignore
+    member private self.AddParent' (rv:RandomVariable) =
+        parents.Add rv |> ignore
 
-    member public self.Dependencies
-        with get() = dependencies :> seq<_>
+    ///
+    /// Separates two variables, breaking the connection
+    /// to the given parent.
+    ///
+    member public self.RemoveParent rv =
+        self.RemoveParent' rv
+        rv.RemoveChild' self
+
+    member private self.RemoveParent' (rv:RandomVariable) =
+        parents.Remove rv |> ignore
+
+    ///
+    /// The parent variables to this variable.
+    ///
+    member public self.Parents
+        with get() = parents :> seq<_>
+
+    ///
+    /// Links two variables together, using the given
+    /// variable as a child.
+    ///
+    member public self.AddChild rv =
+        self.AddChild' rv
+        rv.AddParent' self
+
+    member private self.AddChild' rv =
+        children.Add rv |> ignore
+
+    ///
+    /// Separates two variables, breaking the connection
+    /// to the given child.
+    ///
+    member public self.RemoveChild rv =
+        self.RemoveChild' rv
+        rv.RemoveParent' self
+
+    member private self.RemoveChild' rv =
+        children.Remove rv |> ignore
+
+    ///
+    /// The child variables to this variable.
+    ///
+    member public self.Children
+        with get() = children :> seq<_>
     
         
 
