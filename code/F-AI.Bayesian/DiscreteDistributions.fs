@@ -32,7 +32,7 @@ type DiscreteDistribution() =
     ///
     /// Assign a probability mass to a particular value.
     ///
-    member public self.SetMass value mass =
+    member public self.SetMass value (mass:Real) =
         if Real.IsNaN value then 
             invalidArg "value" "Value must not be missing." 
         else 
@@ -49,3 +49,10 @@ type DiscreteDistribution() =
     ///
     member public self.RemoveMass value =
         masses <- masses |> Map.remove value
+
+    ///
+    /// Retrieves known masses.
+    ///
+    member public self.Masses 
+        with get() = 
+            masses :> IEnumerable<_>

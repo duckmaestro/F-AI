@@ -90,7 +90,7 @@ type public RandomVariable(name', space', distribution') =
     /// The parent variables to this variable.
     ///
     member public self.Parents
-        with get() = parents :> seq<_>
+        with get() = parents :> IEnumerable<_>
 
     ///
     /// Links two variables together, using the given
@@ -118,7 +118,8 @@ type public RandomVariable(name', space', distribution') =
     /// The child variables to this variable.
     ///
     member public self.Children
-        with get() = children :> seq<_>
+        with get() = children :> IEnumerable<_>
     
         
 
+    

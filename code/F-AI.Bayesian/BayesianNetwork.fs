@@ -35,7 +35,7 @@ type public BayesianNetwork() =
     /// The list of variables in this network.
     ///
     member public self.Variables
-        with get() = rvs
+        with get() = rvs :> IEnumerable<_>
 
     ///
     /// Adds a variable to this network.
@@ -116,3 +116,4 @@ type public BayesianNetwork() =
 
             // Associate CPT with this variable.
             dv.Distribution <- ConditionalDiscrete cpt
+        ()
