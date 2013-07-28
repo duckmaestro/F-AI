@@ -40,6 +40,7 @@ type public RandomVariable(name', space', distribution') =
     let mutable distribution = distribution'
     let mutable name = name'
     let mutable space = space'
+    let mutable userData = null;
     
     let parents = new HashSet<RandomVariable>()
     let children = new HashSet<RandomVariable>()
@@ -120,6 +121,10 @@ type public RandomVariable(name', space', distribution') =
     member public self.Children
         with get() = children :> IEnumerable<_>
     
-        
-
+    ///
+    /// An arbitrary object reference, kept but ignored.
+    ///
+    member public self.UserData
+        with get()      =   userData
+        and set(value)  =   userData <- value
     
