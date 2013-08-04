@@ -37,7 +37,9 @@ let doDemoBayesian =
     let variableNames = firstSample.VariableNames
 
     // Set state space.
-    let stateSpace = RandomVariableSpace.Discrete [| 0. .. 3. |]
+    let stateSpace = 
+        Space.Discrete 
+            (Map.ofList [ 0.,"none" ; 1.,"light" ; 2.,"medium" ; 3.,"heavy" ])
 
     // Build a Bayesian network.
     let bn = new BayesianNetwork ()
