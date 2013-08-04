@@ -22,15 +22,6 @@ open System.Collections.Generic
 
 
 ///
-/// Describes a space of permitted values.
-///
-type RandomVariableSpace = 
-    | Continuous of Real * Real     // The min and max bounds on the region.
-    | Discrete of array<Real>       // A list of valid values.
-
-
-
-///
 /// A random variable.
 /// Contains a mutable dependency list 
 /// and mutable distribution.
@@ -55,7 +46,7 @@ type public RandomVariable(name', space', distribution') =
     /// The space of possible values for this variable.
     ///
     member public self.Space 
-        with get() : RandomVariableSpace = space
+        with get() : Space = space
 
     ///
     /// The probability distribution associated with this

@@ -39,9 +39,7 @@ let public learnConditionalDistributions
         match variableList with
         | [ ]       ->  [ ]
         | v :: vs   ->  // Promote each value to a singleton list.
-                        let v1_perms =  match v.Space with 
-                                        | Discrete xs   ->  xs |> Seq.map (fun x -> [x]) |> List.ofSeq 
-                                        | _             ->  failwith "Continous variables not supported."
+                        let v1_perms =  v.Space.Values |> Seq.map (fun x -> [x]) |> List.ofSeq 
                         
                         // Recurse.
                         let vs_perms =  enumeratePermutations' (variableList |> List.tail) 
@@ -75,10 +73,7 @@ let public learnConditionalDistributions
     // Initializes a new occurrence counter. For each possible value
     // of the random variable, initializes a 0 count.
     let emptyOccurrenceCounter (rv:RandomVariable) =
-        let permutations = 
-            match rv.Space with 
-            | Discrete vals ->  vals 
-            | _             ->  failwith "Variable must be discrete-valued."
+        let permutations = rv.Space.Values
 
         let occurrenceCounter =
             permutations
