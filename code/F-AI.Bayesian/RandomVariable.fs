@@ -31,7 +31,8 @@ type public RandomVariable(name', space', distribution') =
     let mutable distribution = distribution'
     let mutable name = name'
     let mutable space = space'
-    let mutable userData = null;
+    let mutable prior = None
+    let mutable userData = null
     
     let parents = new HashSet<RandomVariable>()
     let children = new HashSet<RandomVariable>()
@@ -57,12 +58,25 @@ type public RandomVariable(name', space', distribution') =
         and set(value)              =   distribution <- value
 
     ///
+    /// The Dirichlet prior parameters.
+    ///
+    member public self.Prior
+        with get() : option<DirichletDistribution>  =   prior
+        and set(value)                              =   prior <- value
+
+    ///
     /// Links two variables together, using the given
     /// variable as a parent.
     ///
     member public self.AddParent rv = 
-        self.AddParent' rv
-        rv.AddChild' self
+        if self.Parents |> Seq.exists (fun p -> p = rv) then
+            ()
+        else if self = rv then
+            invalidArg "rv" "Cannot a variable as a parent to itself."
+        else
+            self.AddParent' rv
+            rv.AddChild' self
+            ()
 
     member private self.AddParent' (rv:RandomVariable) =
         parents.Add rv |> ignore
@@ -89,8 +103,14 @@ type public RandomVariable(name', space', distribution') =
     /// variable as a child.
     ///
     member public self.AddChild rv =
-        self.AddChild' rv
-        rv.AddParent' self
+        if self.Children |> Seq.exists (fun c -> c = rv) then
+            ()
+        else if self = rv then
+            invalidArg "rv" "Cannot a variable as a child to itself."
+        else
+            self.AddChild' rv
+            rv.AddParent' self
+            ()
 
     member private self.AddChild' rv =
         children.Add rv |> ignore

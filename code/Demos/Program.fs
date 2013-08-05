@@ -51,6 +51,9 @@ if performBayesianNetworkTests then
 // Done. 
 // 
 
-// wait for input.
+// Notify user.
+Console.WriteLine("Finished demo(s). Press enter to quit.");
+
+// Wait for input.
 let mutable key = Console.ReadLine()
 

@@ -43,13 +43,16 @@ let doDemoBayesian =
 
     // Build a Bayesian network.
     let bn = new BayesianNetwork ()
+    let prior = new DirichletDistribution (Map.ofList [ 0.,1. ; 1.,1. ; 2.,1. ; 3.,1. ])
     for variableName in variableNames do
         let dist = Distribution.ConditionalDiscrete (new ConditionalProbabilityTable ())
         let rv = new RandomVariable (variableName, stateSpace, dist)
+
+        rv.Prior <- Some prior
         bn.AddVariable rv
     ()
 
-    bn.GenerateStructure PairwiseSingle
+    bn.GenerateStructure Random
 
 
     // Learn CPTs.

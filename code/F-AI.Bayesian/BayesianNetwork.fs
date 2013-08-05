@@ -53,14 +53,19 @@ type public BayesianNetwork() =
         rvs <- rvs |> List.partition (fun rv' -> rv' <> rv) |> fst
 
     ///
-    /// Generates an arbitrary structure over the
-    /// variables currently in this network.
+    /// Generates an arbitrary DAG structure over the variables currently in 
+    /// this network. Useful for testing.
     ///
-    member public self.GenerateStructure mode =
-        let generatePairwiseSingle =
+    member public self.GenerateStructure (mode, ?seed, ?parentLimit) =
+        let seed = defaultArg seed 0
+        let parentLimit = defaultArg parentLimit 3
+        let random = new System.Random(seed)
+       
+        let generatePairwiseSingle () =
+            // Randomize the rv order, then form disjoint parent-child pairs.
             for variablePair in 
                 self.Variables 
-                |> Seq.sortBy (fun v -> v.Name)
+                |> Seq.sortBy (fun _ -> random.Next())
                 |> Seq.pairwise 
                 |> Seq.mapi (fun i v -> i,v)
                 |> Seq.filter (fun i_v -> fst i_v % 2 = 0)
@@ -70,10 +75,24 @@ type public BayesianNetwork() =
                     let v2 = snd variablePair
                     v2.AddParent v1
 
+        let generateRandom () =
+            // Randomize the rv order, then for each node pick
+            // random parents from earlier in the node list.
+            let variables = 
+                self.Variables 
+                |> Seq.sortBy (fun _ -> random.Next()) 
+                |> Seq.toArray
+            for vid in [|1..variables.Length-1|] do
+                let variable = variables.[vid]
+                let numParents = random.Next (parentLimit + 1)
+                for _ in [|1..numParents|] do
+                    let pid = random.Next (0, vid)
+                    variable.AddParent variables.[pid]
+                    
         match mode with
             | Sequential        ->  failwith "Not implemented yet."
-            | Random            ->  failwith "Not implemented yet."
-            | PairwiseSingle    ->  generatePairwiseSingle
+            | Random            ->  generateRandom ()
+            | PairwiseSingle    ->  generatePairwiseSingle ()
 
     ///
     /// Learns a structure for the variables in this

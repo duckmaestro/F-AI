@@ -90,15 +90,24 @@ let public learnConditionalDistributions
 
     // Given a map of variable values to counts, forms a 
     // discrete distribution.
-    let makeDistribution (counts:Map<Real,Integer>) =
-        let total = counts |> Map.fold (fun s k v -> s + float v) 0.0
-        if total = 0.0 then None
+    let makeDistribution (counts:Map<Real,Integer>) (prior:DirichletDistribution) =
+        let totalFromData = counts |> Map.fold (fun s k v -> s + float v) 0.0
+        let totalFromPrior = prior.Parameters |> Seq.sumBy (fun kvp -> kvp.Value)
+        let total = totalFromData + totalFromPrior
+        
+        // Not enough data and no prior.
+        if total = 0.0 then 
+            None
+
+        // We have enough data and/or a prior.
         else
             let distribution = new DiscreteDistribution ()
             for kvp in counts do
                 let rvValue = kvp.Key
                 let rvValueCount = float kvp.Value
-                distribution.SetMass rvValue (rvValueCount / total)
+                let rvPrior = float (defaultArg (prior.GetParameter rvValue) 0.)
+                let mass = (rvValueCount + rvPrior) / total
+                distribution.SetMass rvValue mass
             Some distribution
 
 
@@ -147,8 +156,10 @@ let public learnConditionalDistributions
         
     // Prepare conditional distributions.
     let distributions =
+        let prior = defaultArg dv.Prior (new DirichletDistribution())
+
         dvCountsByParentConfig 
-        |> Map.map (fun key value -> makeDistribution value)
+        |> Map.map (fun parentInstance dvCounts -> makeDistribution dvCounts prior)
 
     // Done.
     distributions

@@ -46,6 +46,7 @@
     <Compile Include="InMemoryObservationSet.fs" />
     <Compile Include="DiscreteDistributions.fs" />
     <Compile Include="ConditionalProbabilityTable.fs" />
+    <Compile Include="DirichletDistribution.fs" />
     <Compile Include="Distribution.fs" />
     <Compile Include="Space.fs" />
     <Compile Include="RandomVariable.fs" />
