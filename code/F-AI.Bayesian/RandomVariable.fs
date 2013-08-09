@@ -131,6 +131,18 @@ type public RandomVariable(name', space', distribution') =
     ///
     member public self.Children
         with get() = children :> IEnumerable<_>
+
+    ///
+    /// Returns true if the provided node is a descendent of this node.
+    ///
+    member public self.HasDescendant query =
+        children.Contains(query) || children |> Seq.exists (fun c -> c.HasDescendant query)
+
+    ///
+    /// Returns true if the provided node is an ancestor of this node.
+    ///
+    member public self.HasAncestor query =
+        parents.Contains(query) || parents |> Seq.exists (fun a -> a.HasAncestor query)
     
     ///
     /// An arbitrary object reference, kept but ignored.

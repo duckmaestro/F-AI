@@ -28,6 +28,9 @@ type GenerateStructureMode = | Sequential | Random | PairwiseSingle
 ///
 type public BayesianNetwork() =
 
+    // A randomizer for sampling.
+    let randomizer = new System.Random(0)
+
     // The variables in this network.
     let mutable rvs = List.empty
 
@@ -135,4 +138,68 @@ type public BayesianNetwork() =
 
             // Associate CPT with this variable.
             dv.Distribution <- ConditionalDiscrete cpt
+        ()
+
+    ///
+    /// Returns a partial ordering of the variables in this network.
+    ///
+    member public self.GetTopologicalOrdering () = 
+    
+        // TODO: Move these list helpers elsewhere.
+        let splitListAt list element =
+            let indexOfElement = list |> List.findIndex (fun item -> item = element)
+            let split1 = list |> List.mapi (fun i e -> i,e) |> List.filter (fun (i,e) -> i < indexOfElement) |> List.map (fun (i,e) -> e)
+            let split2 = list |> List.mapi (fun i e -> i,e) |> List.filter (fun (i,e) -> i >= indexOfElement) |> List.map (fun (i,e) -> e)
+            split1,split2
+
+        let insertBefore list before value =
+            let l1,l2 = splitListAt list before
+            List.append (l1) (value::l2)
+
+        let insertAfter list after value =
+            let l1,l2 = splitListAt list after
+            let l1' = List.append l1 [ l2.Head ]
+            let l2' = match l2 with | h::rest -> rest | _ -> []
+            List.append (l1') (value::l2')
+
+        
+        // The ordering.
+        let mutable ordering = [ self.Variables |> Seq.head ]
+        
+        // Our variables.
+        let variables = self.Variables
+        
+        // Build ordering.
+        for rv in variables |> Seq.skip 1 do
+            let eldestDescendent = ordering |> List.tryFind (fun v -> rv.HasDescendant(v))
+            let youngestAncestor = ordering |> List.rev |> List.tryFind (fun v -> rv.HasAncestor(v))
+
+            match eldestDescendent, youngestAncestor with
+                | None, None        ->  do ordering <- insertAfter ordering (ordering.Head) rv
+                | Some d, Some a    ->  do ordering <- insertAfter ordering a rv
+                | None, Some a      ->  do ordering <- insertAfter ordering a rv
+                | Some d, None      ->  do ordering <- insertBefore ordering d rv
+
+        
+        #if DEBUG
+        // Check results.
+        for i in [|0..ordering.Length-1|] do
+            let rv = ordering.Item i
+            for j in [|0..i-1|] do
+                let a = ordering.Item j
+                if rv.HasDescendant a then
+                    failwith "Ordering not correct."
+            for j in [|i+1..ordering.Length-1|] do
+                let d = ordering.Item j
+                if rv.HasAncestor d then
+                    failwith "Ordering not correct."
+        #endif
+
+        ordering
+
+    ///
+    /// Samples a particle from the network using likelihood weighting.
+    ///
+    member public self.Sample (evidence:Observation) = 
+        failwith "Not implemented yet."
         ()
