@@ -26,11 +26,11 @@ open System.Collections.Generic
 /// Contains a mutable dependency list 
 /// and mutable distribution.
 ///
-type public RandomVariable(name', space', distribution') =
+type public RandomVariable(name, space, ?distributions) =
     
-    let mutable distribution = distribution'
-    let mutable name = name'
-    let mutable space = space'
+    let mutable distributions = defaultArg distributions (new DistributionSet ())
+    let mutable name = name
+    let mutable space = space
     let mutable prior = None
     let mutable userData = null
     
@@ -51,12 +51,11 @@ type public RandomVariable(name', space', distribution') =
         with get() : Space = space
 
     ///
-    /// The probability distribution associated with this
-    /// variable.
+    /// The probability distribution(s) associated with this variable.
     ///
-    member public self.Distribution 
-        with get() : Distribution   =   distribution
-        and set(value)              =   distribution <- value
+    member public self.Distributions
+        with get() : DistributionSet    =   distributions
+        and set(value)                  =   distributions <- value
 
     ///
     /// The Dirichlet prior parameters.
@@ -66,8 +65,7 @@ type public RandomVariable(name', space', distribution') =
         and set(value)                              =   prior <- value
 
     ///
-    /// Links two variables together, using the given
-    /// variable as a parent.
+    /// Links two variables together, using the given variable as a parent.
     ///
     member public self.AddParent rv = 
         if self.Parents |> Seq.exists (fun p -> p = rv) then
@@ -84,8 +82,7 @@ type public RandomVariable(name', space', distribution') =
         eventEdgesChanged.Trigger ()
 
     ///
-    /// Separates two variables, breaking the connection
-    /// to the given parent.
+    /// Separates two variables, breaking the connection to the given parent.
     ///
     member public self.RemoveParent rv =
         self.RemoveParent' rv

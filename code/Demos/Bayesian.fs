@@ -45,7 +45,7 @@ let doDemoBayesian =
     let bn = new BayesianNetwork ()
     let prior = new DirichletDistribution (Map.ofList [ 0.,1. ; 1.,1. ; 2.,1. ; 3.,1. ])
     for variableName in variableNames do
-        let dist = Distribution.ConditionalDiscrete (new ConditionalProbabilityTable ())
+        let dist = new DistributionSet ()
         let rv = new RandomVariable (variableName, stateSpace, dist)
 
         rv.Prior <- Some prior
@@ -62,7 +62,7 @@ let doDemoBayesian =
     let ordering = bn.GetTopologicalOrdering ()
 
     // Test sampling
-    let samples = [|0..20|] |> Seq.map (fun _ -> bn.Sample ()) |> Seq.toArray
+    let samples = { 0..20 } |> Seq.map (fun _ -> bn.Sample ()) |> Seq.toArray
 
     // Done.
     ()

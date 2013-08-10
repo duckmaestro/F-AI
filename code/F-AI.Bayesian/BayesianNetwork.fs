@@ -33,7 +33,7 @@ type public BayesianNetwork() =
     let randomizer = new System.Random(0)
 
     // The variables in this network.
-    let mutable rvs = []
+    let mutable rvs = [ ]
 
     // A cache of the topological ordering.
     let mutable topologicalOrdering = Some []
@@ -135,7 +135,7 @@ type public BayesianNetwork() =
             let conditionalDistributions = learnConditionalDistributions dv ivs observations
 
             // Copy distributions into a CPT.
-            let cpt = new ConditionalProbabilityTable()
+            let cpt = new DistributionSet()
             for conditionalDistribution in conditionalDistributions do
                 let parentInstantiation = conditionalDistribution.Key
                 let distribution = conditionalDistribution.Value
@@ -147,7 +147,7 @@ type public BayesianNetwork() =
                 
 
             // Associate CPT with this variable.
-            dv.Distribution <- ConditionalDiscrete cpt
+            dv.Distributions <- cpt
         ()
 
     ///
@@ -225,10 +225,7 @@ type public BayesianNetwork() =
         for rv in ordering do
             let sampleParentsOnly = sample .&. (rv.Parents |> Seq.map (fun p -> p.Name))
 
-            let distribution =
-                match rv.Distribution with
-                    | Distribution.Discrete distribution    ->  distribution
-                    | Distribution.ConditionalDiscrete cpt  ->  cpt.TryGetConditionalDistribution sampleParentsOnly |> Option.get
+            let distribution = rv.Distributions.TryGetDistribution sampleParentsOnly |> Option.get
 
             let sampleForRV = sampleFrom distribution
             sample <- sample .+. (rv.Name, sampleForRV)

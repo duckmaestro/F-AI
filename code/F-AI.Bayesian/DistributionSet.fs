@@ -22,9 +22,11 @@ open System.Collections.Generic
 
 
 ///
-/// A table of distributions, indexed by observation.
+/// A set of distributions, indexed by observation. This is a generalization 
+/// of conditional probability tables (CPTs), though most often this type is 
+/// used in fact as a CPT.
 ///
-type ConditionalProbabilityTable() =
+type DistributionSet() =
     
     // Ensures the observation has no null variable names or missing values.
     let ensureStrictObservation (observation:Observation) =
@@ -41,7 +43,7 @@ type ConditionalProbabilityTable() =
     ///
     /// Retrives the conditional distribution for the given observation.
     ///
-    member public   self.TryGetConditionalDistribution observation =
+    member public self.TryGetDistribution observation =
 
         // Check observation.
         ensureStrictObservation observation
@@ -53,7 +55,7 @@ type ConditionalProbabilityTable() =
     ///
     /// Stores a conditional distribution for the given observation.
     ///
-    member public   self.SetConditionalDistribution observation (distribution:DiscreteDistribution) =
+    member public self.SetConditionalDistribution observation (distribution:DiscreteDistribution) =
         
         // Check observation.
         ensureStrictObservation observation
@@ -67,6 +69,6 @@ type ConditionalProbabilityTable() =
     ///
     /// Returns a sequence over the distributions in this table.
     ///
-    member public   self.EnumerateDistributions () =
+    member public self.EnumerateDistributions () =
         table
         |> Map.toSeq
