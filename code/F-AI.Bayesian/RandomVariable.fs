@@ -36,6 +36,7 @@ type public RandomVariable(name', space', distribution') =
     
     let parents = new HashSet<RandomVariable>()
     let children = new HashSet<RandomVariable>()
+    let eventEdgesChanged = new Event<_>()
 
     ///
     /// The name of this variable, e.g. Earthquake.
@@ -79,7 +80,8 @@ type public RandomVariable(name', space', distribution') =
             ()
 
     member private self.AddParent' (rv:RandomVariable) =
-        parents.Add rv |> ignore
+        ignore <| parents.Add rv
+        eventEdgesChanged.Trigger ()
 
     ///
     /// Separates two variables, breaking the connection
@@ -90,7 +92,8 @@ type public RandomVariable(name', space', distribution') =
         rv.RemoveChild' self
 
     member private self.RemoveParent' (rv:RandomVariable) =
-        parents.Remove rv |> ignore
+        ignore <| parents.Remove rv
+        eventEdgesChanged.Trigger ()
 
     ///
     /// The parent variables to this variable.
@@ -113,7 +116,8 @@ type public RandomVariable(name', space', distribution') =
             ()
 
     member private self.AddChild' rv =
-        children.Add rv |> ignore
+        ignore <| children.Add rv
+        eventEdgesChanged.Trigger ()
 
     ///
     /// Separates two variables, breaking the connection
@@ -124,7 +128,15 @@ type public RandomVariable(name', space', distribution') =
         rv.RemoveParent' self
 
     member private self.RemoveChild' rv =
-        children.Remove rv |> ignore
+        ignore <| children.Remove rv
+        eventEdgesChanged.Trigger ()
+
+    ///
+    /// Raised when an edge is added or removed, i.e. when a parent 
+    /// or child is added or removed.
+    ///
+    [<CLIEvent>]
+    member self.EdgesChanged = eventEdgesChanged.Publish
 
     ///
     /// The child variables to this variable.

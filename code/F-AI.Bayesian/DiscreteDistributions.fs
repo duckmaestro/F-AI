@@ -32,7 +32,7 @@ type DiscreteDistribution() =
     ///
     /// Assign a probability mass to a particular value.
     ///
-    member public self.SetMass value (mass:Real) =
+    member public self.SetMass (value:Real) (mass:Real) =
         if Real.IsNaN value then 
             invalidArg "value" "Value must not be missing." 
         else 

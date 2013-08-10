@@ -40,6 +40,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ListHelpers.fs" />
     <Compile Include="BasicTypes.fs" />
     <Compile Include="Observation.fs" />
     <Compile Include="IObservationSet.fs" />

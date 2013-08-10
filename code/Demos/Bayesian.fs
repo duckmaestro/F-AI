@@ -58,5 +58,11 @@ let doDemoBayesian =
     // Learn CPTs.
     bn.LearnDistributions dataSetTraffic
 
+    // Test ordering.
+    let ordering = bn.GetTopologicalOrdering ()
+
+    // Test sampling
+    let samples = [|0..20|] |> Seq.map (fun _ -> bn.Sample ()) |> Seq.toArray
+
     // Done.
     ()
