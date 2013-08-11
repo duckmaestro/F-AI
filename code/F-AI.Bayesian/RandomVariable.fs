@@ -26,6 +26,7 @@ open System.Collections.Generic
 /// Contains a mutable dependency list 
 /// and mutable distribution.
 ///
+[<System.Diagnostics.DebuggerDisplay("{Name}")>]
 type public RandomVariable(name, space, ?distributions) =
     
     let mutable distributions = defaultArg distributions (new DistributionSet ())
@@ -42,7 +43,7 @@ type public RandomVariable(name, space, ?distributions) =
     /// The name of this variable, e.g. Earthquake.
     ///
     member public self.Name 
-        with get() : String = name
+        with get() : Identifier = name
 
     ///
     /// The space of possible values for this variable.

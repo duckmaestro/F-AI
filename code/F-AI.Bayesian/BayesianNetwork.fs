@@ -204,30 +204,6 @@ type public BayesianNetwork() =
     /// Samples a particle from the network using forward sampling.
     ///
     member public self.Sample ()= 
-        let mutable sample = new Observation ()
-        let ordering = self.GetTopologicalOrdering ()
-
-        let sampleFrom (distribution:DiscreteDistribution) =
-            let point = randomizer.NextDouble ()
-            let mutable accumulation = 0.
-            let mutable event = None
-
-            for eventMass in distribution.Masses do
-                if event.IsSome then ()
-                else
-                    accumulation <- accumulation + eventMass.Value
-                    if point <= accumulation then
-                        event <- Some eventMass.Key
-
-            event.Value
-
-            
-        for rv in ordering do
-            let sampleParentsOnly = sample .&. (rv.Parents |> Seq.map (fun p -> p.Name))
-
-            let distribution = rv.Distributions.TryGetDistribution sampleParentsOnly |> Option.get
-
-            let sampleForRV = sampleFrom distribution
-            sample <- sample .+. (rv.Name, sampleForRV)
-
+        let rvs = self.GetTopologicalOrdering ()
+        let sample = ForwardSampler.getSample rvs
         sample

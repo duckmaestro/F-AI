@@ -25,10 +25,15 @@ open System.Collections.Generic
 /// A collection of observed values, indexed by variable name.
 /// Immutable, and has some operator overloads.
 ///
-[<System.Diagnostics.DebuggerDisplayAttribute("Variables: {_variableValues}")>]
-type public Observation(?variableValues) =
+[<System.Diagnostics.DebuggerDisplay("Variables: {_variableValues}")>]
+type public Observation(variableValues) =
+    
+    // Creates an empty observation.
+    new () = 
+        Observation (Map.empty)
 
-    member private self._variableValues = defaultArg variableValues Map.empty
+    // Explicit field for inter-instance access.
+    member private self._variableValues = variableValues
 
     ///
     /// Performs the union of this observation with another, 
@@ -62,7 +67,7 @@ type public Observation(?variableValues) =
     /// Removes the named variable from the observation, 
     /// returning a new observation.
     ///
-    static member (.-.) (o1:Observation, name:VariableName) =
+    static member (.-.) (o1:Observation, name:Identifier) =
         let o1' = 
             o1._variableValues
             |> Map.remove name
@@ -72,14 +77,13 @@ type public Observation(?variableValues) =
     /// Performs the intersection of this observation with the 
     /// list of provided variable names.
     /// 
-    static member (.&.) (o1:Observation, names:VariableName seq) = 
+    static member (.&.) (o1:Observation, names:Identifier seq) = 
         let mutable o1' = o1._variableValues
         for kvp in o1' do
             if (Seq.exists (fun n -> n = kvp.Key) names) = false then
                 o1' <- o1' |> Map.remove kvp.Key
         new Observation(o1')
         
-
     ///
     /// If both observations have the same keys and values, then they are equal.
     ///
@@ -105,9 +109,9 @@ type public Observation(?variableValues) =
     override o1.GetHashCode () =
         Unchecked.hash o1._variableValues
 
-    interface IEnumerable<KeyValuePair<VariableName, Real>> with
+    interface IEnumerable<KeyValuePair<Identifier, Real>> with
         member self.GetEnumerator () =
-            let vv = self._variableValues :> IEnumerable<KeyValuePair<VariableName, Real>>
+            let vv = self._variableValues :> IEnumerable<KeyValuePair<Identifier, Real>>
             vv.GetEnumerator ()
 
     interface IEnumerable with
@@ -125,4 +129,4 @@ type public Observation(?variableValues) =
     /// Returns the list of variable names in this observation
     ///
     member self.VariableNames 
-        with get() : VariableName seq = self._variableValues |> Seq.map (fun kvp -> kvp.Key)
+        with get() : Identifier seq = self._variableValues |> Seq.map (fun kvp -> kvp.Key)

@@ -15,14 +15,27 @@
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
 
-namespace FAI.Bayesian
+module FAI.Bayesian.ForwardSampler
 
+// Randomizer.
+let private randomizer = new System.Random (0)
 
-/// An identifier for a random variable.
-type Identifier = System.String
+///
+/// Generates a sample.
+///
+let getSample (variables:RandomVariable seq) = 
+    
+    // TODO: Enforce/check a topological ordering on incoming variables.
 
-/// A continous-valued number. NaN if missing.
-type Real = System.Double
+    let mutable sample = new Observation ()
+    let ordering = variables
+            
+    for rv in ordering do
+        let sampleParentsOnly = sample .&. (rv.Parents |> Seq.map (fun p -> p.Name))
 
-/// An integer.
-type Integer = System.Int32
+        let distribution = rv.Distributions.TryGetDistribution sampleParentsOnly |> Option.get
+
+        let sampleForRV = SimpleSampler.getSample distribution
+        sample <- sample .+. (rv.Name, sampleForRV)
+
+    sample

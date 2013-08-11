@@ -50,9 +50,13 @@
     <Compile Include="DistributionSet.fs" />
     <Compile Include="Space.fs" />
     <Compile Include="RandomVariable.fs" />
+    <Compile Include="SimpleSampler.fs" />
+    <Compile Include="ForwardSampler.fs" />
+    <Compile Include="GibbsSampler.fs" />
     <Compile Include="LearnStructure.fs" />
     <Compile Include="LearnDistributions.fs" />
     <Compile Include="BayesianNetwork.fs" />
+    <Compile Include="InferenceQuery.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
