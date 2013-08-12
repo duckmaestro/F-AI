@@ -8,12 +8,16 @@ Completed but not robustly tested:
  * kNN
  * Perceptron
  * Decision Tree
- * Noisy-Or
+ * Noisy-Or Classifier
+ * Bayesian Networks
+ ** CPT learning from discrete-valued, complete training data
+ ** Inference queries using Gibbs sampling
  
 In progress summer '13:
- * Bayesian networks
+ * Enhanacements to Bayesian network code.
+ ** Structure learning
 
-Desired:
+TBD:
  * k-means clustering
  * PCA
  * GMM
