@@ -42,7 +42,7 @@ let doDemoBayesian =
             (Map.ofList [ 0.,"none" ; 1.,"light" ; 2.,"medium" ; 3.,"heavy" ])
 
     // Build a Bayesian network.
-    let bn = new BayesianNetwork ()
+    let bn = new BayesianNetwork "Traffic"
     let prior = new DirichletDistribution (Map.ofList [ 0.,1. ; 1.,1. ; 2.,1. ; 3.,1. ])
     for variableName in variableNames do
         let dist = new DistributionSet ()

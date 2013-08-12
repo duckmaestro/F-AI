@@ -27,12 +27,10 @@ type GenerateStructureMode = | Sequential | Random | PairwiseSingle
 ///
 /// A Bayesian network.
 ///
-type public BayesianNetwork() =
-
-    // A randomizer for sampling.
-    let randomizer = new System.Random(0)
-
-    // The variables in this network.
+[<System.Diagnostics.DebuggerDisplay("{Name}")>]
+type public BayesianNetwork(name) =
+    
+    let mutable name = name
     let mutable rvs = [ ]
 
     // A cache of the topological ordering.
@@ -41,6 +39,12 @@ type public BayesianNetwork() =
     // Invoked when an edge change occurs.
     let onEdgesChanged = new Handler<_> (fun sender () -> do topologicalOrdering <- None)
 
+    
+    ///
+    /// The name of this network, e.g. Weather Predictor.
+    ///
+    member public self.Name 
+        with get() : Identifier = name
 
     ///
     /// The list of variables in this network.

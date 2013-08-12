@@ -24,11 +24,11 @@ open System.Collections.Generic
 ///
 type public InferenceQuery (network, evidence) =
 
-    // Memoized value of the current best estimate for marginal distributions.
+    // Memoized posteriors.
     let mutable posteriors = Map.empty
-
-    // Complete history of particles encountered for this query.
+    
     let mutable particleHistory = [ ]
+    let mutable warmupSize = 100
 
     ///
     /// The target Bayesian network for this query.
@@ -49,10 +49,22 @@ type public InferenceQuery (network, evidence) =
         with get () =   posteriors
 
     ///
-    /// The refinement count.
+    /// The size of the warmup period.
+    ///
+    member public self.WarmupSize
+        with get ()     =   warmupSize
+        and set value   =   warmupSize <- value
+
+    ///
+    /// The refinement count. Returns zero until the warmup period is past.
     ///
     member public self.RefinementCount
-        with get () =   particleHistory.Length
+        with get () =   
+            let rawHistoryLength = particleHistory.Length
+            if rawHistoryLength <= warmupSize then
+                0
+            else
+                rawHistoryLength - warmupSize
 
     ///
     /// Computes or refines results for this query.
@@ -71,10 +83,20 @@ type public InferenceQuery (network, evidence) =
             let nextParticle = GibbsSampler.getNextSample rvs particleHistory.Head self.Evidence
             particleHistory <- nextParticle :: particleHistory
 
+        // Decide how many recent particles to use.
+        let numParticlesToUse = 
+            if particleHistory.Length > warmupSize * 2 then
+                particleHistory.Length - warmupSize
+            else if particleHistory.Length > warmupSize then
+                warmupSize
+            else
+                particleHistory.Length
+            
         // Recompute marginal distributions.
         for rv in rvs do
             let valueCounts = 
                 particleHistory
+                |> Seq.truncate numParticlesToUse
                 |> Seq.map (fun p -> Option.get (p.TryValueForVariable rv.Name))
                 |> Seq.groupBy (fun value -> value)
                 |> Seq.map (fun (key,group) -> (key, group |> Seq.length |> float))
