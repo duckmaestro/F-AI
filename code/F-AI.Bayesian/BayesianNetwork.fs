@@ -31,15 +31,16 @@ type GenerateStructureMode = | Sequential | Random | PairwiseSingle
 type public BayesianNetwork(name) =
     
     let mutable name = name
-    let mutable rvs = [ ]
+    let mutable rvs : RandomVariable list = [ ]
 
     // A cache of the topological ordering.
     let mutable topologicalOrdering = Some []
 
     // Invoked when an edge change occurs.
     let onEdgesChanged = new Handler<_> (fun sender () -> do topologicalOrdering <- None)
+    let onVariableAddedRemoved = fun () -> do topologicalOrdering <- None
 
-    
+
     ///
     /// The name of this network, e.g. Weather Predictor.
     ///
@@ -47,10 +48,17 @@ type public BayesianNetwork(name) =
         with get() : Identifier = name
 
     ///
-    /// The list of variables in this network.
+    /// The list of variables in this network, in a topological order.
     ///
     member public self.Variables
-        with get() = rvs :> IEnumerable<_>
+        with get() = 
+            // Refresh topological ordering if needed.
+            if topologicalOrdering.IsNone then
+                topologicalOrdering <- Some (self.GetTopologicalOrdering ())
+
+            // Return variable list.
+            Option.get <| topologicalOrdering :> IEnumerable<RandomVariable>
+                                        
 
     ///
     /// Adds a variable to this network.
@@ -61,6 +69,9 @@ type public BayesianNetwork(name) =
         else
             rvs <- rv :: rvs
             rv.EdgesChanged.AddHandler onEdgesChanged
+
+        onVariableAddedRemoved ()
+        ()
     
     ///
     /// Removes a variable from the network.
@@ -68,6 +79,9 @@ type public BayesianNetwork(name) =
     member public self.RemoveVariable rv =
         rvs <- rvs |> List.partition (fun rv' -> rv' <> rv) |> fst
         rv.EdgesChanged.RemoveHandler onEdgesChanged
+
+        onVariableAddedRemoved ()
+        ()
 
     ///
     /// Generates an arbitrary DAG structure over the variables currently in 
@@ -154,60 +168,44 @@ type public BayesianNetwork(name) =
             dv.Distributions <- cpt
         ()
 
-    ///
-    /// Returns a partial ordering of the variables in this network.
-    ///
-    member public self.GetTopologicalOrdering () = 
+    // Retrieves the variables of this network in a topological ordering.
+    member private self.GetTopologicalOrdering () =
+       
+        // The ordering.
+        let mutable ordering = [ rvs |> Seq.head ]
+                
+        // Build ordering.
+        for rv in rvs |> Seq.skip 1 do
+            let eldestDescendent = ordering |> List.tryFind (fun v -> rv.HasDescendant v)
+            let youngestAncestor = ordering |> List.rev |> List.tryFind (fun v -> rv.HasAncestor v)
 
-        if topologicalOrdering.IsSome then
-            // Already cached.
-            topologicalOrdering.Value
+            match eldestDescendent, youngestAncestor with
+                | None, None        ->  do ordering <- insertAfter ordering (ordering.Head) rv
+                | Some d, Some a    ->  do ordering <- insertAfter ordering a rv
+                | None, Some a      ->  do ordering <- insertAfter ordering a rv
+                | Some d, None      ->  do ordering <- insertBefore ordering d rv
 
-        else
-        
-            // The ordering.
-            let mutable ordering = [ self.Variables |> Seq.head ]
-        
-            // Our variables.
-            let variables = self.Variables
-        
-            // Build ordering.
-            for rv in variables |> Seq.skip 1 do
-                let eldestDescendent = ordering |> List.tryFind (fun v -> rv.HasDescendant v)
-                let youngestAncestor = ordering |> List.rev |> List.tryFind (fun v -> rv.HasAncestor v)
+        #if DEBUG
+        // Check results.
+        for i in [|0..ordering.Length-1|] do
+            let rv = ordering.Item i
+            for j in [|0..i-1|] do
+                let a = ordering.Item j
+                if rv.HasDescendant a then
+                    failwith "Ordering not correct."
+            for j in [|i+1..ordering.Length-1|] do
+                let d = ordering.Item j
+                if rv.HasAncestor d then
+                    failwith "Ordering not correct."
+        #endif
 
-                match eldestDescendent, youngestAncestor with
-                    | None, None        ->  do ordering <- insertAfter ordering (ordering.Head) rv
-                    | Some d, Some a    ->  do ordering <- insertAfter ordering a rv
-                    | None, Some a      ->  do ordering <- insertAfter ordering a rv
-                    | Some d, None      ->  do ordering <- insertBefore ordering d rv
-
-        
-            #if DEBUG
-            // Check results.
-            for i in [|0..ordering.Length-1|] do
-                let rv = ordering.Item i
-                for j in [|0..i-1|] do
-                    let a = ordering.Item j
-                    if rv.HasDescendant a then
-                        failwith "Ordering not correct."
-                for j in [|i+1..ordering.Length-1|] do
-                    let d = ordering.Item j
-                    if rv.HasAncestor d then
-                        failwith "Ordering not correct."
-            #endif
-
-            // Cache the ordering.
-            topologicalOrdering <- Some ordering
-
-            // Done.
-            topologicalOrdering.Value
-
+        // Done.
+        ordering
 
     ///
     /// Samples a particle from the network using forward sampling.
     ///
     member public self.Sample ()= 
-        let rvs = self.GetTopologicalOrdering ()
+        let rvs = self.Variables
         let sample = ForwardSampler.getSample rvs
         sample

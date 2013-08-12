@@ -71,7 +71,7 @@ type public InferenceQuery (network, evidence) =
     ///
     member public self.RefineResults steps =
 
-        let rvs = network.GetTopologicalOrdering ()
+        let rvs = network.Variables
 
         // Init with first particle.
         if particleHistory = [ ] then

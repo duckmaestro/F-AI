@@ -59,7 +59,7 @@ let doDemoBayesian =
     bn.LearnDistributions dataSetTraffic
 
     // Test ordering.
-    let ordering = bn.GetTopologicalOrdering ()
+    let ordering = bn.Variables
 
     // Test sampling
     let samples = { 0..20 } |> Seq.map (fun _ -> bn.Sample ()) |> Seq.toArray
