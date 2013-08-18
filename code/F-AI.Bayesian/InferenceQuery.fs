@@ -93,25 +93,72 @@ type public InferenceQuery (network, evidence) =
                 particleHistory.Length
             
         // Recompute marginal distributions.
-        for rv in rvs do
-            let valueCounts = 
-                particleHistory
-                |> Seq.truncate numParticlesToUse
-                |> Seq.map (fun p -> Option.get (p.TryValueForVariable rv.Name))
-                |> Seq.groupBy (fun value -> value)
-                |> Seq.map (fun (key,group) -> (key, group |> Seq.length |> float))
-                |> Seq.toArray
+        for rv in rvs do            
+            
+            let rvValueInEvidence = evidence.TryValueForVariable rv.Name
 
-            let totalCount = float particleHistory.Length
+            let postieror = 
+                
+                // If this variable has a value from evidence.
+                if Option.isSome rvValueInEvidence then
+                    let distribution = new DiscreteDistribution()
+                    let rvValueInEvidence = Option.get <| rvValueInEvidence
+                    for valueInSpace in rv.Space.Values do
+                        if valueInSpace = rvValueInEvidence then
+                            distribution.SetMass valueInSpace 1.
+                        else
+                            distribution.SetMass valueInSpace 0.
+                    distribution
+
+                // If this variable does not have a value from evidence.
+                else
+
+                    // Grab the prior.
+                    let prior = defaultArg rv.Prior (new DirichletDistribution())
+
+                    // Prepare count query.
+                    let valueCounts = // A sequence of value,count tuples.
+                        particleHistory
+                        |> Seq.take numParticlesToUse
+                        |> Seq.map (fun p -> Option.get (p.TryValueForVariable rv.Name))
+                        |> Seq.groupBy (fun value -> value)
+                        |> Seq.map (fun (key,group) -> (key, group |> Seq.length |> float))
+                        |> Seq.cache
             
-            // Build a posterior distribution.
-            let posterior = new DiscreteDistribution()
-            for (value,count) in valueCounts do
-                let mass = count / totalCount
-                posterior.SetMass value mass
+                    // Incorporate prior distribution.
+                    let valueCounts' = 
+                        seq { 
+                            for valueInSpace in rv.Space.Values do    
+                                let countFromParticles = valueCounts |> Seq.tryFind (fun (v,k) -> v = valueInSpace)
+                                let countFromPrior = defaultArg (prior.GetParameter (valueInSpace)) 0.
+                        
+                                let adjustedCount = 
+                                    match countFromParticles with
+                                        | None          ->  countFromPrior
+                                        | Some parVC    ->  snd parVC + countFromPrior
+
+                                yield valueInSpace,adjustedCount
+                        }
+                        |> Seq.toArray
+
+                    // Adjusted value count.
+                    let totalCount = 
+                        (float numParticlesToUse)
+                        + (prior.Parameters |> Seq.sumBy (fun kvp -> kvp.Value))
             
-            // Store distribution.
-            posteriors <- posteriors |> Map.add rv.Name posterior
+                    // Build a posterior distribution from particle value counts.
+                    let posterior = new DiscreteDistribution()
+                    for (value,count) in valueCounts' do
+                        let mass = count / totalCount
+                        posterior.SetMass value mass
+
+                    assert ((posterior.Masses |> Seq.length) = (rv.Space.Values |> Seq.length))
+            
+                    posterior
+
+
+            // Store postieror for this variable
+            posteriors <- posteriors |> Map.add rv.Name postieror
 
         // Done.
         ()
