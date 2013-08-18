@@ -29,6 +29,8 @@ type public InferenceQuery (network, evidence) =
     
     let mutable particleHistory = [ ]
     let mutable warmupSize = 100
+    let mutable particleSeparation = 1
+
 
     ///
     /// The target Bayesian network for this query.
@@ -56,6 +58,14 @@ type public InferenceQuery (network, evidence) =
         and set value   =   warmupSize <- value
 
     ///
+    /// The minimumum distance in sequence between samples for samples
+    /// that will be retained and used.
+    ///
+    member public self.ParticleSeparation
+        with get ()     =   particleSeparation
+        and set value   =   particleSeparation <- value
+
+    ///
     /// The refinement count. Returns zero until the warmup period is past.
     ///
     member public self.RefinementCount
@@ -71,6 +81,13 @@ type public InferenceQuery (network, evidence) =
     ///
     member public self.RefineResults steps =
 
+        // Ensure we generate enough samples for at least one period of sample
+        // separation, ending on a retained sample.
+        let separationPeriod = particleSeparation + 1
+        let steps = 
+            if steps <= separationPeriod then separationPeriod
+            else steps
+        
         let rvs = network.Variables
 
         // Init with first particle.
@@ -79,9 +96,17 @@ type public InferenceQuery (network, evidence) =
             particleHistory <- [ firstParticle ]
 
         // Generate new particles.
-        for _ in { 1..steps } do
-            let nextParticle = GibbsSampler.getNextSample rvs particleHistory.Head self.Evidence
-            particleHistory <- nextParticle :: particleHistory
+        let mutable previousParticle = particleHistory.Head
+        for step in { 1..steps } do
+            let nextParticle =
+                GibbsSampler.getNextSample rvs previousParticle self.Evidence
+
+            if step % separationPeriod = 0 then            
+                particleHistory <- nextParticle :: particleHistory
+            else
+                ()
+
+            previousParticle <- nextParticle
 
         // Decide how many recent particles to use.
         let numParticlesToUse = 
