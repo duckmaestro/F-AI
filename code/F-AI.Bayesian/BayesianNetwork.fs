@@ -58,7 +58,6 @@ type public BayesianNetwork(name) =
 
             // Return variable list.
             Option.get <| topologicalOrdering :> IEnumerable<RandomVariable>
-                                        
 
     ///
     /// Adds a variable to this network.
@@ -107,8 +106,8 @@ type public BayesianNetwork(name) =
                     v2.AddParent v1
 
         let generateRandom () =
-            // Randomize the rv order, then for each node pick
-            // random parents from earlier in the node list.
+            // Randomize the rv order, then for each node pick random parents 
+            // from earlier in the node list.
             let variables = 
                 self.Variables 
                 |> Seq.sortBy (fun _ -> random.Next()) 
@@ -126,46 +125,18 @@ type public BayesianNetwork(name) =
             | PairwiseSingle    ->  generatePairwiseSingle ()
 
     ///
-    /// Learns a structure for the variables in this
-    /// network based on the given training set of
-    /// observations.
+    /// Learns a structure for the variables in this network based on the 
+    /// given training set of observations.
     ///
     member public self.LearnStructure observations =
         failwith "Not implemented yet."
 
     ///
-    /// Learns conditional distributions for the variables
-    /// in this network based on the currently configured
-    /// network structure.
+    /// Learns conditional distributions for the variables in this network 
+    /// based on the currently configured network structure.
     ///
     member public self.LearnDistributions (observations:IObservationSet) = 
-        
-        // For each random variable, learn its conditional distributions.
-        for dv in self.Variables do
-            let ivs = dv.Parents
-
-            // HACK: The current learning algorithm is not friendly to
-            //       observation set streaming, and the observation
-            //       set position must be reset before each variable.
-            observations.Reset ()
-
-            // Learn conditional distributions for this variable.
-            let conditionalDistributions = learnConditionalDistributions dv ivs observations
-
-            // Copy distributions into a CPT.
-            let cpt = new DistributionSet()
-            for conditionalDistribution in conditionalDistributions do
-                let parentInstantiation = conditionalDistribution.Key
-                let distribution = conditionalDistribution.Value
-
-                match distribution with
-                    | Some d    ->  cpt.SetConditionalDistribution parentInstantiation d
-                    | _         ->  failwith "A neccessary distribution was not learned." 
-                                    (* TODO: Decide how to fill in missing distributions. *) 
-                
-
-            // Associate CPT with this variable.
-            dv.Distributions <- cpt
+        LearnDistributions.learnDistributions self.Variables observations
         ()
 
     // Retrieves the variables of this network in a topological ordering.
@@ -180,10 +151,18 @@ type public BayesianNetwork(name) =
             let youngestAncestor = ordering |> List.rev |> List.tryFind (fun v -> rv.HasAncestor v)
 
             match eldestDescendent, youngestAncestor with
-                | None, None        ->  do ordering <- insertAfter ordering (ordering.Head) rv
-                | Some d, Some a    ->  do ordering <- insertAfter ordering a rv
-                | None, Some a      ->  do ordering <- insertAfter ordering a rv
-                | Some d, None      ->  do ordering <- insertBefore ordering d rv
+                | None, None        ->  do 
+                    ordering <- insertAfter ordering (ordering.Head) rv
+
+                | Some d, Some a    ->  do 
+                    ordering <- insertAfter ordering a rv
+
+                | None, Some a      ->  do 
+                    ordering <- insertAfter ordering a rv
+
+                | Some d, None      ->  do 
+                    ordering <- insertBefore ordering d rv
+
 
         #if DEBUG
         // Check results.

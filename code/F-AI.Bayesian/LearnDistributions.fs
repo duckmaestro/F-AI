@@ -15,16 +15,16 @@
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
 
-module LearnDistributions
+module FAI.Bayesian.LearnDistributions
 
 open System.Collections.Generic
 open FAI.Bayesian
 
 ///
-/// Learns a set of conditional distributions.
+/// Learns a conditional distributions for a dependent variable.
 /// Assumes no missing information.
 /// 
-let public learnConditionalDistributions 
+let public learnConditionalDistribution 
             (dependentVariable:RandomVariable) 
             (independentVariables:RandomVariable seq)
             (observationSet:IObservationSet) =
@@ -163,3 +163,40 @@ let public learnConditionalDistributions
 
     // Done.
     distributions
+
+
+///
+/// Learns the distributions for the given variables, according to the given
+/// observation set and the variables' structural parents.
+/// Mutates the distribution on each variable.
+/// 
+let public learnDistributions 
+            (variables:seq<RandomVariable>) 
+            (observations:IObservationSet) = 
+
+    // For each random variable, learn its conditional distributions.
+    for dv in variables do
+        let ivs = dv.Parents
+
+        // HACK: The current learning algorithm is not friendly to
+        //       observation set streaming, and the observation
+        //       set position must be reset before each variable.
+        observations.Reset ()
+
+        // Learn conditional distributions for this variable.
+        let conditionalDistribution = learnConditionalDistribution dv ivs observations
+
+        // Copy distributions into a CPT.
+        let cpt = new DistributionSet()
+        for distribution in conditionalDistribution do
+            let parentInstantiation = distribution.Key
+            let distribution = distribution.Value
+
+            match distribution with
+                | Some d    ->  cpt.SetConditionalDistribution parentInstantiation d
+                | _         ->  failwith "A neccessary distribution was not learned."                 
+
+        // Associate CPT with this variable.
+        dv.Distributions <- cpt
+
+    ()
