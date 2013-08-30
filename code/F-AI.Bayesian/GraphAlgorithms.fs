@@ -17,15 +17,15 @@
 
 module FAI.Bayesian.GraphAlgorithms
 
-type Vertex = { VertexId : string }
-type Weight = float
-type Edge = { Vertex1 : Vertex ; Vertex2 : Vertex ; Weight : Weight }
+type Vertex = string
+type Edge = { Vertex1:string; Vertex2:string; Weight:float; }
 
 
 ///
 /// Finds the maximum weight spanning tree for an undirected graph.
 ///
 let findMaximumWeightSpanningTree nodes edges = 
+    let edges = edges |> Set.toSeq
     let mutable markedNodes = Set.singleton <| (nodes |> Set.toSeq |> Seq.head)
     let mutable unmarkedNodes = nodes - markedNodes
     let mutable treeEdges = Set.empty
@@ -55,4 +55,4 @@ let findMaximumWeightSpanningTree nodes edges =
         
         treeEdges <- treeEdges |> Set.add bestEdge
         
-    edges
+    treeEdges

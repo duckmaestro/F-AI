@@ -52,7 +52,8 @@ let doDemoBayesian =
         bn.AddVariable rv
     ()
 
-    bn.GenerateStructure Random
+    //bn.GenerateStructure Random
+    bn.LearnStructure dataSetTraffic
 
 
     // Learn CPTs.

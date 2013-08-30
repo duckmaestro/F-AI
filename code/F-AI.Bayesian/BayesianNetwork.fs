@@ -129,7 +129,9 @@ type public BayesianNetwork(name) =
     /// given training set of observations.
     ///
     member public self.LearnStructure observations =
-        failwith "Not implemented yet."
+        // For now, only tree structure is supported.
+        LearnStructure.learnTreeStructure self.Variables observations
+        ()
 
     ///
     /// Learns conditional distributions for the variables in this network 
