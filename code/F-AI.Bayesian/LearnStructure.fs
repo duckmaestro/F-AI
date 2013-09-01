@@ -34,25 +34,15 @@ let computeLogLikelihoodFromData
         (variables:seq<RandomVariable>)
         (observations:IObservationSet) =
     
-    // A helper to iterate over observations.
-    let observationSetIterator (observationSet:IObservationSet) = seq { 
-        let continuu = ref true
-        while ! continuu do
-            let obs = observationSet.Next ()
-            if obs.IsSome then yield Option.get <| obs
-            else continuu := false
-    }
-    
     // A helper to select variable names.
     let getName (rv:RandomVariable) = rv.Name
     let getParentNames (rv:RandomVariable) = rv.Parents |> Seq.map getName
 
     // Begin.
-    observations.Reset ()
     let mutable logLikelihoodTotal = 0.
     
     // Compute the log likelihood of each observation.    
-    for obs in observationSetIterator observations do
+    for obs in observations do
 
         let mutable logLikelihoodObservation = 0.
 
@@ -148,7 +138,6 @@ let learnTreeStructure (rvs:seq<RandomVariable>) (observations:IObservationSet) 
         |> Seq.map (fun rv -> 
             rv, 
             (
-                observations.Reset ();
                 LearnDistributions.learnConditionalDistribution rv rv.Parents observations |> distributionMapToSet)
             )
         |> Seq.cache

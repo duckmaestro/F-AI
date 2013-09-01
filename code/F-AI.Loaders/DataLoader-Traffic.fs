@@ -52,9 +52,11 @@ let private ParseSample (variableNames:seq<String>) (row:String) =
 
 // functions
 
-let LoadFromFile filename =
+let LoadFromFile filePath =
     
-    let fileAsString:String = File.ReadAllText filename
+    let fileName = System.IO.Path.GetFileName filePath
+
+    let fileAsString:String = File.ReadAllText filePath
     let rows = 
         fileAsString.Split '\n'
         |> Seq.map (fun r -> r.Trim ())
@@ -75,7 +77,7 @@ let LoadFromFile filename =
         |> Seq.map (fun r -> ParseSample header r)
         |> Seq.toArray
 
-    new InMemoryObservationSet(samples)
+    new InMemoryObservationSet (samples, fileName, filePath)
     
 
 

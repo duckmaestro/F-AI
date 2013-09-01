@@ -17,18 +17,22 @@
 
 namespace FAI.Bayesian
 
+open System.Collections.Generic
+
 ///
 /// Exposes access to a set of observations.
 ///
+[<Interface>]
 type public IObservationSet = 
+    inherit IEnumerable<Observation> 
 
     // The size of the set, if known.
     abstract Size : Option<Integer> with get
 
-    // Read the next observation and advance the internal position.
-    abstract Next : unit -> Option<Observation>
+    // The name of the set, if known.
+    abstract Name : string with get
 
-    // Reset the internal position.
-    abstract Reset : unit -> unit
+    // The source uri of the set, if known.
+    abstract SourceUri : string with get
 
 

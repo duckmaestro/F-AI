@@ -17,26 +17,31 @@
 
 namespace FAI.Bayesian
 
+open System.Collections
 open System.Collections.Generic
 
 
 ///
 /// A simple, in-memory observation set.
 /// 
-type public InMemoryObservationSet(observations') =
-    let mutable position = 0
+type public InMemoryObservationSet 
+    (   observations:seq<Observation>,
+        name,
+        sourceUri
+    ) =
 
-    let observations = observations' |> Seq.toArray
+    let observations = observations |> Seq.toArray
 
     interface IObservationSet with
         member self.Size with get() = Some observations.Length
+        member self.Name with get() = name
+        member self.SourceUri with get() = sourceUri
+    
+    interface IEnumerable<Observation> with
+        member self.GetEnumerator () =
+            observations |> Seq.cast |> (fun s -> s.GetEnumerator())
 
-        member self.Next () =     
-            let value = 
-                if position >= observations.Length then None
-                else Some observations.[position]
-            if Option.isSome value then position <- position + 1
-            value
+    interface IEnumerable with 
+        member self.GetEnumerator () =
+            observations.GetEnumerator ()
 
-        member self.Reset () =
-            position <- 0

@@ -30,7 +30,7 @@ let doDemoBayesian =
     let dataSetTraffic = TrafficLoader.LoadFromFile "traffic.txt" :> IObservationSet
 
     // Print first sample's value for 'a5'.
-    let firstSample = Option.get (dataSetTraffic.Next ())
+    let firstSample = dataSetTraffic |> Seq.head
     printfn "%f" (firstSample.TryValueForVariable "a5" |> Option.get)
 
     // Grab variable names.

@@ -131,28 +131,22 @@ let public learnConditionalDistribution
             |> Map.ofSeq
 
     // Step over each observation.
-    let mutable doLoop = true
-    while doLoop do
-        let observation0 = observationSet.Next ()
-        if Option.isNone observation0 then
-            doLoop <- false
-        else
-            let observation = observation0.Value
+    for observation in observationSet do
+        
+        // Prepare observation using parent nodes only.
+        let ivsObservation = observation .&. ivsNames
 
-            // Prepare observation using parent nodes only.
-            let ivsObservation = observation .&. ivsNames
+        // Lookup counts for the parent config for this observation.
+        let dvCountsForParentConfig = 
+            dvCountsByParentConfig 
+            |> Map.find ivsObservation
 
-            // Lookup counts for the parent config for this observation.
-            let dvCountsForParentConfig = 
-                dvCountsByParentConfig 
-                |> Map.find ivsObservation
+        // Lookup observation value for dependent variable.
+        let valForDV = Option.get (observation.TryValueForVariable dv.Name)
 
-            // Lookup observation value for dependent variable.
-            let valForDV = Option.get (observation.TryValueForVariable dv.Name)
-
-            // Increase count for this observation
-            let dvCountsForParentConfig' = addOccurrence dvCountsForParentConfig valForDV
-            dvCountsByParentConfig <- dvCountsByParentConfig |> Map.add ivsObservation dvCountsForParentConfig'
+        // Increase count for this observation
+        let dvCountsForParentConfig' = addOccurrence dvCountsForParentConfig valForDV
+        dvCountsByParentConfig <- dvCountsByParentConfig |> Map.add ivsObservation dvCountsForParentConfig'
         
     // Prepare conditional distributions.
     let distributions =
@@ -181,7 +175,6 @@ let public learnDistributions
         // HACK: The current learning algorithm is not friendly to
         //       observation set streaming, and the observation
         //       set position must be reset before each variable.
-        observations.Reset ()
 
         // Learn conditional distributions for this variable.
         let conditionalDistribution = learnConditionalDistribution dv ivs observations
