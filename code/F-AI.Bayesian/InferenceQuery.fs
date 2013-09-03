@@ -31,6 +31,10 @@ type public InferenceQuery (network, evidence) =
     let mutable warmupSize = 100
     let mutable particleSeparation = 1
 
+    // Constructor
+    do
+        if evidence :> obj = null then
+            invalidArg "evidence" "Evidence must be non-null."
 
     ///
     /// The target Bayesian network for this query.
