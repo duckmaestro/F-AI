@@ -24,18 +24,19 @@ open System.Collections.Generic
 ///
 /// A simple, in-memory observation set.
 /// 
-type public InMemoryObservationSet 
-    (   observations:seq<Observation>,
-        name,
-        sourceUri
-    ) =
+type public InMemoryObservationSet (name,
+                                    variables,
+                                    observations:seq<Observation>,
+                                    ?sourceUri) =
 
     let observations = observations |> Seq.toArray
+    let sourceUri = defaultArg sourceUri ""
 
     interface IObservationSet with
         member self.Size with get() = Some observations.Length
         member self.Name with get() = name
         member self.SourceUri with get() = sourceUri
+        member self.Variables with get() = variables
     
     interface IEnumerable<Observation> with
         member self.GetEnumerator () =

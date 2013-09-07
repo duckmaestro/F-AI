@@ -43,13 +43,13 @@
     <Compile Include="ListHelpers.fs" />
     <Compile Include="GraphAlgorithms.fs" />
     <Compile Include="BasicTypes.fs" />
+    <Compile Include="Space.fs" />
     <Compile Include="Observation.fs" />
     <Compile Include="IObservationSet.fs" />
     <Compile Include="InMemoryObservationSet.fs" />
     <Compile Include="DiscreteDistributions.fs" />
     <Compile Include="DirichletDistribution.fs" />
     <Compile Include="DistributionSet.fs" />
-    <Compile Include="Space.fs" />
     <Compile Include="RandomVariable.fs" />
     <Compile Include="SimpleSampler.fs" />
     <Compile Include="ForwardSampler.fs" />

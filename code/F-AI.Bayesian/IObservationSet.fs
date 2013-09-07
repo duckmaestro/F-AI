@@ -26,13 +26,24 @@ open System.Collections.Generic
 type public IObservationSet = 
     inherit IEnumerable<Observation> 
 
-    // The size of the set, if known.
+    ///
+    /// The size of the set, if known.
+    ///
     abstract Size : Option<Integer> with get
 
-    // The name of the set, if known.
+    ///
+    /// The name of the set, if known.
+    ///
     abstract Name : string with get
 
-    // The source uri of the set, if known.
+    ///
+    /// The source uri of the set, if known.
+    ///
     abstract SourceUri : string with get
+
+    ///
+    /// The variables and their state spaces.
+    ///
+    abstract Variables : Map<Identifier, Space> with get
 
 
