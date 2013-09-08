@@ -22,8 +22,8 @@ open System.Collections.Generic
 
 
 ///
-/// A collection of observed values, indexed by variable name.
-/// Immutable, and has some operator overloads.
+/// A collection of observed values, indexed by variable name. Immutable, and 
+/// has some operator overloads.
 ///
 [<System.Diagnostics.DebuggerDisplay("Variables: {_variableValues}")>]
 type public Observation(variableValues) =
@@ -36,9 +36,14 @@ type public Observation(variableValues) =
     member private self._variableValues = variableValues
 
     ///
-    /// Performs the union of this observation with another, 
-    /// returning a new observation. Right operand
-    /// values take precedence.
+    /// Returns true if the observation is empty.
+    ///
+    member public self.IsEmpty 
+        with get() = self._variableValues.IsEmpty
+
+    ///
+    /// Performs the union of this observation with another, returning a new 
+    /// observation. Right operand values take precedence.
     ///
     static member (.|.) (o1:Observation, o2:Observation) =
         let mutable o1' = o1._variableValues
@@ -54,8 +59,8 @@ type public Observation(variableValues) =
         new Observation(o1')
 
     ///
-    /// Removes the right operand variables from the left operand,
-    /// returning a new observation.
+    /// Removes the right operand variables from the left operand, returning a 
+    /// new observation.
     ///
     static member (.-.) (o1:Observation, o2:Observation) =
         let mutable o1' = o1._variableValues
@@ -64,8 +69,8 @@ type public Observation(variableValues) =
         new Observation(o1')
 
     ///
-    /// Removes the named variable from the observation, 
-    /// returning a new observation.
+    /// Removes the named variable from the observation, returning a new 
+    /// observation.
     ///
     static member (.-.) (o1:Observation, name:Identifier) =
         let o1' = 
@@ -74,8 +79,8 @@ type public Observation(variableValues) =
         new Observation(o1')
 
     /// 
-    /// Performs the intersection of this observation with the 
-    /// list of provided variable names.
+    /// Performs the intersection of this observation with the list of provided 
+    /// variable names.
     /// 
     static member (.&.) (o1:Observation, names:Identifier seq) = 
         let mutable o1' = o1._variableValues
@@ -83,6 +88,13 @@ type public Observation(variableValues) =
             if (Seq.exists (fun n -> n = kvp.Key) names) = false then
                 o1' <- o1' |> Map.remove kvp.Key
         new Observation(o1')
+
+    ///
+    /// Performs the intersection of this observation with the provided
+    /// variable name.
+    ///
+    static member (.&.) (o1:Observation, name:Identifier) =
+        o1 .&. Seq.singleton name
         
     ///
     /// If both observations have the same keys and values, then they are equal.
@@ -109,6 +121,9 @@ type public Observation(variableValues) =
     override o1.GetHashCode () =
         Unchecked.hash o1._variableValues
 
+    ///
+    /// Support for IEnumerable.
+    ///
     interface IEnumerable<KeyValuePair<Identifier, Real>> with
         member self.GetEnumerator () =
             let vv = self._variableValues :> IEnumerable<KeyValuePair<Identifier, Real>>
@@ -124,6 +139,16 @@ type public Observation(variableValues) =
     ///
     member self.TryValueForVariable name =
         self._variableValues.TryFind name
+
+    /// 
+    /// Returns true if the observation has the given variable name and given
+    /// corresponding value.
+    ///
+    member self.HasValue name value =
+        let value' = self._variableValues.TryFind name
+        match value' with
+            | None          ->  false
+            | Some value'   ->  value' = value
 
     ///
     /// Returns the list of variable names in this observation

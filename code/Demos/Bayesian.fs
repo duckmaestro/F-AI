@@ -28,6 +28,7 @@ let doDemoBayesian =
 
     // Load traffic data set.
     let dataSetTraffic = TrafficLoader.LoadFromFile "traffic.txt" :> IObservationSet
+    let sufficientStatistics = new SufficientStatistics(dataSetTraffic)
 
     // Print first sample's value for 'a5'.
     let firstSample = dataSetTraffic |> Seq.head
@@ -49,11 +50,10 @@ let doDemoBayesian =
     ()
 
     //bn.GenerateStructure Random
-    bn.LearnStructure dataSetTraffic
-
+    bn.LearnStructure sufficientStatistics
 
     // Learn CPTs.
-    bn.LearnDistributions dataSetTraffic
+    bn.LearnDistributions sufficientStatistics
 
     // Test ordering.
     let ordering = bn.Variables

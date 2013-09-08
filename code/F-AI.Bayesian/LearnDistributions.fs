@@ -27,10 +27,10 @@ open FAI.Bayesian
 let public learnConditionalDistribution 
             (dependentVariable:RandomVariable) 
             (independentVariables:RandomVariable seq)
-            (observationSet:IObservationSet) =
+            (sufficientStatistics:SufficientStatistics) =
     
     //
-    // Support functions.
+    // Helper functions.
     //
 
     // From a list of random variables, generates each possible instantiation
@@ -69,24 +69,6 @@ let public learnConditionalDistribution
                     |> (fun x -> new Observation(x))
                 )
         namedPermutations
-        
-    // Initializes a new occurrence counter. For each possible value
-    // of the random variable, initializes a 0 count.
-    let emptyOccurrenceCounter (rv:RandomVariable) =
-        let permutations = rv.Space.Values
-
-        let occurrenceCounter =
-            permutations
-            |> Seq.map (fun p -> p, 0)
-            |> Map.ofSeq
-        occurrenceCounter
-
-    // Increases the occurrence counter's value for the
-    // given occurrence value.
-    let addOccurrence occurrenceCounter occurrenceValue =
-        let oldCount = occurrenceCounter |> Map.find occurrenceValue
-        let newCount = oldCount + 1
-        occurrenceCounter |> Map.add occurrenceValue newCount
 
     // Given a map of variable values to counts, forms a 
     // discrete distribution.
@@ -117,43 +99,32 @@ let public learnConditionalDistribution
 
     let dv = dependentVariable
     let ivs = independentVariables
-    let ivsNames = ivs |> Seq.map (fun rv -> rv.Name)
 
     // Enumerate permutations of independent variables.
     let parentConfigs = enumeratePermutations ivs
-    let mutable dvCountsByParentConfig = 
-        if (parentConfigs |> Seq.length) <> 0 then
-            parentConfigs
-            |> Seq.map (fun p -> p, emptyOccurrenceCounter dv)
-            |> Map.ofSeq
-        else
-            Seq.singleton (new Observation(), emptyOccurrenceCounter dv)
-            |> Map.ofSeq
-
-    // Step over each observation.
-    for observation in observationSet do
-        
-        // Prepare observation using parent nodes only.
-        let ivsObservation = observation .&. ivsNames
-
-        // Lookup counts for the parent config for this observation.
-        let dvCountsForParentConfig = 
-            dvCountsByParentConfig 
-            |> Map.find ivsObservation
-
-        // Lookup observation value for dependent variable.
-        let valForDV = Option.get (observation.TryValueForVariable dv.Name)
-
-        // Increase count for this observation
-        let dvCountsForParentConfig' = addOccurrence dvCountsForParentConfig valForDV
-        dvCountsByParentConfig <- dvCountsByParentConfig |> Map.add ivsObservation dvCountsForParentConfig'
         
     // Prepare conditional distributions.
     let distributions =
         let prior = defaultArg dv.Prior (new DirichletDistribution())
+        let parentConfigs = 
+            if parentConfigs |> Seq.length = 0 then
+                Seq.singleton (new Observation())
+            else
+                parentConfigs
 
-        dvCountsByParentConfig 
-        |> Map.map (fun parentInstance dvCounts -> makeDistribution dvCounts prior)
+        let countConditionalObservations (fixedCondition:Observation) =
+            dv.Space.Values
+            |> Seq.map (fun v -> v, fixedCondition .+. (dv.Name,v))
+            |> Seq.map (fun (v,q) -> v, sufficientStatistics.GetObservationCount q)
+            |> Map.ofSeq
+
+        let distributions =
+            parentConfigs
+            |> Seq.map (fun config -> config, countConditionalObservations config)
+            |> Seq.map (fun (config,count) -> config, makeDistribution count prior)
+            |> Map.ofSeq
+
+        distributions
 
     // Done.
     distributions
@@ -166,18 +137,15 @@ let public learnConditionalDistribution
 /// 
 let public learnDistributions 
             (variables:seq<RandomVariable>) 
-            (observations:IObservationSet) = 
+            (sufficientStatistics:SufficientStatistics) = 
 
     // For each random variable, learn its conditional distributions.
     for dv in variables do
         let ivs = dv.Parents
 
-        // HACK: The current learning algorithm is not friendly to
-        //       observation set streaming, and the observation
-        //       set position must be reset before each variable.
-
         // Learn conditional distributions for this variable.
-        let conditionalDistribution = learnConditionalDistribution dv ivs observations
+        let conditionalDistribution = 
+            learnConditionalDistribution dv ivs sufficientStatistics
 
         // Copy distributions into a CPT.
         let cpt = new DistributionSet()

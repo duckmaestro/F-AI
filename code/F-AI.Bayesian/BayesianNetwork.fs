@@ -128,17 +128,17 @@ type public BayesianNetwork(name) =
     /// Learns a structure for the variables in this network based on the 
     /// given training set of observations.
     ///
-    member public self.LearnStructure observations =
+    member public self.LearnStructure sufficientStatistics =
         // For now, only tree structure is supported.
-        LearnStructure.learnTreeStructure self.Variables observations
+        LearnStructure.learnTreeStructure self.Variables sufficientStatistics
         ()
 
     ///
     /// Learns conditional distributions for the variables in this network 
     /// based on the currently configured network structure.
     ///
-    member public self.LearnDistributions (observations:IObservationSet) = 
-        LearnDistributions.learnDistributions self.Variables observations
+    member public self.LearnDistributions sufficientStatistics = 
+        LearnDistributions.learnDistributions self.Variables sufficientStatistics
         ()
 
     // Retrieves the variables of this network in a topological ordering.

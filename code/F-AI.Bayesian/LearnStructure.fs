@@ -21,7 +21,7 @@ open GraphAlgorithms
 
 
 ///
-///
+/// 
 ///
 let computeMutualInformation () = ()
 
@@ -85,7 +85,8 @@ let computeFamilyScore (rv:RandomVariable) (observations:IObservationSet) =
 ///
 /// Learns a best tree structure for the random variables.
 ///
-let learnTreeStructure (rvs:seq<RandomVariable>) (observations:IObservationSet) = 
+let learnTreeStructure (rvs:seq<RandomVariable>) 
+                       (sufficientStatistics:SufficientStatistics) = 
 
     // Clear existing structure.
     for rv in rvs do
@@ -135,10 +136,14 @@ let learnTreeStructure (rvs:seq<RandomVariable>) (observations:IObservationSet) 
     // Learn mle distributions.
     let distributions =
         variableParentPermutations
-        |> Seq.map (fun rv -> 
-            rv, 
-            (
-                LearnDistributions.learnConditionalDistribution rv rv.Parents observations |> distributionMapToSet)
+        |> Seq.map (
+            fun rv ->   
+                let distributions = 
+                    LearnDistributions.learnConditionalDistribution 
+                        rv rv.Parents sufficientStatistics
+                    |> distributionMapToSet
+                
+                rv, distributions
             )
         |> Seq.cache
 
@@ -149,7 +154,8 @@ let learnTreeStructure (rvs:seq<RandomVariable>) (observations:IObservationSet) 
     // Measure family score
     let familyScores = 
         distributions
-        |> Seq.map (fun (rv,_) -> rv, computeFamilyScore rv observations)
+        |> Seq.map (fun (rv,_) -> 
+            rv, computeFamilyScore rv sufficientStatistics.ObservationSet)
         |> Seq.cache
 
     // Prepare as fully connected graph.

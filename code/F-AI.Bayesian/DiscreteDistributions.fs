@@ -17,6 +17,7 @@
 
 namespace FAI.Bayesian
 
+open System
 open System.Collections.Generic
 
 
@@ -56,3 +57,27 @@ type DiscreteDistribution() =
     member public self.Masses 
         with get() = 
             masses :> IEnumerable<_>
+
+    ///
+    /// Equality based on masses.
+    ///
+    override self.Equals other =
+        0 = (self :> IComparable).CompareTo other
+
+    ///
+    /// Hash code based on masses.
+    ///        
+    override self.GetHashCode () =
+        self.Masses
+        |> Seq.fold (fun s m -> s + m.GetHashCode()) 0
+
+    ///
+    /// Comparison based on masses.
+    ///
+    interface IComparable with
+        member self.CompareTo other = 
+            match other with
+            | :? DiscreteDistribution as other -> 
+                let otherMasses = other.Masses :?> Map<_,_>
+                (masses :> IComparable).CompareTo(otherMasses)
+            | _ -> -1

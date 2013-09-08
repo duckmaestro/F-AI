@@ -54,6 +54,7 @@
     <Compile Include="SimpleSampler.fs" />
     <Compile Include="ForwardSampler.fs" />
     <Compile Include="GibbsSampler.fs" />
+    <Compile Include="SufficientStatistics.fs" />
     <Compile Include="LearnDistributions.fs" />
     <Compile Include="LearnStructure.fs" />
     <Compile Include="BayesianNetwork.fs" />
