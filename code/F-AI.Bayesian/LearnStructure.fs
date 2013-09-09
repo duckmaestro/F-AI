@@ -21,10 +21,93 @@ open GraphAlgorithms
 
 
 ///
-/// 
+/// Computes the empirical mutual information between two variables.
 ///
-let computeMutualInformation () = ()
+let computeEmpiricalMutualInformation 
+        (x:Identifier * Space)
+        (ys:list<Identifier * Space>)
+        (sufficientStatistics:SufficientStatistics) =
 
+    // TODO: Add support for a prior to help with unseen observations.
+    
+    let mutable sum = 0.
+    let normalizer = 1. / (float <| sufficientStatistics.GetObservationCount (new Observation()))
+
+    let xName = fst x
+    let xSpace = snd x
+
+    for xValue in xSpace.Values do
+        let xObservation = new Observation(xName, xValue)
+        let xCount = float <| sufficientStatistics.GetObservationCount xObservation
+        let xCount = if xCount > 0. then xCount else 1. // HACK: until priors supported.
+        let xProb = xCount * normalizer
+
+        // Recursion to explode y values and sum over them.
+        let rec doSum (ys:list<Identifier * Space>) (yObservationAcc:Observation) =
+
+            match ys with
+            | []    ->
+                let xyObservation = xObservation .|. yObservationAcc
+            
+                let yCount = float <| sufficientStatistics.GetObservationCount yObservationAcc
+                let yCount = if yCount > 0. then yCount else 1. // HACK: until priors supported.
+                let yProb = yCount * normalizer
+                let xyCount = float <| sufficientStatistics.GetObservationCount xyObservation
+                let xyCount = if xyCount > 0. then xyCount else 1. // HACK: until priors supported.
+                let xyProb = xyCount * normalizer
+
+                assert (yProb > 0.)
+                assert (xProb > 0.)
+                assert (xyProb > 0.)
+
+                let summand = xyCount * System.Math.Log (xyProb / (xProb * yProb))
+                summand
+
+            | y::ys -> 
+                let yName = fst y
+                let ySpace = snd y
+
+                let summand = 
+                    ySpace.Values
+                    |> Seq.sumBy 
+                        (fun yValue -> doSum ys (yObservationAcc .+. (yName, yValue)))
+                summand
+
+        let summand = doSum ys (new Observation())
+        sum <- sum + summand
+
+            
+    let final = sum * normalizer
+
+    assert (final >= 0.)
+
+    final
+
+
+///
+/// Computes the entropy of a variable.
+///
+let computeEmpiricalEntropy 
+        variableName
+        (variableSpace:Space)
+        (sufficientStatistics:SufficientStatistics) =
+
+    let mutable sum = 0.
+    let M = float <| sufficientStatistics.GetObservationCount (new Observation())
+    let normalizer = 1. / M
+    let innerConstant = System.Math.Log M
+
+    for v in variableSpace.Values do
+        let count = float <| sufficientStatistics.GetObservationCount 
+                                (new Observation(variableName, v))
+        let logCount = System.Math.Log count
+        let summand = count * (innerConstant - logCount)
+        sum <- sum + summand
+
+    let final = sum * normalizer
+    final
+
+    
 
 ///
 /// Using the provided variables and their parent structure, computes the log 
@@ -72,13 +155,34 @@ let computeLogLikelihoodFromData
 
     
 ///
+/// Computes the family score of a given random variable and its parents.
 ///
-///
-let computeFamilyScore (rv:RandomVariable) (observations:IObservationSet) =
-    
-    // TODO: switch to mutual information to be faster.
-    
-    computeLogLikelihoodFromData (Seq.singleton rv) observations
+let computeFamilyScore 
+        (rv:RandomVariable) 
+        (sufficientStatistics:SufficientStatistics) =
+   
+    let M = float sufficientStatistics.ObservationSet.Size.Value
+
+    let x = (rv.Name, rv.Space)
+    let parents = 
+        rv.Parents 
+        |> Seq.map (fun p -> p.Name, p.Space)
+        |> List.ofSeq
+
+    let mutualInformation = 
+            computeEmpiricalMutualInformation 
+                x
+                parents
+                sufficientStatistics
+
+    let entropy =
+        computeEmpiricalEntropy
+            rv.Name
+            rv.Space
+            sufficientStatistics
+
+    let familyScore = M * (mutualInformation - entropy)
+    familyScore
 
 
 
@@ -132,30 +236,11 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
     let selectOriginalVariable name =
         rvs |> Seq.find (fun rv -> rv.Name = name)
 
-
-    // Learn mle distributions.
-    let distributions =
-        variableParentPermutations
-        |> Seq.map (
-            fun rv ->   
-                let distributions = 
-                    LearnDistributions.learnConditionalDistribution 
-                        rv rv.Parents sufficientStatistics
-                    |> distributionMapToSet
-                
-                rv, distributions
-            )
-        |> Seq.cache
-
-    // Store distributions.
-    for (rv,d) in distributions do
-        rv.Distributions <- d
-
     // Measure family score
     let familyScores = 
-        distributions
-        |> Seq.map (fun (rv,_) -> 
-            rv, computeFamilyScore rv sufficientStatistics.ObservationSet)
+        variableParentPermutations
+        |> Seq.map (fun rv -> 
+            rv, computeFamilyScore rv sufficientStatistics)
         |> Seq.cache
 
     // Prepare as fully connected graph.

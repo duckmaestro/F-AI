@@ -17,6 +17,7 @@
 
 namespace FAI.Bayesian
 
+open System
 open System.Collections
 open System.Collections.Generic
 
@@ -31,6 +32,10 @@ type public Observation(variableValues) =
     // Creates an empty observation.
     new () = 
         Observation (Map.empty)
+
+    // Creates an observation with one observed variable.
+    new (name, value) =
+        Observation (Map.empty |> Map.add name value)
 
     // Explicit field for inter-instance access.
     member private self._variableValues = variableValues
@@ -115,7 +120,8 @@ type public Observation(variableValues) =
     interface System.IComparable with
       member o1.CompareTo o2 =
           match o2 with
-          | :? Observation as o2'   ->  Unchecked.compare o1._variableValues o2'._variableValues
+          | :? Observation as o2'   ->  (o1._variableValues :> IComparable)
+                                            .CompareTo (o2'._variableValues)
           | _                       ->  failwith "Invalid argument type."
 
     override o1.GetHashCode () =

@@ -44,9 +44,9 @@ type SufficientStatistics(observations:IObservationSet) =
     member public self.GetObservationCount (observation:Observation) = 
 
         // Check argument.
-        if observation.VariableNames |> Seq.isEmpty then
-            failwith "Observation must not be empty."
-
+        if observation.IsEmpty then Option.get <| observations.Size else
+            
+        // Helper.
         let getObservationCountFromCache (observation:Observation) =
             let count = countCache |> Map.tryFind observation
             match count with
