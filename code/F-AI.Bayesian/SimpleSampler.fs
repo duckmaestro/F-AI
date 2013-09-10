@@ -50,10 +50,32 @@ let getSampleUnnormalized (distribution:DiscreteDistribution) =
     let mutable event = None
 
     for eventMass in distribution.Masses do
-        if event.IsSome then ()
-        else
+        if event.IsNone then
             accumulation <- accumulation + eventMass.Value
             if point <= accumulation then
                 event <- Some eventMass.Key
 
     Option.get <| event
+
+///
+/// Samples an integer value between 1 and n using a uniform distribution.
+///
+let getSampleUniformNatural n = 
+    let value = randomizer.Next n
+    value + 1
+
+///
+/// Samples a value from the provided space using a uniform distribution.
+///
+let getSampleUniform (space:Space) = 
+    let i = getSampleUniformNatural space.Size
+    let value = space.Values |> Seq.skip (i-1) |> Seq.head
+    value
+
+/// Samples a multidimensional value from the provided spaces using uniform,
+/// independent distributions.
+let getSampleUniformMultidimensional (space:seq<Space>) =
+    space
+    |> Seq.map getSampleUniform
+    |> List.ofSeq
+

@@ -28,7 +28,7 @@ type public InferenceQuery (network, evidence) =
     let mutable posteriors = Map.empty
     
     let mutable particleHistory = [ ]
-    let mutable warmupSize = 100
+    let mutable warmupSize = 250
     let mutable particleSeparation = 1
 
     // Constructor
@@ -96,7 +96,16 @@ type public InferenceQuery (network, evidence) =
 
         // Init with first particle.
         if particleHistory = [ ] then
-            let firstParticle = (ForwardSampler.getSample rvs)
+            let rvsNames = rvs |> Seq.map (fun rv -> rv.Name)
+            let rvsSpaces = rvs |> Seq.map (fun rv -> rv.Space)
+            let particleValues =
+                SimpleSampler.getSampleUniformMultidimensional rvsSpaces
+            let firstParticle =
+                particleValues 
+                |> Seq.zip rvsNames
+                |> Map.ofSeq
+                |> fun p -> new Observation(p)
+
             particleHistory <- [ firstParticle ]
 
         // Generate new particles.

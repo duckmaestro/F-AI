@@ -27,18 +27,23 @@ open System.Collections.Generic
 type Space = 
     | Discrete of Map<Real,String>      // A list of valid values and their labels.
 
+    member public self.Size
+        with get() = 
+            match self with
+            | Discrete map      -> map.Count
+
     member public self.Values
         with get() = 
             match self with
-                | Discrete (map)    -> map |> Map.toSeq |> Seq.map (fun (k,v) -> k)
+            | Discrete map      -> map |> Map.toSeq |> Seq.map (fun (k,v) -> k)
 
     member public self.GetLabel value =
         let map = 
             match self with
-                | Discrete (labels)        -> Some labels
+            | Discrete (labels)     -> Some labels
         
         match map with
-            | Some (map')    -> map' |> Map.find value
-            | None           -> ""
+        | Some map'     -> map' |> Map.find value
+        | None          -> ""
             
         

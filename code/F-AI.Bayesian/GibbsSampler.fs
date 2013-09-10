@@ -18,7 +18,14 @@
 module FAI.Bayesian.GibbsSampler
 
 let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (evidence:Observation) = 
+
+    // Randomize the variable order.
+    let nvariables = variables |> Seq.length
+    let variables = 
+        variables 
+        |> Seq.sortBy (fun _ -> SimpleSampler.getSampleUniformNatural nvariables)
     
+    // The working sample.
     let mutable newSample = currentSample
 
     // For each variable in the network, generate a new value from the 
@@ -40,12 +47,16 @@ let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (ev
                 // Using the Markov blanket, we need to lookup conditional 
                 // probabilities for each child, and for this node.
 
+                // FIXME: Distribution needs to be changed to support log 
+                //        probabilities. Falling into gibbs islands right now
+                //        in some situations.
+
                 // Child probabilities are p( CHILD | Pa(CHILD)+RV = sample+value )
                 let mutable factors = [ ]
 
                 for child in rv.Children do
                     let childValue = Option.get <| fromSample.TryValueForVariable child.Name
-                    let childParentsValues = fromSample .&. (child.Parents |> Seq.map (fun p -> p.Name))
+                    let childParentsValues = fromSampleWithValue .&. (child.Parents |> Seq.map (fun p -> p.Name))
                     let childDistribution = Option.get <| child.Distributions.TryGetDistribution childParentsValues
                     let childProbability = Option.get <| childDistribution.GetMass childValue
                     factors <- childProbability :: factors 
@@ -66,12 +77,23 @@ let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (ev
             // Sample from our distribution.
             SimpleSampler.getSampleUnnormalized distribution
 
-        // Is this variable in the evidence set.
+        // Sample from p(rv|Others).
         let rvNewValue =
-            match evidence.TryValueForVariable rv.Name with
+            // If we have no evidence and this node has no parent, simply draw 
+            // from its distribution. This helps to avoid a Gibbs island 
+            // problem.
+            if evidence.IsEmpty && rv.Parents |> Seq.length = 0 then
+                rv.Distributions.TryGetDistribution evidence
+                |> Option.get
+                |> SimpleSampler.getSample
+            // If we have evidence or this is a variable with parents, perform
+            // standard Gibbs procedure.
+            else
+                match evidence.TryValueForVariable rv.Name with
                 | Some value    ->  value
                 | None          ->  getNewValue newSample
 
+        // Update full sample.
         newSample <- newSample .+. (rv.Name,rvNewValue)
         
     // Done.
