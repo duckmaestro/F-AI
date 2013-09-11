@@ -20,6 +20,7 @@ namespace FAI.Bayesian
 open LearnStructure
 open LearnDistributions
 open ListHelpers
+open GraphAlgorithms
 open System.Collections.Generic
 
 type GenerateStructureMode = | Sequential | Random | PairwiseSingle
@@ -143,7 +144,20 @@ type public BayesianNetwork(name) =
 
     // Retrieves the variables of this network in a topological ordering.
     member private self.GetTopologicalOrdering () =
-       
+        
+        // TODO: Perform this check in effect while building the ordering?
+        #if DEBUG
+        // Check for cycles.
+        let isAcyclic = 
+            GraphAlgorithms.isAcyclicDirected 
+                (rvs |> Seq.map (fun rv -> rv.Name) |> Set.ofSeq)
+                (rvs |> Seq.collect (fun rv -> rv.Children |> Seq.map 
+                                                (fun c -> { Vertex1 = rv.Name; Vertex2 = c.Name; Weight = 0. }))
+                     |> Set.ofSeq)
+        if isAcyclic = false then
+            failwith "Graph not acyclic."
+        #endif
+
         // The ordering.
         let mutable ordering = [ rvs |> Seq.head ]
                 
@@ -186,7 +200,7 @@ type public BayesianNetwork(name) =
     ///
     /// Samples a particle from the network using forward sampling.
     ///
-    member public self.Sample ()= 
+    member public self.Sample () = 
         let rvs = self.Variables
         let sample = ForwardSampler.getSample rvs
         sample
