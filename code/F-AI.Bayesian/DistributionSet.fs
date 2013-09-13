@@ -22,24 +22,48 @@ open System.Collections.Generic
 
 
 ///
-/// A set of distributions, indexed by observation. This is a generalization 
-/// of conditional probability tables (CPTs), though most often this type is 
-/// used in fact as a CPT.
+/// An immutable set of distributions, indexed by observation. This is a 
+/// generalization of conditional probability tables (CPTs), though most often 
+/// this type is used in fact as a CPT.
 ///
-type DistributionSet() =
-    
-    // Ensures the observation has no null variable names or missing values.
+type DistributionSet(?distributions) =
+
+    // Internal storage of each distribution, indexed by observation.
+    let distributions = defaultArg distributions Map.empty
+
+    // Helper. Ensures the observation has no null variable names or missing 
+    // values.
     let ensureStrictObservation (observation:Observation) =
         if observation |> Seq.exists (fun kvp -> Real.IsNaN kvp.Value) then
             failwith "Observation value cannot be missing." 
         else
             ()
 
+    ///
+    /// Constructs an empty distribution set.
+    ///
+    new() =
+        DistributionSet(Map.empty)
 
-    // Internal storage of each distribution, indexed by observation.
-    let mutable table = Map.empty // Observation * DiscreteDistribution>();
+    ///
+    /// Constructs a distributionset with one distribution using an empty
+    /// observation for its key.
+    ///
+    new(distribution:DiscreteDistribution) =
+        let distributions = 
+            Map.empty |> Map.add (new Observation()) distribution
+        DistributionSet(distributions)
 
-
+    ///
+    /// Constructs a distribution set from a sequence of distributions.
+    ///
+    new(distributions:seq<System.Tuple<Observation,DiscreteDistribution>>) =
+        let distributions =
+            distributions
+            |> Seq.map (fun t -> t.Item1, t.Item2)
+            |> Map.ofSeq
+        DistributionSet(distributions)
+        
     ///
     /// Retrives the conditional distribution for the given observation.
     ///
@@ -49,26 +73,24 @@ type DistributionSet() =
         ensureStrictObservation observation
 
         // Search the table.
-        table |> Map.tryFind observation
+        distributions |> Map.tryFind observation
 
 
     ///
     /// Stores a conditional distribution for the given observation.
     ///
-    member public self.SetConditionalDistribution observation (distribution:DiscreteDistribution) =
+    member public self.CloneAndAddDistribution (conditionedOnObservation)
+                                               (distribution:DiscreteDistribution) =
         
         // Check observation.
-        ensureStrictObservation observation
+        ensureStrictObservation conditionedOnObservation
 
-        // Add.
-        table <- table |> Map.add observation distribution
-
-        // Done.
-        ()
+        // Create new.
+        new DistributionSet(distributions |> Map.add conditionedOnObservation distribution)
 
     ///
     /// Returns a sequence over the distributions in this table.
     ///
     member public self.EnumerateDistributions () =
-        table
+        distributions
         |> Map.toSeq

@@ -144,19 +144,15 @@ let public learnDistributions
         let ivs = dv.Parents
 
         // Learn conditional distributions for this variable.
-        let conditionalDistribution = 
+        let conditionalDistributions = 
             learnConditionalDistribution dv ivs sufficientStatistics
 
-        // Copy distributions into a CPT.
-        let cpt = new DistributionSet()
-        for distribution in conditionalDistribution do
-            let parentInstantiation = distribution.Key
-            let distribution = distribution.Value
-
-            match distribution with
-                | Some d    ->  cpt.SetConditionalDistribution parentInstantiation d
-                | _         ->  failwith "A neccessary distribution was not learned."                 
-
+        // Copy distributions into a set.
+        let cpt =
+            conditionalDistributions
+            |> Map.map (fun k v -> v.Value)
+            |> fun ds -> new DistributionSet(ds)
+        
         // Associate CPT with this variable.
         dv.Distributions <- cpt
 

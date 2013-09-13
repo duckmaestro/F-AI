@@ -208,11 +208,12 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
             )
             
     // Helpers.
-    let distributionMapToSet map =
-        let set = new DistributionSet()
-        for o,d in map |> Map.toSeq do
-            let d = Option.get <| d
-            set.SetConditionalDistribution o d
+    let distributionMapToSet (map:Map<_,Option<_>>) =        
+        let set =
+            map
+            |> Map.map (fun k v -> v.Value)
+            |> fun ds -> new DistributionSet(ds)
+
         set
 
     let nameFirstParent (rv:RandomVariable) = rv.Parents |> Seq.map (fun rv-> rv.Name) |> Seq.head
