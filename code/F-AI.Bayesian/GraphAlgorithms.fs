@@ -33,7 +33,7 @@ type Edge = { Vertex1:string; Vertex2:string; Weight:float; }
 ///
 /// Finds the maximum weight spanning tree for an undirected graph.
 ///
-let findMaximumWeightSpanningTree vertices edges = 
+let findMaximumWeightSpanningTree vertices edges (progressCallback:Option<_>) = 
     let edges = edges |> Set.toSeq
     let mutable markedVertices = Set.singleton <| (vertices |> Set.toSeq |> Seq.head)
     let mutable unmarkedVertices = vertices - markedVertices
@@ -63,7 +63,13 @@ let findMaximumWeightSpanningTree vertices edges =
             |> Set.remove bestEdge.Vertex2
         
         treeEdges <- treeEdges |> Set.add bestEdge
+
+        // Raise progress callback.
+        match progressCallback with
+        | Some fn   ->  fn treeEdges
+        | None      ->  ()
         
+    // Done.
     treeEdges
 
 ///

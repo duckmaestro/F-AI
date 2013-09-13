@@ -37,9 +37,12 @@ type public BayesianNetwork(name) =
     // A cache of the topological ordering.
     let mutable topologicalOrdering = Some []
 
-    // Invoked when an edge change occurs.
-    let onEdgesChanged = new Handler<_> (fun sender () -> do topologicalOrdering <- None)
-    let onVariableAddedRemoved = fun () -> do topologicalOrdering <- None
+    // Published events.
+    let eventStructureChanged = new Event<_>()
+
+
+    let onVariableAddedRemoved = fun () -> do topologicalOrdering <- None;
+                                              eventStructureChanged.Trigger ();
 
 
     ///
@@ -68,7 +71,6 @@ type public BayesianNetwork(name) =
             ()
         else
             rvs <- rv :: rvs
-            rv.EdgesChanged.AddHandler onEdgesChanged
 
         onVariableAddedRemoved ()
         ()
@@ -78,10 +80,16 @@ type public BayesianNetwork(name) =
     ///
     member public self.RemoveVariable rv =
         rvs <- rvs |> List.partition (fun rv' -> rv' <> rv) |> fst
-        rv.EdgesChanged.RemoveHandler onEdgesChanged
 
         onVariableAddedRemoved ()
         ()
+
+    ///
+    /// Raised when an edge is added or removed, i.e. when a parent 
+    /// or child is added or removed.
+    ///
+    [<CLIEvent>]
+    member self.StructureChanged = eventStructureChanged.Publish
 
     ///
     /// Generates an arbitrary DAG structure over the variables currently in 
@@ -131,7 +139,11 @@ type public BayesianNetwork(name) =
     ///
     member public self.LearnStructure sufficientStatistics =
         // For now, only tree structure is supported.
-        LearnStructure.learnTreeStructure self.Variables sufficientStatistics
+        LearnStructure.learnTreeStructure 
+            self.Variables 
+            sufficientStatistics
+            (Some (fun _ -> ()))
+
         ()
 
     ///

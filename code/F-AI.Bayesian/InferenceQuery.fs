@@ -139,14 +139,14 @@ type public InferenceQuery (network, evidence) =
                 
                 // If this variable has a value from evidence.
                 if Option.isSome rvValueInEvidence then
-                    let distribution = new DiscreteDistribution()
+                    let mutable distribution = Map.empty
                     let rvValueInEvidence = Option.get <| rvValueInEvidence
                     for valueInSpace in rv.Space.Values do
                         if valueInSpace = rvValueInEvidence then
-                            distribution.SetMass valueInSpace 1.
+                            distribution <- distribution |> Map.add valueInSpace 1.
                         else
-                            distribution.SetMass valueInSpace 0.
-                    distribution
+                            distribution <- distribution |> Map.add valueInSpace 0.
+                    new DiscreteDistribution(distribution)
 
                 // If this variable does not have a value from evidence.
                 else
@@ -163,7 +163,8 @@ type public InferenceQuery (network, evidence) =
                         |> Seq.map (fun (key,group) -> (key, group |> Seq.length |> float))
                         |> Seq.cache
             
-                    // Incorporate prior distribution.
+                    // Incorporate prior distribution. 
+                    // FIXME: Is this reasonable to do?
                     let valueCounts' = 
                         seq { 
                             for valueInSpace in rv.Space.Values do    
@@ -185,14 +186,14 @@ type public InferenceQuery (network, evidence) =
                         + (prior.Parameters |> Seq.sumBy (fun kvp -> kvp.Value))
             
                     // Build a posterior distribution from particle value counts.
-                    let posterior = new DiscreteDistribution()
+                    let mutable distribution = Map.empty
                     for (value,count) in valueCounts' do
                         let mass = count / totalCount
-                        posterior.SetMass value mass
+                        distribution <- distribution |> Map.add value mass
 
-                    assert ((posterior.Masses |> Seq.length) = (rv.Space.Values |> Seq.length))
+                    assert ((distribution |> Seq.length) = (rv.Space.Values |> Seq.length))
             
-                    posterior
+                    new DiscreteDistribution(distribution)
 
 
             // Store postieror for this variable

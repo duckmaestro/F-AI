@@ -83,7 +83,6 @@ let computeEmpiricalMutualInformation
 
     final
 
-
 ///
 /// Computes the entropy of a variable.
 ///
@@ -106,8 +105,6 @@ let computeEmpiricalEntropy
 
     let final = sum * normalizer
     final
-
-    
 
 ///
 /// Using the provided variables and their parent structure, computes the log 
@@ -151,8 +148,6 @@ let computeLogLikelihoodFromData
 
     // Done.
     logLikelihoodTotal
-
-
     
 ///
 /// Computes the family score of a given random variable and its parents.
@@ -190,13 +185,8 @@ let computeFamilyScore
 /// Learns a best tree structure for the random variables.
 ///
 let learnTreeStructure (rvs:seq<RandomVariable>) 
-                       (sufficientStatistics:SufficientStatistics) = 
-
-    // Clear existing structure.
-    for rv in rvs do
-        rv.Distributions <- new DistributionSet ()
-        for parent in rv.Parents |> Seq.cache do
-            rv.RemoveParent parent            
+                       (sufficientStatistics:SufficientStatistics)
+                       (progressCallback:Option<_>) =     
 
     // Prepare n (n - 1) / 2 possible parentings.
     let selfJoin = seq { 
@@ -249,7 +239,7 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
         |> Seq.map (fun rv -> rv.Name)
         |> Set.ofSeq
 
-    let edges =
+    let edgesFullyConnected =
         familyScores
         |> Seq.map (fun (rv,score) -> 
             normalizeUnorderedEdge {   
@@ -259,55 +249,119 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
             })
         |> Set.ofSeq
 
-    // Find maximum spanning tree, undirected.
-    let bestEdges = 
-        GraphAlgorithms.findMaximumWeightSpanningTree vertices edges
-
-    // Choose a root node to convert to directed.
-    // Arbitrary criterion: node with most edges.
-    let rootNodeName =
-        vertices
-        |> Seq.maxBy (fun v -> 
-            bestEdges
-            |> Seq.filter (fun e -> e.Vertex1 = v || e.Vertex2 = v)
-            |> Seq.length)
-
-    let rootVariable = selectOriginalVariable rootNodeName
-
-    // Build rest of structure.
-    let rec appendNextVariables (lastVariable:RandomVariable) = 
-        let otherName edge = 
-            if lastVariable.Name = edge.Vertex1 then
-                edge.Vertex2
-            else if lastVariable.Name = edge.Vertex2 then
-                edge.Vertex1
-            else
-                failwith "Inconsistent edge data."
-
-        let isWithParent edge = 
-            lastVariable.Parents 
-            |> Seq.exists (fun rv -> rv.Name = edge.Vertex1 || rv.Name = edge.Vertex2)
         
-        let nextEdges = 
-            bestEdges 
-            |> Seq.filter (fun e -> 
-                e.Vertex1 = lastVariable.Name ||
-                e.Vertex2 = lastVariable.Name)
-            |> Seq.filter (fun e -> isWithParent e = false)
+    // Updates the source variables according to the edge list.
+    let buildGraphFromEdges edges =
 
-        let children = 
-            nextEdges 
-            |> Seq.map (fun e -> selectOriginalVariable (otherName e))
-            |> List.ofSeq
+        // Find the existing root node.
+        let existingRootVariable =
+            rvs
+            |> Seq.filter (fun rv -> rv.Parents |> Seq.isEmpty)
+            |> Seq.sortBy (fun rv -> - (rv.Children |> Seq.length))
+            |> Seq.tryFind (fun _ -> true)
 
-        for child in children do
-            child.AddParent lastVariable
-            appendNextVariables child
+        // Choose a root node to convert to directed.
+        // Arbitrary criterion: node with most edges.
+        let rootNodeName =
+            vertices
+            |> Seq.maxBy (fun v -> 
+                edges
+                |> Seq.filter (fun e -> e.Vertex1 = v || e.Vertex2 = v)
+                |> Seq.length)
 
-        ()
+        let rootVariable = selectOriginalVariable rootNodeName
 
-    // Begin recursion to form tree, starting at root.
-    appendNextVariables rootVariable
+        // If root changed, reset all edges.
+        if existingRootVariable.IsSome && rootVariable <> existingRootVariable.Value then
+            // Clear existing structure.
+            for rv in rvs do
+                rv.Distributions <- new DistributionSet ()
+                for parent in rv.Parents |> Seq.toList do
+                    rv.RemoveParent parent
+
+        // Build rest of structure.
+        let rec appendNextVariables (lastVariable:RandomVariable) = 
+            // Helper. Selects the "other" variable given an edge with the 
+            // current variable.
+            let otherName edge = 
+                if lastVariable.Name = edge.Vertex1 then
+                    edge.Vertex2
+                else if lastVariable.Name = edge.Vertex2 then
+                    edge.Vertex1
+                else
+                    failwith "Inconsistent edge data."
+
+            // Helper.
+            let isWithParent edge = 
+                lastVariable.Parents 
+                |> Seq.exists (fun rv -> rv.Name = edge.Vertex1 || rv.Name = edge.Vertex2)
+        
+            // Helper.
+            let nextEdges = 
+                edges 
+                |> Seq.filter (fun e -> 
+                    e.Vertex1 = lastVariable.Name ||
+                    e.Vertex2 = lastVariable.Name)
+                |> Seq.filter (fun e -> isWithParent e = false)
+
+            // Helper.
+            let children = 
+                nextEdges 
+                |> Seq.map (fun e -> selectOriginalVariable (otherName e))
+                |> List.ofSeq
+
+            // For each child (from outgoing edges), parent them to the current 
+            // variable.
+            for child in children do
+
+                // If existing parents that aren't the new parent, remove them.
+                let existingParents = child.Parents |> Seq.cache
+                let numExistingParents = existingParents |> Seq.length
+                if numExistingParents >= 2 || 
+                    (numExistingParents = 1 
+                        && existingParents |> Seq.head <> lastVariable) then
+                    for p in existingParents do
+                        child.RemoveParent p
+                   
+                // Add the new parent.
+                child.AddParent lastVariable
+
+                // Recurse.
+                appendNextVariables child
+
+            ()
+
+        // Begin recursion to form tree, starting at root.
+        appendNextVariables rootVariable
+
+
+    // Initialize progress callback. If the caller provided a callback, we will 
+    // build a new graph after each progress event, then raise their callback.
+    let spanningTreeProgressCallback = 
+        match progressCallback with
+        | Some cb   ->  Some (fun edges -> do buildGraphFromEdges edges; cb ();)
+        | None      ->  None
+    
+    // Begin tree structure search algorithm.
+    let finalEdges = 
+        GraphAlgorithms.findMaximumWeightSpanningTree 
+            vertices 
+            edgesFullyConnected
+            spanningTreeProgressCallback
+
+    // Build graph structure using final edges if not done already.
+    if progressCallback.IsNone then
+        do buildGraphFromEdges finalEdges;
 
     // Done.
     () 
+
+///
+/// Learns a general structure for the random variables given the sufficient
+/// statistics.
+///
+let learnGeneralStructure (rvs:seq<RandomVariable>) 
+                          (sufficientStatistics:SufficientStatistics) 
+                          (progressCallback:Option<_>) = 
+
+    failwith "Not implemented yet."

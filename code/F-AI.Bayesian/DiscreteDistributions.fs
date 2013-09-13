@@ -22,22 +22,38 @@ open System.Collections.Generic
 
 
 ///
-/// A discrete probability distribution.
+/// An immutable discrete probability distribution.
 ///
-type DiscreteDistribution() = 
-    
+type DiscreteDistribution(?masses) = 
+
     // Internal storage of the probability masses, indexed by
     // random variable value.
-    let mutable masses = Map.empty
+    let masses = defaultArg masses Map.empty
 
+    ///
+    /// Initializes an empty distribution.
+    /// 
+    new() =
+        DiscreteDistribution(Map.empty)
+
+    ///
+    /// Initializes a distribution using a sequence of tuples.
+    ///
+    new(masses:seq<System.Tuple<Real,Real>>) =
+        let masses = 
+            masses 
+            |> Seq.map (fun t -> t.Item1 ,t.Item2)
+            |> Map.ofSeq
+        DiscreteDistribution(masses)
+  
     ///
     /// Assign a probability mass to a particular value.
     ///
-    member public self.SetMass (value:Real) (mass:Real) =
+    member public self.CloneAndSetMass (value:Real) (mass:Real) =
         if Real.IsNaN value then 
             invalidArg "value" "Value must not be missing." 
         else 
-            masses <- masses |> Map.add value mass
+            new DiscreteDistribution (masses |> Map.add value mass)
 
     ///
     /// Get the probability mass of a particular value.
@@ -48,8 +64,8 @@ type DiscreteDistribution() =
     ///
     /// Removes a mass from the distribution.
     ///
-    member public self.RemoveMass value =
-        masses <- masses |> Map.remove value
+    member public self.CloneAndRemoveMass value =
+        new DiscreteDistribution (masses |> Map.remove value)
 
     ///
     /// Retrieves known masses.

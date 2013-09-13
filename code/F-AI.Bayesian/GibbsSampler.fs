@@ -37,7 +37,7 @@ let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (ev
         let getNewValue (fromSample:Observation) = 
 
             // Build the conditional distribution p( RV | BN-RV = sample).
-            let distribution = new DiscreteDistribution ()
+            let mutable distribution = Map.empty
 
             // For each possible value of rv, find its conditional mass.
             for value in rv.Space.Values do
@@ -72,9 +72,10 @@ let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (ev
 
                 // Compute & store unnormalized mass.
                 let mass = factors |> List.fold (fun a f -> a * f) 1.
-                distribution.SetMass value mass
+                distribution <- distribution |> Map.add value mass
 
             // Sample from our distribution.
+            let distribution = new DiscreteDistribution(distribution)
             SimpleSampler.getSampleUnnormalized distribution
 
         // Sample from p(rv|Others).

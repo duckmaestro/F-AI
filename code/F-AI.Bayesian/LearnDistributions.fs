@@ -83,14 +83,14 @@ let public learnConditionalDistribution
 
         // We have enough data and/or a prior.
         else
-            let distribution = new DiscreteDistribution ()
+            let mutable distribution = Map.empty
             for kvp in counts do
                 let rvValue = kvp.Key
                 let rvValueCount = float kvp.Value
                 let rvPrior = float (defaultArg (prior.GetParameter rvValue) 0.)
                 let mass = (rvValueCount + rvPrior) / total
-                distribution.SetMass rvValue mass
-            Some distribution
+                distribution <- distribution |> Map.add rvValue mass
+            Some (new DiscreteDistribution(distribution))
 
 
     //
