@@ -49,13 +49,13 @@ let doDemoBayesian =
         bn.AddVariable rv
     ()
 
-    //bn.GenerateStructure Random
+    // Learn a tree structure.
     bn.LearnStructure sufficientStatistics
 
     // Learn CPTs.
     bn.LearnDistributions sufficientStatistics
 
-    // Test ordering.
+    // Test topological ordering.
     let ordering = bn.Variables
 
     // Test sampling

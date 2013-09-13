@@ -55,13 +55,19 @@ type public BayesianNetwork(name) =
     /// The list of variables in this network, in a topological order.
     ///
     member public self.Variables
-        with get() = 
-            // Refresh topological ordering if needed.
-            if topologicalOrdering.IsNone then
-                topologicalOrdering <- Some (self.GetTopologicalOrdering ())
+        with get() : list<RandomVariable> = 
 
-            // Return variable list.
-            Option.get <| topologicalOrdering :> IEnumerable<RandomVariable>
+            // FIXME: Restore cache feature once edges are added/removed via
+            //         the BN.
+
+//            // Refresh topological ordering if needed.
+//            if topologicalOrdering.IsNone then
+//                topologicalOrdering <- Some (self.GetTopologicalOrdering ())
+//
+//            // Return variable list.
+//            Option.get <| topologicalOrdering :> IEnumerable<RandomVariable>
+
+            self.GetTopologicalOrdering ()
 
     ///
     /// Adds a variable to this network.
