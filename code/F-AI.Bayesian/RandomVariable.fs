@@ -27,16 +27,74 @@ open System.Collections.Generic
 /// and mutable distribution.
 ///
 [<System.Diagnostics.DebuggerDisplay("{Name}")>]
-type public RandomVariable(name, space, ?distributions) =
+type public RandomVariable(name, space, ?distributions, ?parents, ?children, ?prior, ?userData) =
     
     let mutable distributions = defaultArg distributions (new DistributionSet ())
     let mutable name = name
     let mutable space = space
-    let mutable prior = None
-    let mutable userData = null
+    let mutable prior = defaultArg prior None
+    let mutable userData = defaultArg userData null
     
-    let parents = new HashSet<RandomVariable>()
-    let children = new HashSet<RandomVariable>()
+    let parents = defaultArg parents Set.empty
+    let children = defaultArg children Set.empty
+
+    ///
+    /// Initializes an empty random variable with just a name and a space.
+    ///
+    new(name, space) =
+        RandomVariable(name, space, new DistributionSet(), Set.empty, Set.empty)
+
+    ///
+    /// Initializes a random variable with a name, space, and distribution set.
+    ///
+    new(name, space, distributions) =
+        RandomVariable(name, space, distributions, Set.empty, Set.empty)
+
+    ///
+    /// Clones the random variable and adds a new parent.
+    ///
+    member public self.CloneAndAddParent parentName =
+        if parentName = name then
+            failwith "Cannot add self as parent."
+
+        let parents = parents |> Set.add parentName
+        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+
+    ///
+    /// Clones the random variable and removes a parent.
+    ///
+    member public self.CloneAndRemoveParent parentName =
+        let parents = parents |> Set.remove parentName
+        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+
+    ///
+    /// Clones the random variable and adds a new child.
+    ///
+    member public self.CloneAndAddChild childName =
+        if childName = name then
+            failwith "Cannot add self as child."
+
+        let children = children |> Set.add childName
+        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+
+    ///
+    /// Clones the random variable and removes a child.
+    ///
+    member public self.CloneAndRemoveChild childName =
+        let children = children |> Set.remove childName
+        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+
+    ///
+    /// Clones the random variable and removes all parents and children.
+    /// 
+    member public self.CloneAndDisconnect () =
+        new RandomVariable(name, space, distributions, Set.empty, Set.empty, prior, userData)
+
+    ///
+    /// Clones the random variable and assigns a new local distribution.
+    ///
+    member public self.CloneAndSetDistribution distribution =
+        new RandomVariable(name, space, distribution, parents, children, prior, userData)
 
     ///
     /// The name of this variable, e.g. Earthquake.
@@ -51,45 +109,29 @@ type public RandomVariable(name, space, ?distributions) =
         with get() : Space = space
 
     ///
-    /// The probability distribution(s) associated with this variable.
+    /// The local probability distribution(s) associated with this variable.
     ///
     member public self.Distributions
         with get() : DistributionSet    =   distributions
-        and set(value)                  =   distributions <- value
+
+    ///
+    /// Retrieves the local conditional distribution for this variable given a
+    /// parent instantiation.
+    ///
+    member public self.GetConditionalDistribution (parentValues:Observation) =
+        let parentValues = parentValues .&. self.Parents
+        let distribution = distributions.TryGetDistribution parentValues
+        match distribution with
+        | None      ->  failwith "Distribution not found."
+        | Some d    ->  d
 
     ///
     /// The Dirichlet prior parameters.
+    /// TODO: Detach this from RandomVariable.
     ///
     member public self.Prior
         with get() : option<DirichletDistribution>  =   prior
         and set(value)                              =   prior <- value
-
-    ///
-    /// Links two variables together, using the given variable as a parent.
-    ///
-    member public self.AddParent rv = 
-        if self.Parents |> Seq.exists (fun p -> p = rv) then
-            ()
-        else if self = rv then
-            invalidArg "rv" "Cannot a variable as a parent to itself."
-        else
-            self.AddParent' rv
-            rv.AddChild' self
-            ()
-
-    member private self.AddParent' (rv:RandomVariable) =
-        ignore <| parents.Add rv
-
-    ///
-    /// Separates two variables, breaking the connection to the given parent.
-    ///
-    member public self.RemoveParent rv =
-        self.RemoveParent' rv
-        rv.RemoveChild' self
-        ()
-
-    member private self.RemoveParent' (rv:RandomVariable) =
-        ignore <| parents.Remove rv
 
     ///
     /// The parent variables to this variable.
@@ -98,52 +140,10 @@ type public RandomVariable(name, space, ?distributions) =
         with get() = parents :> IEnumerable<_>
 
     ///
-    /// Links two variables together, using the given
-    /// variable as a child.
-    ///
-    member public self.AddChild rv =
-        if self.Children |> Seq.exists (fun c -> c = rv) then
-            ()
-        else if self = rv then
-            invalidArg "rv" "Cannot a variable as a child to itself."
-        else
-            self.AddChild' rv
-            rv.AddParent' self
-            ()
-
-    member private self.AddChild' rv =
-        ignore <| children.Add rv
-
-    ///
-    /// Separates two variables, breaking the connection
-    /// to the given child.
-    ///
-    member public self.RemoveChild rv =
-        self.RemoveChild' rv
-        rv.RemoveParent' self
-        ()
-
-    member private self.RemoveChild' rv =
-        ignore <| children.Remove rv
-        ()
-
-    ///
     /// The child variables to this variable.
     ///
     member public self.Children
         with get() = children :> IEnumerable<_>
-
-    ///
-    /// Returns true if the provided node is a descendent of this node.
-    ///
-    member public self.HasDescendant query =
-        children.Contains(query) || children |> Seq.exists (fun c -> c.HasDescendant query)
-
-    ///
-    /// Returns true if the provided node is an ancestor of this node.
-    ///
-    member public self.HasAncestor query =
-        parents.Contains(query) || parents |> Seq.exists (fun a -> a.HasAncestor query)
     
     ///
     /// An arbitrary object reference, kept but ignored.

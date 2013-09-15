@@ -96,8 +96,8 @@ type public InferenceQuery (network, evidence) =
 
         // Init with first particle.
         if particleHistory = [ ] then
-            let rvsNames = rvs |> Seq.map (fun rv -> rv.Name)
-            let rvsSpaces = rvs |> Seq.map (fun rv -> rv.Space)
+            let rvsNames = rvs |> Seq.map (fun kvp -> kvp.Key)
+            let rvsSpaces = rvs |> Seq.map (fun kvp -> kvp.Value.Space)
             let particleValues =
                 SimpleSampler.getSampleUniformMultidimensional rvsSpaces
             let firstParticle =
@@ -131,7 +131,7 @@ type public InferenceQuery (network, evidence) =
                 particleHistory.Length
             
         // Recompute marginal distributions.
-        for rv in rvs do            
+        for rv in rvs |> Seq.map (fun kvp -> kvp.Value) do            
             
             let rvValueInEvidence = evidence.TryValueForVariable rv.Name
 

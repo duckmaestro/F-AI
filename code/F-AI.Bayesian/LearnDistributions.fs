@@ -132,16 +132,17 @@ let public learnConditionalDistribution
 
 ///
 /// Learns the distributions for the given variables, according to the given
-/// observation set and the variables' structural parents.
-/// Mutates the distribution on each variable.
+/// sufficient statistics and the network structure.
 /// 
 let public learnDistributions 
-            (variables:seq<RandomVariable>) 
+            (variables:Map<Identifier,RandomVariable>) 
             (sufficientStatistics:SufficientStatistics) = 
 
+    let mutable results = Map.empty
+
     // For each random variable, learn its conditional distributions.
-    for dv in variables do
-        let ivs = dv.Parents
+    for dv in variables |> Map.toSeq |> Seq.map (fun (k,v) -> v) do
+        let ivs = dv.Parents |> Seq.map (fun p -> variables |> Map.find p)
 
         // Learn conditional distributions for this variable.
         let conditionalDistributions = 
@@ -154,6 +155,6 @@ let public learnDistributions
             |> fun ds -> new DistributionSet(ds)
         
         // Associate CPT with this variable.
-        dv.Distributions <- cpt
+        results <- results |> Map.add dv.Name cpt
 
-    ()
+    results

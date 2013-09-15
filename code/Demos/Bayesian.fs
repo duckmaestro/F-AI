@@ -41,9 +41,8 @@ let doDemoBayesian =
     let bn = new BayesianNetwork "Traffic"
     let prior = new DirichletDistribution (Map.ofList [ 0.,1. ; 1.,1. ; 2.,1. ; 3.,1. ])
     for variableName in variableNames do
-        let dist = new DistributionSet ()
         let space = dataSetTraffic.Variables |> Map.find variableName
-        let rv = new RandomVariable (variableName, space, dist)
+        let rv = new RandomVariable(variableName, space)
 
         rv.Prior <- Some prior
         bn.AddVariable rv
@@ -51,12 +50,13 @@ let doDemoBayesian =
 
     // Learn a tree structure.
     bn.LearnStructure sufficientStatistics
+    //bn.GenerateStructure GenerateStructureMode.Random
 
     // Learn CPTs.
     bn.LearnDistributions sufficientStatistics
 
     // Test topological ordering.
-    let ordering = bn.Variables
+    let ordering = bn.VariablesOrdered
 
     // Test sampling
     let samples = { 0..20 } |> Seq.map (fun _ -> bn.Sample ()) |> Seq.toArray

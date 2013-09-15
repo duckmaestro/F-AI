@@ -114,10 +114,6 @@ let computeLogLikelihoodFromData
         (variables:seq<RandomVariable>)
         (observations:IObservationSet) =
     
-    // A helper to select variable names.
-    let getName (rv:RandomVariable) = rv.Name
-    let getParentNames (rv:RandomVariable) = rv.Parents |> Seq.map getName
-
     // Begin.
     let mutable logLikelihoodTotal = 0.
     
@@ -130,7 +126,7 @@ let computeLogLikelihoodFromData
         for rv in variables do
         
             let rvValue = Option.get <| obs.TryValueForVariable rv.Name
-            let parentValues = obs .&. (getParentNames rv)
+            let parentValues = obs .&. rv.Parents
 
             let distribution = 
                 Option.get <| rv.Distributions.TryGetDistribution parentValues
@@ -154,13 +150,14 @@ let computeLogLikelihoodFromData
 ///
 let computeFamilyScore 
         (rv:RandomVariable) 
+        (parents:seq<RandomVariable>)
         (sufficientStatistics:SufficientStatistics) =
    
     let M = float sufficientStatistics.ObservationSet.Size.Value
 
     let x = (rv.Name, rv.Space)
     let parents = 
-        rv.Parents 
+        parents
         |> Seq.map (fun p -> p.Name, p.Space)
         |> List.ofSeq
 
@@ -184,14 +181,16 @@ let computeFamilyScore
 ///
 /// Learns a best tree structure for the random variables.
 ///
-let learnTreeStructure (rvs:seq<RandomVariable>) 
+let learnTreeStructure (rvs:Map<Identifier,RandomVariable>) 
                        (sufficientStatistics:SufficientStatistics)
                        (progressCallback:Option<_>) =     
 
+    let rvsList = rvs |> Map.toSeq |> Seq.map (fun (k,v) -> v)
+
     // Prepare n (n - 1) / 2 possible parentings.
     let selfJoin = seq { 
-        for rv1 in rvs do
-            for rv2 in rvs do
+        for rv1 in rvsList do
+            for rv2 in rvsList do
                 if rv1 <> rv2 && rv1.Name < rv2.Name then
                     yield rv1,rv2
         }
@@ -201,10 +200,9 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
         |> Seq.map (fun (rv1,rv2) -> 
                 let rv1' = new RandomVariable(rv1.Name, rv1.Space)
                 let rv2' = new RandomVariable(rv2.Name, rv2.Space)
-                rv1'.Prior <- rv1.Prior
-                rv2'.Prior <- rv2.Prior
-                rv1'.AddChild(rv2') 
-                rv2'
+                do rv1'.Prior <- rv1.Prior // Hacky
+                do rv2'.Prior <- rv2.Prior
+                rv2',rv1' // Child,Parent
             )
             
     // Helpers.
@@ -215,8 +213,6 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
             |> fun ds -> new DistributionSet(ds)
 
         set
-
-    let nameFirstParent (rv:RandomVariable) = rv.Parents |> Seq.map (fun rv-> rv.Name) |> Seq.head
     
     let normalizeUnorderedEdge e = 
         if e.Vertex1 > e.Vertex2 then
@@ -224,61 +220,50 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
         else
             e
 
-    let selectOriginalVariable name =
-        rvs |> Seq.find (fun rv -> rv.Name = name)
-
     // Measure family score
     let familyScores = 
         variableParentPermutations
-        |> Seq.map (fun rv -> 
-            rv, computeFamilyScore rv sufficientStatistics)
+        |> Seq.map (fun (rv,parent) -> 
+                        rv.Name,parent.Name,computeFamilyScore rv (Seq.singleton parent) sufficientStatistics)
         |> Seq.cache
 
     // Prepare as fully connected graph.
     let vertices = 
-        rvs
+        rvsList
         |> Seq.map (fun rv -> rv.Name)
         |> Set.ofSeq
 
     let edgesFullyConnected =
         familyScores
-        |> Seq.map (fun (rv,score) -> 
+        |> Seq.map (fun (rvName,parentName,score) -> 
             normalizeUnorderedEdge {   
-                Vertex1 = rv.Name; 
-                Vertex2 = nameFirstParent <| rv; 
+                Vertex1 = rvName; 
+                Vertex2 = parentName;
                 Weight = score
             })
         |> Set.ofSeq
 
         
     // Updates the source variables according to the edge list.
-    let buildGraphFromEdges edges =
+    let buildNetwork (variables:Map<Identifier,RandomVariable>) 
+                     edges =
 
-        // Find the existing root node.
-        let existingRootVariable =
-            rvs
-            |> Seq.filter (fun rv -> rv.Parents |> Seq.isEmpty)
-            |> Seq.sortBy (fun rv -> - (rv.Children |> Seq.length))
-            |> Seq.tryFind (fun _ -> true)
+        // The network we're going to build.
+        let network = ref Map.empty
 
         // Choose a root node to convert to directed.
         // Arbitrary criterion: node with most edges.
         let rootNodeName =
-            vertices
-            |> Seq.maxBy (fun v -> 
+            variables
+            |> Map.toSeq
+            |> Seq.map (fun (k,v) -> k)
+            |> Seq.maxBy (fun name -> 
                 edges
-                |> Seq.filter (fun e -> e.Vertex1 = v || e.Vertex2 = v)
+                |> Seq.filter (fun e -> e.Vertex1 = name || e.Vertex2 = name)
                 |> Seq.length)
 
-        let rootVariable = selectOriginalVariable rootNodeName
-
-        // If root changed, reset all edges.
-        if existingRootVariable.IsSome && rootVariable <> existingRootVariable.Value then
-            // Clear existing structure.
-            for rv in rvs do
-                rv.Distributions <- new DistributionSet ()
-                for parent in rv.Parents |> Seq.toList do
-                    rv.RemoveParent parent
+        let rootVariable = rvs |> Map.find rootNodeName
+        network := !network |> Map.add rootVariable.Name rootVariable
 
         // Build rest of structure.
         let rec appendNextVariables (lastVariable:RandomVariable) = 
@@ -293,9 +278,10 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
                     failwith "Inconsistent edge data."
 
             // Helper.
-            let isWithParent edge = 
+            let isEdgeWithParent edge = 
                 lastVariable.Parents 
-                |> Seq.exists (fun rv -> rv.Name = edge.Vertex1 || rv.Name = edge.Vertex2)
+                |> Seq.exists (fun parentName -> parentName = edge.Vertex1 
+                                                    || parentName = edge.Vertex2)
         
             // Helper.
             let nextEdges = 
@@ -303,29 +289,20 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
                 |> Seq.filter (fun e -> 
                     e.Vertex1 = lastVariable.Name ||
                     e.Vertex2 = lastVariable.Name)
-                |> Seq.filter (fun e -> isWithParent e = false)
+                |> Seq.filter (fun e -> isEdgeWithParent e = false)
 
             // Helper.
-            let children = 
+            let nextChildren = 
                 nextEdges 
-                |> Seq.map (fun e -> selectOriginalVariable (otherName e))
+                |> Seq.map (fun e -> variables |> Map.find (otherName e))
                 |> List.ofSeq
 
             // For each child (from outgoing edges), parent them to the current 
             // variable.
-            for child in children do
-
-                // If existing parents that aren't the new parent, remove them.
-                let existingParents = child.Parents |> Seq.cache
-                let numExistingParents = existingParents |> Seq.length
-                if numExistingParents >= 2 || 
-                    (numExistingParents = 1 
-                        && existingParents |> Seq.head <> lastVariable) then
-                    for p in existingParents do
-                        child.RemoveParent p
-                   
-                // Add the new parent.
-                child.AddParent lastVariable
+            for child in nextChildren do
+                let child = child.CloneAndDisconnect ()
+                let child = child.CloneAndAddParent lastVariable.Name
+                network := !network |> Map.add child.Name child
 
                 // Recurse.
                 appendNextVariables child
@@ -335,12 +312,15 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
         // Begin recursion to form tree, starting at root.
         appendNextVariables rootVariable
 
+        // Done.
+        !network
+
 
     // Initialize progress callback. If the caller provided a callback, we will 
     // build a new graph after each progress event, then raise their callback.
     let spanningTreeProgressCallback = 
         match progressCallback with
-        | Some cb   ->  Some (fun edges -> do buildGraphFromEdges edges; cb ();)
+        | Some cb   ->  None //Some (fun edges -> do buildGraphFromEdges edges; cb ();)
         | None      ->  None
     
     // Begin tree structure search algorithm.
@@ -351,11 +331,13 @@ let learnTreeStructure (rvs:seq<RandomVariable>)
             spanningTreeProgressCallback
 
     // Build graph structure using final edges if not done already.
-    if progressCallback.IsNone then
-        do buildGraphFromEdges finalEdges;
+    //if spanningTreeProgressCallback.IsNone then
+        //buildNetwork rvs finalEdges;
+
+    let network = buildNetwork rvs finalEdges
 
     // Done.
-    () 
+    network
 
 ///
 /// Learns a general structure for the random variables given the sufficient

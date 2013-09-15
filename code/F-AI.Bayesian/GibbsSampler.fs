@@ -17,21 +17,26 @@
 
 module FAI.Bayesian.GibbsSampler
 
-let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (evidence:Observation) = 
+let getNextSample (variables:Map<Identifier,RandomVariable>)
+                  (currentSample:Observation)
+                  (evidence:Observation) = 
 
-    // Randomize the variable order.
-    let nvariables = variables |> Seq.length
-    let variables = 
+    let variablesMap = variables
+
+    let variablesList = 
+        let nvariables = variables |> Seq.length
         variables 
+        |> Seq.map (fun kvp -> kvp.Value)
         |> Seq.sortBy (fun _ -> SimpleSampler.getSampleUniformNatural nvariables)
     
+
     // The working sample.
     let mutable newSample = currentSample
 
     // For each variable in the network, generate a new value from the 
     // conditional distribution from defined by the remainder of the 
     // observation.
-    for rv in variables do
+    for rv in variablesList do
 
         // Helper sampler.
         let getNewValue (fromSample:Observation) = 
@@ -54,9 +59,10 @@ let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (ev
                 // Child probabilities are p( CHILD | Pa(CHILD)+RV = sample+value )
                 let mutable factors = [ ]
 
-                for child in rv.Children do
-                    let childValue = Option.get <| fromSample.TryValueForVariable child.Name
-                    let childParentsValues = fromSampleWithValue .&. (child.Parents |> Seq.map (fun p -> p.Name))
+                for childName in rv.Children do
+                    let child = variablesMap |> Map.find childName
+                    let childValue = Option.get <| fromSample.TryValueForVariable childName
+                    let childParentsValues = fromSampleWithValue .&. child.Parents
                     let childDistribution = Option.get <| child.Distributions.TryGetDistribution childParentsValues
                     let childProbability = Option.get <| childDistribution.GetMass childValue
                     factors <- childProbability :: factors 
@@ -65,7 +71,7 @@ let getNextSample (variables:RandomVariable seq) (currentSample:Observation) (ev
 
                 // RV probability is p( RV = value | Pa(RV) = sample )
                 let rvValue = value
-                let rvParentsValues = fromSample .&. (rv.Parents |> Seq.map (fun p -> p.Name))
+                let rvParentsValues = fromSample .&. rv.Parents
                 let rvDistribution = Option.get <| rv.Distributions.TryGetDistribution rvParentsValues
                 let rvProbability = Option.get <| rvDistribution.GetMass rvValue
                 factors <- rvProbability :: factors

@@ -23,19 +23,19 @@ let private randomizer = new System.Random (0)
 ///
 /// Generates a sample.
 ///
-let getSample (variables:RandomVariable seq) = 
-    
+let getSample (variableCollection:Map<Identifier,RandomVariable>)
+              (variableOrdering:seq<RandomVariable>) = 
     // TODO: Enforce/check a topological ordering on incoming variables.
 
+    // The sample we're building up.
     let mutable sample = new Observation ()
-    let ordering = variables
-            
-    for rv in ordering do
-        let sampleParentsOnly = sample .&. (rv.Parents |> Seq.map (fun p -> p.Name))
 
+    // Do forward sampling.
+    for rv in variableOrdering do
+        let sampleParentsOnly = sample .&. rv.Parents
         let distribution = rv.Distributions.TryGetDistribution sampleParentsOnly |> Option.get
-
         let sampleForRV = SimpleSampler.getSample distribution
         sample <- sample .+. (rv.Name, sampleForRV)
 
+    // Done.
     sample

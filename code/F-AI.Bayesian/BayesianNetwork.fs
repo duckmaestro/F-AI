@@ -23,26 +23,27 @@ open ListHelpers
 open GraphAlgorithms
 open System.Collections.Generic
 
-type GenerateStructureMode = | Sequential | Random | PairwiseSingle
+///
+/// Structure learning classes.
+///
+type GenerateStructureMode = | Sequential | Random | PairwiseSingle | Tree | General
 
 ///
-/// A Bayesian network.
+/// A Bayesian network. Network structure is mutable. Variable instances are
+/// constant but replaceable by certain operations.
 ///
 [<System.Diagnostics.DebuggerDisplay("{Name}")>]
 type public BayesianNetwork(name) =
     
     let mutable name = name
-    let mutable rvs : RandomVariable list = [ ]
-
-    // A cache of the topological ordering.
-    let mutable topologicalOrdering = Some []
+    let mutable rvsSearchable : Map<Identifier,RandomVariable> = Map.empty
+    let mutable rvsOrdered = Some [ ]
 
     // Published events.
     let eventStructureChanged = new Event<_>()
-
-
-    let onVariableAddedRemoved = fun () -> do topologicalOrdering <- None;
-                                              eventStructureChanged.Trigger ();
+    let onStructureChanged = fun () -> 
+                                    rvsOrdered <- None;
+                                    eventStructureChanged.Trigger ();
 
 
     ///
@@ -52,43 +53,152 @@ type public BayesianNetwork(name) =
         with get() : Identifier = name
 
     ///
-    /// The list of variables in this network, in a topological order.
-    ///
-    member public self.Variables
-        with get() : list<RandomVariable> = 
-
-            // FIXME: Restore cache feature once edges are added/removed via
-            //         the BN.
-
-//            // Refresh topological ordering if needed.
-//            if topologicalOrdering.IsNone then
-//                topologicalOrdering <- Some (self.GetTopologicalOrdering ())
-//
-//            // Return variable list.
-//            Option.get <| topologicalOrdering :> IEnumerable<RandomVariable>
-
-            self.GetTopologicalOrdering ()
-
-    ///
     /// Adds a variable to this network.
     ///
     member public self.AddVariable (rv:RandomVariable) =
-        if rvs |> List.exists (fun rv' -> rv' = rv) then
+        if rvsSearchable |> Map.containsKey rv.Name then
             ()
         else
-            rvs <- rv :: rvs
-
-        onVariableAddedRemoved ()
-        ()
+            rvsSearchable <- rvsSearchable |> Map.add rv.Name rv
+            rvsOrdered <- None
+            onStructureChanged ()
+            ()
     
     ///
     /// Removes a variable from the network.
     ///
-    member public self.RemoveVariable rv =
-        rvs <- rvs |> List.partition (fun rv' -> rv' <> rv) |> fst
-
-        onVariableAddedRemoved ()
+    member public self.RemoveVariable (rv:RandomVariable) =
+        rvsSearchable <- rvsSearchable |> Map.remove rv.Name
+        rvsOrdered <- None
+        onStructureChanged ()
         ()
+
+    ///
+    /// Modifies the network so that a parent-child connection is made between
+    /// the two variables.
+    ///
+    member public self.ConnectVariables parentName childName =
+        let rvParent = rvsSearchable |> Map.tryFind parentName
+        let rvChild = rvsSearchable |> Map.tryFind childName
+        if rvParent.IsNone || rvChild.IsNone then
+            failwith "One or more variables not found in the network."
+        
+        let rvParent = rvParent.Value
+        let rvChild = rvChild.Value
+
+        let rvParent' = rvParent.CloneAndAddChild childName
+        let rvChild' = rvChild.CloneAndAddParent parentName
+
+        // TODO: Test for cycles.
+
+        rvsSearchable <- rvsSearchable |> Map.add parentName rvParent'
+        rvsSearchable <- rvsSearchable |> Map.add childName rvChild'
+        rvsOrdered <- None
+
+        onStructureChanged ()
+        ()
+
+    ///
+    /// Breaks the child-parent relationship between two variables.
+    ///
+    member public self.DisconnectVariables parentName childName = 
+        let rvParent = rvsSearchable |> Map.tryFind parentName
+        let rvChild = rvsSearchable |> Map.tryFind childName
+        if rvParent.IsNone || rvChild.IsNone then
+            failwith "One or more variables not found in the network."
+        
+        let rvParent = rvParent.Value
+        let rvChild = rvChild.Value
+
+        let rvParent' = rvParent.CloneAndRemoveChild childName
+        let rvChild' = rvChild.CloneAndRemoveParent parentName
+
+        rvsSearchable <- rvsSearchable |> Map.add parentName rvParent'
+        rvsSearchable <- rvsSearchable |> Map.add childName rvChild'
+        rvsOrdered <- None
+
+        onStructureChanged ()
+        ()
+
+    ///
+    /// Disconnects all variables in this network, leaving no parent-child 
+    /// structure.
+    ///
+    member public self.DisconnectAllVariables () =
+        rvsSearchable <- rvsSearchable |> Map.map (fun k v -> v.CloneAndDisconnect ())
+        rvsOrdered <- None
+
+        onStructureChanged ()
+        ()
+
+    ///
+    /// Assigns a new local distribution to a variable in this network.
+    /// 
+    member public self.SetLocalDistribution variableName distribution =
+        let variable = rvsSearchable |> Map.find variableName
+
+        rvsSearchable <- 
+            rvsSearchable 
+            |> Map.add variableName (variable.CloneAndSetDistribution distribution)
+        rvsOrdered <- None
+
+        ()
+
+    ///
+    /// Gets a variable by name.
+    ///
+    member public self.GetVariable variableName =
+        rvsSearchable |> Map.find variableName
+
+    ///
+    /// The variables in this network as a map.
+    ///
+    member public self.Variables
+        with get() : Map<Identifier, RandomVariable> =
+            rvsSearchable
+
+    ///
+    /// The list of variables in this network, in a topological order.
+    ///
+    member public self.VariablesOrdered
+        with get() : list<RandomVariable> = 
+
+            // Refresh topological ordering if needed.
+            if rvsOrdered.IsNone then
+                rvsOrdered <- Some (self.GetTopologicalOrdering ())
+
+            // Return variable list.
+            rvsOrdered.Value
+
+    ///
+    /// A description of all edges from parents to children.
+    ///
+    member public self.VariableEdges
+        with get() =
+            
+            rvsSearchable 
+            |> Seq.map (fun kvp -> kvp.Value)
+            |> Seq.collect (fun rv -> 
+                                    rv.Children 
+                                    |> Seq.map (fun c -> rv.Name, c ))
+
+    ///
+    /// Tests whether a two variables are related by ancestry.
+    ///
+    member public self.IsAncestor ancestor descendant =
+        // TODO: Move this into generic graph algorithms.
+
+        // Helper.
+        let rec hasDescendent start desc = 
+            let rvStart = rvsSearchable |> Map.find start
+
+            // Is descendant if child directly is, or a child has the 
+            // descendant.
+            rvStart.Children |> Seq.exists (fun c -> c = desc)
+            || rvStart.Children |> Seq.exists (fun c -> self.IsAncestor c desc)
+        
+        // Begin.
+        hasDescendent ancestor descendant        
 
     ///
     /// Raised when an edge is added or removed, i.e. when a parent 
@@ -105,11 +215,16 @@ type public BayesianNetwork(name) =
         let seed = defaultArg seed 0
         let parentLimit = defaultArg parentLimit 3
         let random = new System.Random(seed)
-       
+
+        // Reset structure.
+        self.DisconnectAllVariables ()
+        
+        // Method 1.
         let generatePairwiseSingle () =
             // Randomize the rv order, then form disjoint parent-child pairs.
             for variablePair in 
                 self.Variables 
+                |> Seq.map  (fun kvp -> kvp.Key)
                 |> Seq.sortBy (fun _ -> random.Next())
                 |> Seq.pairwise 
                 |> Seq.mapi (fun i v -> i,v)
@@ -118,26 +233,37 @@ type public BayesianNetwork(name) =
                 do
                     let v1 = fst variablePair
                     let v2 = snd variablePair
-                    v2.AddParent v1
+                    self.ConnectVariables v1 v2
 
+        // Method 2.
         let generateRandom () =
             // Randomize the rv order, then for each node pick random parents 
             // from earlier in the node list.
             let variables = 
                 self.Variables 
+                |> Seq.map  (fun kvp -> kvp.Key)
                 |> Seq.sortBy (fun _ -> random.Next()) 
                 |> Seq.toArray
-            for vid in [|1..variables.Length-1|] do
+            for vid in { 1..variables.Length-1 } do
                 let variable = variables.[vid]
                 let numParents = random.Next (parentLimit + 1)
                 for _ in [|1..numParents|] do
                     let pid = random.Next (0, vid)
-                    variable.AddParent variables.[pid]
+                    let parent = variables.[pid]
+                    self.ConnectVariables parent variable
                     
+        // Switch on mode/method.
         match mode with
             | Sequential        ->  failwith "Not implemented yet."
-            | Random            ->  generateRandom ()
-            | PairwiseSingle    ->  generatePairwiseSingle ()
+            | Random            ->  do generateRandom ();
+            | PairwiseSingle    ->  do generatePairwiseSingle ();
+            | _                 ->  failwith "Invalid option for this method."
+
+        // Notify.
+        onStructureChanged ()
+
+        // Done.
+        ()
 
     ///
     /// Learns a structure for the variables in this network based on the 
@@ -145,44 +271,76 @@ type public BayesianNetwork(name) =
     ///
     member public self.LearnStructure sufficientStatistics =
         // For now, only tree structure is supported.
-        LearnStructure.learnTreeStructure 
-            self.Variables 
-            sufficientStatistics
-            (Some (fun _ -> ()))
+        let structure =    
+            LearnStructure.learnTreeStructure 
+                self.Variables 
+                sufficientStatistics
+                (Some (fun _ -> ()))
 
-        ()
+        rvsSearchable <- structure
+        rvsOrdered <- None
+
+        // Notify.
+        onStructureChanged ()
+
+        // Done.
+        ()        
 
     ///
     /// Learns conditional distributions for the variables in this network 
     /// based on the currently configured network structure.
     ///
     member public self.LearnDistributions sufficientStatistics = 
-        LearnDistributions.learnDistributions self.Variables sufficientStatistics
+
+        // Learn.
+        let distributions = 
+            LearnDistributions.learnDistributions 
+                self.Variables 
+                sufficientStatistics
+
+        // Update variables.
+        for rv,d in distributions |> Map.toSeq do
+            self.SetLocalDistribution rv d
+
         ()
 
     // Retrieves the variables of this network in a topological ordering.
     member private self.GetTopologicalOrdering () =
         
-        // TODO: Perform this check in effect while building the ordering?
         #if DEBUG
         // Check for cycles.
+        // TODO: Perform this check in effect while building the ordering?
         let isAcyclic = 
+            let variables = 
+                self.Variables 
+                |> Seq.map (fun kvp -> kvp.Key) 
+                |> Set.ofSeq
+            let edges = 
+                self.VariableEdges 
+                |> Seq.map (fun (v1,v2) -> { Vertex1 = v1; Vertex2 = v2; Weight = 0. }) 
+                |> Set.ofSeq
+
             GraphAlgorithms.isAcyclicDirected 
-                (rvs |> Seq.map (fun rv -> rv.Name) |> Set.ofSeq)
-                (rvs |> Seq.collect (fun rv -> rv.Children |> Seq.map 
-                                                (fun c -> { Vertex1 = rv.Name; Vertex2 = c.Name; Weight = 0. }))
-                     |> Set.ofSeq)
+                variables
+                edges
+
         if isAcyclic = false then
             failwith "Graph not acyclic."
         #endif
 
+
         // The ordering.
-        let mutable ordering = [ rvs |> Seq.head ]
+        let mutable ordering = [ rvsSearchable |> Seq.head |> fun rv -> rv.Value ]
                 
         // Build ordering.
-        for rv in rvs |> Seq.skip 1 do
-            let eldestDescendent = ordering |> List.tryFind (fun v -> rv.HasDescendant v)
-            let youngestAncestor = ordering |> List.rev |> List.tryFind (fun v -> rv.HasAncestor v)
+        for rv in rvsSearchable |> Seq.map (fun kvp -> kvp.Value) |> Seq.skip 1 do
+            let eldestDescendent =
+                ordering 
+                |> List.tryFind (fun v -> self.IsAncestor rv.Name v.Name)
+            let youngestAncestor = 
+                ordering 
+                |> List.rev 
+                |> List.tryFind (fun v -> self.IsAncestor v.Name rv.Name)
 
             match eldestDescendent, youngestAncestor with
                 | None, None        ->  do 
@@ -204,11 +362,11 @@ type public BayesianNetwork(name) =
             let rv = ordering.Item i
             for j in [|0..i-1|] do
                 let a = ordering.Item j
-                if rv.HasDescendant a then
+                if self.IsAncestor rv.Name a.Name then
                     failwith "Ordering not correct."
             for j in [|i+1..ordering.Length-1|] do
                 let d = ordering.Item j
-                if rv.HasAncestor d then
+                if self.IsAncestor d.Name rv.Name then
                     failwith "Ordering not correct."
         #endif
 
@@ -220,5 +378,5 @@ type public BayesianNetwork(name) =
     ///
     member public self.Sample () = 
         let rvs = self.Variables
-        let sample = ForwardSampler.getSample rvs
+        let sample = ForwardSampler.getSample self.Variables self.VariablesOrdered
         sample
