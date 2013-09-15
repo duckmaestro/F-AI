@@ -198,8 +198,8 @@ let learnTreeStructure (rvs:Map<Identifier,RandomVariable>)
     let variableParentPermutations = 
         selfJoin 
         |> Seq.map (fun (rv1,rv2) -> 
-                let rv1' = new RandomVariable(rv1.Name, rv1.Space)
-                let rv2' = new RandomVariable(rv2.Name, rv2.Space)
+                let rv1' = rv1.CloneAndDisconnect ()
+                let rv2' = rv2.CloneAndDisconnect ()
                 do rv1'.Prior <- rv1.Prior // Hacky
                 do rv2'.Prior <- rv2.Prior
                 rv2',rv1' // Child,Parent
@@ -263,6 +263,7 @@ let learnTreeStructure (rvs:Map<Identifier,RandomVariable>)
                 |> Seq.length)
 
         let rootVariable = rvs |> Map.find rootNodeName
+        let rootVariable = rootVariable.CloneAndDisconnect ()
         network := !network |> Map.add rootVariable.Name rootVariable
 
         // Build rest of structure.
@@ -299,10 +300,15 @@ let learnTreeStructure (rvs:Map<Identifier,RandomVariable>)
 
             // For each child (from outgoing edges), parent them to the current 
             // variable.
+            let mutable parent = lastVariable
             for child in nextChildren do
                 let child = child.CloneAndDisconnect ()
-                let child = child.CloneAndAddParent lastVariable.Name
-                network := !network |> Map.add child.Name child
+                let child = child.CloneAndAddParent parent.Name
+                parent <- parent.CloneAndAddChild child.Name
+                
+                network := !network 
+                            |> Map.add child.Name child
+                            |> Map.add parent.Name parent
 
                 // Recurse.
                 appendNextVariables child

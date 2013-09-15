@@ -33,24 +33,33 @@ type GenerateStructureMode = | Sequential | Random | PairwiseSingle | Tree | Gen
 /// constant but replaceable by certain operations.
 ///
 [<System.Diagnostics.DebuggerDisplay("{Name}")>]
-type public BayesianNetwork(name) =
+type public BayesianNetwork(name, ?variables) =
     
     let mutable name = name
-    let mutable rvsSearchable : Map<Identifier,RandomVariable> = Map.empty
-    let mutable rvsOrdered = Some [ ]
+    let mutable rvsSearchable = defaultArg variables Map.empty
+    let mutable rvsOrdered = None
 
     // Published events.
-    let eventStructureChanged = new Event<_>()
-    let onStructureChanged = fun () -> 
-                                    rvsOrdered <- None;
-                                    eventStructureChanged.Trigger ();
+    let eventStructureChanged = new Event<BayesianNetwork>()
 
+
+    ///
+    /// Constructs an empty Bayesian network.
+    ///
+    new(name) = 
+        new BayesianNetwork(name, Map.empty)
 
     ///
     /// The name of this network, e.g. Weather Predictor.
     ///
     member public self.Name 
         with get() : Identifier = name
+
+    ///
+    /// Clones the Bayesian network. Registered event handlers are ignored.
+    ///
+    member public self.Clone () =
+        new BayesianNetwork(name, rvsSearchable)
 
     ///
     /// Adds a variable to this network.
@@ -61,7 +70,7 @@ type public BayesianNetwork(name) =
         else
             rvsSearchable <- rvsSearchable |> Map.add rv.Name rv
             rvsOrdered <- None
-            onStructureChanged ()
+            self.RaiseStructureChanged ()
             ()
     
     ///
@@ -70,7 +79,7 @@ type public BayesianNetwork(name) =
     member public self.RemoveVariable (rv:RandomVariable) =
         rvsSearchable <- rvsSearchable |> Map.remove rv.Name
         rvsOrdered <- None
-        onStructureChanged ()
+        self.RaiseStructureChanged ()
         ()
 
     ///
@@ -95,7 +104,7 @@ type public BayesianNetwork(name) =
         rvsSearchable <- rvsSearchable |> Map.add childName rvChild'
         rvsOrdered <- None
 
-        onStructureChanged ()
+        self.RaiseStructureChanged ()
         ()
 
     ///
@@ -117,7 +126,7 @@ type public BayesianNetwork(name) =
         rvsSearchable <- rvsSearchable |> Map.add childName rvChild'
         rvsOrdered <- None
 
-        onStructureChanged ()
+        self.RaiseStructureChanged ()
         ()
 
     ///
@@ -128,7 +137,7 @@ type public BayesianNetwork(name) =
         rvsSearchable <- rvsSearchable |> Map.map (fun k v -> v.CloneAndDisconnect ())
         rvsOrdered <- None
 
-        onStructureChanged ()
+        self.RaiseStructureChanged ()
         ()
 
     ///
@@ -207,6 +216,10 @@ type public BayesianNetwork(name) =
     [<CLIEvent>]
     member self.StructureChanged = eventStructureChanged.Publish
 
+    // Helper to raise StructureChanged event.
+    member private self.RaiseStructureChanged () =
+        do eventStructureChanged.Trigger self
+
     ///
     /// Generates an arbitrary DAG structure over the variables currently in 
     /// this network. Useful for testing.
@@ -259,9 +272,6 @@ type public BayesianNetwork(name) =
             | PairwiseSingle    ->  do generatePairwiseSingle ();
             | _                 ->  failwith "Invalid option for this method."
 
-        // Notify.
-        onStructureChanged ()
-
         // Done.
         ()
 
@@ -270,6 +280,11 @@ type public BayesianNetwork(name) =
     /// given training set of observations.
     ///
     member public self.LearnStructure sufficientStatistics =
+        
+        // Disconnect all variables, so we trigger a structure change 
+        // immediately.
+        self.DisconnectAllVariables ()
+
         // For now, only tree structure is supported.
         let structure =    
             LearnStructure.learnTreeStructure 
@@ -281,7 +296,7 @@ type public BayesianNetwork(name) =
         rvsOrdered <- None
 
         // Notify.
-        onStructureChanged ()
+        self.RaiseStructureChanged ()
 
         // Done.
         ()        
@@ -307,6 +322,10 @@ type public BayesianNetwork(name) =
     // Retrieves the variables of this network in a topological ordering.
     member private self.GetTopologicalOrdering () =
         
+        if rvsSearchable.Count = 0 then [ ]
+        else
+
+
         #if DEBUG
         // Check for cycles.
         // TODO: Perform this check in effect while building the ordering?
