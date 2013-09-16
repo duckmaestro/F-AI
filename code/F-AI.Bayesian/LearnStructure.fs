@@ -324,9 +324,16 @@ let learnTreeStructure (rvs:Map<Identifier,RandomVariable>)
 
     // Initialize progress callback. If the caller provided a callback, we will 
     // build a new graph after each progress event, then raise their callback.
-    let spanningTreeProgressCallback = 
+    
+    // Saved result from each progress cb.
+    let network = ref None
+    let spanningTreeProgressCallback rvs = 
         match progressCallback with
-        | Some cb   ->  None //Some (fun edges -> do buildGraphFromEdges edges; cb ();)
+        | Some cb   ->  Some (fun (edges:Set<_>) -> 
+                                // Build and remember the network.
+                                network := Some (buildNetwork rvs edges);
+                                // Raise callback.
+                                do cb (Option.get <| !network);)
         | None      ->  None
     
     // Begin tree structure search algorithm.
@@ -334,16 +341,14 @@ let learnTreeStructure (rvs:Map<Identifier,RandomVariable>)
         GraphAlgorithms.findMaximumWeightSpanningTree 
             vertices 
             edgesFullyConnected
-            spanningTreeProgressCallback
+            (spanningTreeProgressCallback rvs)
 
     // Build graph structure using final edges if not done already.
-    //if spanningTreeProgressCallback.IsNone then
-        //buildNetwork rvs finalEdges;
-
-    let network = buildNetwork rvs finalEdges
+    if Option.isNone <| !network then
+        network := Some (buildNetwork rvs finalEdges)
 
     // Done.
-    network
+    Option.get <| !network
 
 ///
 /// Learns a general structure for the random variables given the sufficient

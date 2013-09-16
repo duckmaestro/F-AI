@@ -285,18 +285,18 @@ type public BayesianNetwork(name, ?variables) =
         // immediately.
         self.DisconnectAllVariables ()
 
+        // Structure learning callback.
+        let learningCallback network =
+            rvsSearchable <- network
+            rvsOrdered <- None    
+            self.RaiseStructureChanged ()
+
         // For now, only tree structure is supported.
         let structure =    
             LearnStructure.learnTreeStructure 
                 self.Variables 
                 sufficientStatistics
-                (Some (fun _ -> ()))
-
-        rvsSearchable <- structure
-        rvsOrdered <- None
-
-        // Notify.
-        self.RaiseStructureChanged ()
+                (Some learningCallback)
 
         // Done.
         ()        
