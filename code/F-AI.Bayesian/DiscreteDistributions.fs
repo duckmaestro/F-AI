@@ -75,6 +75,43 @@ type DiscreteDistribution(?masses) =
             masses :> IEnumerable<_>
 
     ///
+    /// Computes the asymmetric KL-divergence D_kl(this||other). If the 
+    /// distributions do not share the same events, the result is NaN. If any 
+    /// other(i) is 0 while this(i) is non-0, the result is +Inf.
+    ///
+    member public self.KLDivergence (other:DiscreteDistribution) = 
+        let eventsFromDist (dist:DiscreteDistribution) =
+            dist.Masses |> Seq.map (fun kvp -> kvp.Key) |> Set.ofSeq
+            
+        let eventsSelf = eventsFromDist self
+        let eventsOther = eventsFromDist other
+
+        if eventsSelf <> eventsOther then
+            // If event space is different, return NaN.
+            System.Double.NaN
+        else
+            // Compute: ln (P(i) / Q(i)) * P(i)
+            let klSummand probP probQ = 
+                if probP = 0. then 
+                    0.
+                else if probQ = 0. then 
+                    System.Double.PositiveInfinity
+                else
+                    let dividend = probP / probQ
+                    let log = Math.Log dividend
+                    let weighted = log * probP
+                    weighted
+
+            // Compute and sum each term.
+            let kl = 
+                eventsSelf
+                |> Seq.map (fun event -> self.GetMass event |> Option.get, other.GetMass event |> Option.get)
+                |> Seq.map (fun (pi, qi) -> klSummand pi qi)
+                |> Seq.sum
+
+            kl
+
+    ///
     /// Equality based on masses.
     ///
     override self.Equals other =
