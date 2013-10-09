@@ -160,6 +160,11 @@ type public BayesianNetwork(name, ?variables) =
         rvsSearchable |> Map.find variableName
 
     ///
+    /// Returns true if a variable exists in the network by the given name.
+    member public self.HasVariable variableName =
+        rvsSearchable |> Map.containsKey variableName
+
+    ///
     /// The variables in this network as a map.
     ///
     member public self.Variables
