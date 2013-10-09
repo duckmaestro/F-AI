@@ -151,9 +151,6 @@ type public InferenceQuery (network, evidence) =
                 // If this variable does not have a value from evidence.
                 else
 
-                    // Grab the prior.
-                    let prior = defaultArg rv.Prior (new DirichletDistribution())
-
                     // Prepare count query.
                     let valueCounts = // A sequence of value,count tuples.
                         particleHistory
@@ -162,32 +159,20 @@ type public InferenceQuery (network, evidence) =
                         |> Seq.groupBy (fun value -> value)
                         |> Seq.map (fun (key,group) -> (key, group |> Seq.length |> float))
                         |> Seq.cache
-            
-                    // Incorporate prior distribution. 
-                    // FIXME: Is this reasonable to do?
-                    let valueCounts' = 
-                        seq { 
-                            for valueInSpace in rv.Space.Values do    
-                                let countFromParticles = valueCounts |> Seq.tryFind (fun (v,k) -> v = valueInSpace)
-                                let countFromPrior = defaultArg (prior.GetParameter (valueInSpace)) 0.
-                        
-                                let adjustedCount = 
-                                    match countFromParticles with
-                                        | None          ->  countFromPrior
-                                        | Some parVC    ->  snd parVC + countFromPrior
-
-                                yield valueInSpace,adjustedCount
-                        }
-                        |> Seq.toArray
 
                     // Adjusted value count.
-                    let totalCount = 
-                        (float numParticlesToUse)
-                        + (prior.Parameters |> Seq.sumBy (fun kvp -> kvp.Value))
+                    let totalCount = float numParticlesToUse
             
                     // Build a posterior distribution from particle value counts.
-                    let mutable distribution = Map.empty
-                    for (value,count) in valueCounts' do
+
+                    // Start with 0 counts.
+                    let mutable distribution = 
+                        rv.Space.Values 
+                        |> Seq.map (fun v -> v, 0.)
+                        |> Map.ofSeq 
+
+                    // Add non-zero counts.
+                    for (value,count) in valueCounts do
                         let mass = count / totalCount
                         distribution <- distribution |> Map.add value mass
 

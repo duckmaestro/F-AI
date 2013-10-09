@@ -28,23 +28,29 @@ let doDemoBayesian =
 
     // Load traffic data set.
     let dataSetTraffic = TrafficLoader.LoadFromFile "traffic.txt" :> IObservationSet
-    let sufficientStatistics = new SufficientStatistics(dataSetTraffic)
-
+    
     // Print first sample's value for 'a5'.
     let firstSample = dataSetTraffic |> Seq.head
     printfn "%f" (firstSample.TryValueForVariable "a5" |> Option.get)
 
     // Grab variable names.
-    let variableNames = firstSample.VariableNames
+    let variableNames = dataSetTraffic.Variables |> Seq.map (fun kvp -> kvp.Key)
 
+    // Define prior parameters.
+    let prior = new DirichletDistribution (Map.ofList [ 0.,1. ; 1.,1. ; 2.,1. ; 3.,1. ])
+    let priors = 
+        variableNames 
+        |> Seq.map (fun name -> name, prior)
+        |> Map.ofSeq
+
+    // Prepare sufficient statistics object.
+    let sufficientStatistics = new SufficientStatistics(dataSetTraffic, priors)
+  
     // Build a Bayesian network.
     let bn = new BayesianNetwork "Traffic"
-    let prior = new DirichletDistribution (Map.ofList [ 0.,1. ; 1.,1. ; 2.,1. ; 3.,1. ])
     for variableName in variableNames do
         let space = dataSetTraffic.Variables |> Map.find variableName
         let rv = new RandomVariable(variableName, space)
-
-        rv.Prior <- Some prior
         bn.AddVariable rv
     ()
 

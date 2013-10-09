@@ -70,12 +70,11 @@ let public learnConditionalDistribution
                 )
         namedPermutations
 
-    // Given a map of variable values to counts, forms a 
-    // discrete distribution.
-    let makeDistribution (counts:Map<Real,Integer>) (prior:DirichletDistribution) =
+    // Given a map of variable values to counts (which may be fractional due to 
+    // effects of a prior), forms a discrete distribution.
+    let makeDistribution (counts:Map<Real,Real>) =
         let totalFromData = counts |> Map.fold (fun s k v -> s + float v) 0.0
-        let totalFromPrior = prior.Parameters |> Seq.sumBy (fun kvp -> kvp.Value)
-        let total = totalFromData + totalFromPrior
+        let total = totalFromData
         
         // Not enough data and no prior.
         if total = 0.0 then 
@@ -86,9 +85,8 @@ let public learnConditionalDistribution
             let mutable distribution = Map.empty
             for kvp in counts do
                 let rvValue = kvp.Key
-                let rvValueCount = float kvp.Value
-                let rvPrior = float (defaultArg (prior.GetParameter rvValue) 0.)
-                let mass = (rvValueCount + rvPrior) / total
+                let rvValueCount = kvp.Value
+                let mass = rvValueCount / total
                 distribution <- distribution |> Map.add rvValue mass
             Some (new DiscreteDistribution(distribution))
 
@@ -105,7 +103,6 @@ let public learnConditionalDistribution
         
     // Prepare conditional distributions.
     let distributions =
-        let prior = defaultArg dv.Prior (new DirichletDistribution())
         let parentConfigs = 
             if parentConfigs |> Seq.length = 0 then
                 Seq.singleton (new Observation())
@@ -121,7 +118,7 @@ let public learnConditionalDistribution
         let distributions =
             parentConfigs
             |> Seq.map (fun config -> config, countConditionalObservations config)
-            |> Seq.map (fun (config,count) -> config, makeDistribution count prior)
+            |> Seq.map (fun (config,count) -> config, makeDistribution count)
             |> Map.ofSeq
 
         distributions

@@ -27,12 +27,11 @@ open System.Collections.Generic
 /// and mutable distribution.
 ///
 [<System.Diagnostics.DebuggerDisplay("{Name}")>]
-type public RandomVariable(name, space, ?distributions, ?parents, ?children, ?prior, ?userData) =
+type public RandomVariable(name, space, ?distributions, ?parents, ?children, ?userData) =
     
     let mutable distributions = defaultArg distributions (new DistributionSet ())
     let mutable name = name
     let mutable space = space
-    let mutable prior = defaultArg prior None
     let mutable userData = defaultArg userData null
     
     let parents = defaultArg parents Set.empty
@@ -58,14 +57,14 @@ type public RandomVariable(name, space, ?distributions, ?parents, ?children, ?pr
             failwith "Cannot add self as parent."
 
         let parents = parents |> Set.add parentName
-        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+        new RandomVariable(name, space, distributions, parents, children, userData)
 
     ///
     /// Clones the random variable and removes a parent.
     ///
     member public self.CloneAndRemoveParent parentName =
         let parents = parents |> Set.remove parentName
-        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+        new RandomVariable(name, space, distributions, parents, children, userData)
 
     ///
     /// Clones the random variable and adds a new child.
@@ -75,26 +74,26 @@ type public RandomVariable(name, space, ?distributions, ?parents, ?children, ?pr
             failwith "Cannot add self as child."
 
         let children = children |> Set.add childName
-        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+        new RandomVariable(name, space, distributions, parents, children, userData)
 
     ///
     /// Clones the random variable and removes a child.
     ///
     member public self.CloneAndRemoveChild childName =
         let children = children |> Set.remove childName
-        new RandomVariable(name, space, distributions, parents, children, prior, userData)
+        new RandomVariable(name, space, distributions, parents, children, userData)
 
     ///
     /// Clones the random variable and removes all parents and children.
     /// 
     member public self.CloneAndDisconnect () =
-        new RandomVariable(name, space, distributions, Set.empty, Set.empty, prior, userData)
+        new RandomVariable(name, space, distributions, Set.empty, Set.empty, userData)
 
     ///
     /// Clones the random variable and assigns a new local distribution.
     ///
     member public self.CloneAndSetDistribution distribution =
-        new RandomVariable(name, space, distribution, parents, children, prior, userData)
+        new RandomVariable(name, space, distribution, parents, children, userData)
 
     ///
     /// The name of this variable, e.g. Earthquake.
@@ -124,14 +123,6 @@ type public RandomVariable(name, space, ?distributions, ?parents, ?children, ?pr
         match distribution with
         | None      ->  failwith "Distribution not found."
         | Some d    ->  d
-
-    ///
-    /// The Dirichlet prior parameters.
-    /// TODO: Detach this from RandomVariable.
-    ///
-    member public self.Prior
-        with get() : option<DirichletDistribution>  =   prior
-        and set(value)                              =   prior <- value
 
     ///
     /// The parent variables to this variable.

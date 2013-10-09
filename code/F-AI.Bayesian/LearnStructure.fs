@@ -200,8 +200,6 @@ let learnTreeStructure (rvs:Map<Identifier,RandomVariable>)
         |> Seq.map (fun (rv1,rv2) -> 
                 let rv1' = rv1.CloneAndDisconnect ()
                 let rv2' = rv2.CloneAndDisconnect ()
-                do rv1'.Prior <- rv1.Prior // Hacky
-                do rv2'.Prior <- rv2.Prior
                 rv2',rv1' // Child,Parent
             )
             
