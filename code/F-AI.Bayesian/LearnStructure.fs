@@ -19,6 +19,20 @@ module internal FAI.Bayesian.LearnStructure
 
 open GraphAlgorithms
 
+///
+/// Describes an action to take in the process of searching for optimal 
+/// structure.
+///
+type private StructureSearchAction =
+        | AddEdge of Identifier * Identifier
+        | RemoveEdge of Identifier * Identifier
+        | ReverseEdge of Identifier * Identifier
+
+type private StructureSearchRecord = { 
+        Variables : Map<Identifier, RandomVariable>
+        FamilyScores : Map<Identifier, Real>
+    }
+
 
 ///
 /// Computes the empirical mutual information between two variables.
@@ -27,8 +41,6 @@ let computeEmpiricalMutualInformation
         (x:Identifier * Space)
         (ys:list<Identifier * Space>)
         (sufficientStatistics:SufficientStatistics) =
-
-    // TODO: Add support for a prior to help with unseen observations.
     
     let mutable sum = 0.
     let normalizer = 1. / (float <| sufficientStatistics.GetObservationCount (new Observation()))
@@ -39,7 +51,6 @@ let computeEmpiricalMutualInformation
     for xValue in xSpace.Values do
         let xObservation = new Observation(xName, xValue)
         let xCount = float <| sufficientStatistics.GetObservationCount xObservation
-        let xCount = if xCount > 0. then xCount else 1. // HACK: until priors supported.
         let xProb = xCount * normalizer
 
         // Recursion to explode y values and sum over them.
@@ -352,8 +363,185 @@ let learnTreeStructure (rvs:Map<Identifier,RandomVariable>)
 /// Learns a general structure for the random variables given the sufficient
 /// statistics.
 ///
-let learnGeneralStructure (rvs:seq<RandomVariable>) 
-                          (sufficientStatistics:SufficientStatistics) 
-                          (progressCallback:Option<_>) = 
+let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>) 
+                          (sufficientStatistics:SufficientStatistics)
+                          (parentLimit)
+                          (progressCallback:Option<_>) =     
 
-    failwith "Not implemented yet."
+    // Helper: Wrapper around the DAG acyclic check.
+    let computeIsAcyclic (rvs:Map<Identifier,RandomVariable>) =
+        let vertices = 
+            rvs 
+            |> Map.toSeq 
+            |> Seq.map (fun kvp -> fst kvp) 
+            |> Set.ofSeq
+        let edges = 
+            rvs 
+            |> Map.toSeq 
+            |> Seq.collect (fun (_,rv) -> rv.Children 
+                                          |> Seq.map (fun c -> { Vertex1 = rv.Name; Vertex2 = c; Weight = 0.; })
+                            )
+            |> Set.ofSeq
+        GraphAlgorithms.isAcyclicDirected vertices edges
+
+
+    // Helper: Computes new structure record given a traversal action.
+    //         Returns none if the action would result in an invalid DAG.
+    let computeStructureRecord structureOld action = 
+        
+        // Grab input.
+        let variablesOld = structureOld.Variables
+        let scoresOld = structureOld.FamilyScores
+        
+        // Prepare output.
+        let mutable dirtyVariables = []
+        let mutable variablesNew = variablesOld
+        let mutable scoresNew = scoresOld
+        let mutable isAcyclic = false
+
+        // Alter structure.
+        match action with
+        | AddEdge (a,b) ->
+            let va = variablesOld |> Map.find a
+            let vb = variablesOld |> Map.find b
+
+            let va' = va.CloneAndAddChild b
+            let vb' = vb.CloneAndAddParent a
+
+            variablesNew <- variablesNew |> Map.add a va'
+            variablesNew <- variablesNew |> Map.add b vb'
+
+            isAcyclic <- computeIsAcyclic variablesNew
+            dirtyVariables <- a :: b :: []
+
+        | RemoveEdge (a,b) ->
+            let va = variablesOld |> Map.find a
+            let vb = variablesOld |> Map.find b
+
+            let va' = va.CloneAndRemoveChild b
+            let vb' = vb.CloneAndRemoveParent a
+
+            variablesNew <- variablesNew |> Map.add a va'
+            variablesNew <- variablesNew |> Map.add b vb'
+
+            isAcyclic <- computeIsAcyclic variablesNew
+            dirtyVariables <- a :: b :: []
+
+        | ReverseEdge (a,b) ->
+            let va = variablesOld |> Map.find a
+            let vb = variablesOld |> Map.find b
+
+            // Remove edge from a to b.
+            let va' = va.CloneAndRemoveChild b
+            let vb' = vb.CloneAndRemoveParent a
+            
+            // Add edge from b to a.
+            let vb' = vb'.CloneAndAddChild a
+            let va' = va'.CloneAndAddParent b
+
+            variablesNew <- variablesNew |> Map.add a va'
+            variablesNew <- variablesNew |> Map.add b vb'
+
+            isAcyclic <- computeIsAcyclic variablesNew
+            dirtyVariables <- a :: b :: []
+
+
+        // If cyclic, quit now.
+        if isAcyclic <> true then
+            None
+        else
+            // Compute updated scores for variables involved.
+            for variableName in dirtyVariables do
+                let variable = variablesNew |> Map.find variableName
+                let parents = variable.GetParentVariables variablesNew
+                let score = computeFamilyScore variable parents sufficientStatistics
+                scoresNew <- scoresNew |> Map.add variableName score
+
+            // Done.
+            Some { Variables = variablesNew; FamilyScores = scoresNew }
+
+
+    // Helper: Tallies total family score.
+    let computeTotalScore searchRecord =
+        searchRecord.FamilyScores |> Map.toSeq |> Seq.sumBy (fun v_s -> snd v_s)
+
+    // Helper: Given the current search state, picks the next best move.
+    let computeNextBestAction searchRecord = 
+        let variables = searchRecord.Variables
+        let totalScoreOld = computeTotalScore searchRecord
+        let candidates = ref Map.empty // Sorted by negative total score.
+        let variablesAsSeq = variables |> Map.toSeq |> Seq.map (fun (k,v) -> v)
+
+        // For each variable in the network, consider options.
+        for v1 in variablesAsSeq do
+
+            // Helper: Adds a candidate if not empty, to the 'candidates' map.
+            let addCandidateChecked candidate =
+                match candidate with
+                    | None          ->  () // Invalid DAG.
+                    | Some record   ->  
+                        let score = computeTotalScore record
+                        candidates := !candidates |> Map.add (-score) record
+
+            // Candidate edge additions.
+            for v2 in variablesAsSeq do
+                if v1.HasChild v2.Name 
+                    || v1.HasParent v2.Name 
+                    || v1.Name = v2.Name 
+                    || v2.Parents |> Seq.length >= parentLimit then ()
+                else
+                    let candidate = computeStructureRecord searchRecord (AddEdge (v1.Name, v2.Name))
+                    addCandidateChecked candidate
+            
+            // Candidate edge removals.
+            for v2Name in v1.Children do
+                let candidate = computeStructureRecord searchRecord (RemoveEdge (v1.Name, v2Name))
+                addCandidateChecked candidate
+
+            // Candidate edge reversals.
+            if v1.Children |> Seq.length >= parentLimit then ()
+            else
+                for v2Name in v1.Children do
+                    let candidate = computeStructureRecord searchRecord (ReverseEdge (v1.Name, v2Name))
+                    addCandidateChecked candidate
+        
+
+        // Given the candidates, pick the best.
+        let bestCandidateScore,bestCandidateRecord = !candidates |> Map.toSeq |> Seq.head
+        let bestCandidateScore = -bestCandidateScore // Undo score negation.
+
+        // Check score, and return best choice if better than present.
+        if bestCandidateScore > totalScoreOld then
+            Some bestCandidateRecord
+        else
+            None
+
+    //
+    // Algorithm.
+    //
+
+    let mutable startScores = Map.empty
+    for rv in rvs |> Map.toSeq |> Seq.map (fun kvp -> snd kvp) do
+        let parents = rv.GetParentVariables rvs
+        let score = computeFamilyScore rv parents sufficientStatistics
+        startScores <- startScores |> Map.add rv.Name score
+
+    let mutable searchState = { Variables = rvs; FamilyScores = startScores; }
+    let mutable continueSearch = true
+    while continueSearch do
+        let searchStateNew = computeNextBestAction searchState
+        
+        match searchStateNew with
+        | None                  ->  
+            // At a local maxima. Halt.
+            do continueSearch <- false;
+
+        | Some searchStateNew   ->  
+            // Store new state & raise callback.
+            do searchState <- searchStateNew
+            match progressCallback with
+            | None      ->  do ();
+            | Some cb   ->  do cb searchStateNew.Variables
+
+    // Done.
+    searchState.Variables

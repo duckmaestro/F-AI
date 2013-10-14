@@ -55,8 +55,7 @@ let doDemoBayesian =
     ()
 
     // Learn a tree structure.
-    bn.LearnStructure sufficientStatistics
-    //bn.GenerateStructure GenerateStructureMode.Random
+    bn.LearnStructure (sufficientStatistics, Tree)
 
     // Learn CPTs.
     bn.LearnDistributions sufficientStatistics

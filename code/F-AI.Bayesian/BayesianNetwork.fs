@@ -26,7 +26,12 @@ open System.Collections.Generic
 ///
 /// Structure learning classes.
 ///
-type GenerateStructureMode = | Sequential | Random | PairwiseSingle | Tree | General
+type StructureClass = 
+    | Sequential 
+    | Random 
+    | PairwiseSingle 
+    | Tree 
+    | General
 
 ///
 /// A Bayesian network. Network structure is mutable. Variable instances are
@@ -284,7 +289,14 @@ type public BayesianNetwork(name, ?variables) =
     /// Learns a structure for the variables in this network based on the 
     /// given training set of observations.
     ///
-    member public self.LearnStructure sufficientStatistics =
+    member public self.LearnStructure ( sufficientStatistics,
+                                        mode,
+                                        ?seed, 
+                                        ?parentLimit ) =
+        
+        let seed = defaultArg seed 0
+        let parentLimit = defaultArg parentLimit 5
+        let random = new System.Random(seed)
         
         // Disconnect all variables, so we trigger a structure change 
         // immediately.
@@ -297,11 +309,25 @@ type public BayesianNetwork(name, ?variables) =
             self.RaiseStructureChanged ()
 
         // For now, only tree structure is supported.
-        let structure =    
-            LearnStructure.learnTreeStructure 
-                self.Variables 
-                sufficientStatistics
-                (Some learningCallback)
+        match mode with
+        | Tree ->  
+            let structure =    
+                LearnStructure.learnTreeStructure 
+                    self.Variables 
+                    sufficientStatistics
+                    (Some learningCallback)
+            ()
+
+        | General ->
+            let structure =
+                LearnStructure.learnGeneralStructure
+                    self.Variables
+                    sufficientStatistics
+                    parentLimit
+                    (Some learningCallback)
+            ()
+
+        | _ -> failwith "Invalid mode for this method."
 
         // Done.
         ()        

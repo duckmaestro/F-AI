@@ -135,6 +135,38 @@ type public RandomVariable(name, space, ?distributions, ?parents, ?children, ?us
     ///
     member public self.Children
         with get() = children :> IEnumerable<_>
+
+    ///
+    /// Returns true if the given variable is a child of this variable.
+    ///
+    member public self.HasChild variableName =
+        children |> Set.contains variableName
+
+    ///
+    /// Returns true if the given variable is a parent to this variable.
+    ///
+    member public self.HasParent variableName =
+        parents |> Set.contains variableName
+
+    ///
+    /// Resolves the parent variables using the provided variable map.
+    ///
+    member public self.GetParentVariables (map:IDictionary<Identifier,RandomVariable>) =
+        seq {
+            for parentName in parents do
+                let parentVariable = map.Item(parentName)
+                yield parentVariable
+        }
+
+    ///
+    /// Resolves the children variables using the provided variable map.
+    ///
+    member public self.GetChildrenVariables (map:IDictionary<Identifier,RandomVariable>) =
+        seq {
+            for childName in children do
+                let childVariable = map.Item(childName)
+                yield childVariable
+        }
     
     ///
     /// An arbitrary object reference, kept but ignored.
