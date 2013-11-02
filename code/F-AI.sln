@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "F-AI", "F-AI\F-AI.fsproj", "{AE3D3BF8-4F2E-4C3F-BB5B-2621A51B6B63}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Demos", "Demos\Demos.fsproj", "{403D6BDF-9CAB-4773-B134-1B3FC527853D}"
