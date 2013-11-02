@@ -13,10 +13,7 @@ Completed but not robustly tested:
  ** CPT learning from discrete-valued, complete training data
  ** Inference queries using Gibbs sampling
  ** Tree structure learning
- 
-In progress summer '13:
- * Enhanacements to Bayesian network code.
- ** Structure learning
+ ** General structure learning
 
 TBD:
  * k-means clustering
