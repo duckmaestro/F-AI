@@ -37,7 +37,7 @@ let doDemoBayesian =
     let variableNames = dataSetTraffic.Variables |> Seq.map (fun kvp -> kvp.Key)
 
     // Define prior parameters.
-    let prior = new DirichletDistribution (Map.ofList [ 0.,1. ; 1.,1. ; 2.,1. ; 3.,1. ])
+    let prior = new DirichletDistribution (Map.ofList [ 0.f,1. ; 1.f,1. ; 2.f,1. ; 3.f,1. ])
     let priors = 
         variableNames 
         |> Seq.map (fun name -> name, prior)

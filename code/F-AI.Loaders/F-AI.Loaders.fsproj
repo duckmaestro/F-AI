@@ -46,6 +46,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataLoader-USCensus1990.fs" />
     <Compile Include="DataLoader-USPS9.fs" />
     <Compile Include="DataLoader-Traffic.fs" />
   </ItemGroup>

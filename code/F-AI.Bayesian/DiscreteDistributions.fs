@@ -39,7 +39,7 @@ type DiscreteDistribution(?masses) =
     ///
     /// Initializes a distribution using a sequence of tuples.
     ///
-    new(masses:seq<System.Tuple<Real,Real>>) =
+    new(masses:seq<System.Tuple<EventValue,ProbabilityMass>>) =
         let masses = 
             masses 
             |> Seq.map (fun t -> t.Item1 ,t.Item2)
@@ -49,9 +49,11 @@ type DiscreteDistribution(?masses) =
     ///
     /// Assign a probability mass to a particular value.
     ///
-    member public self.CloneAndSetMass (value:Real) (mass:Real) =
-        if Real.IsNaN value then 
+    member public self.CloneAndSetMass (value:EventValue) (mass:ProbabilityMass) =
+        if EventValue.IsNaN value then 
             invalidArg "value" "Value must not be missing." 
+        else if ProbabilityMass.IsNaN mass || ProbabilityMass.IsInfinity mass then
+            invalidArg "mass" "Mass must be finite."
         else 
             new DiscreteDistribution (masses |> Map.add value mass)
 

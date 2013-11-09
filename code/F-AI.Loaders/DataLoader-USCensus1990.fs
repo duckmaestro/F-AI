@@ -14,7 +14,7 @@
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
-module FAI.Loaders.TrafficLoader
+module FAI.Loaders.USCensus1990
 
 
 // namespaces
@@ -28,21 +28,17 @@ open FAI.Bayesian
 // private functions
 
 let private ParseSample (variableNames:seq<String>) (row:String) = 
-    let components = row.Split(' ')
+    let components = row.Split(',')
     let componentsNum = components |> Seq.length
 
     let values =
         components
         |> Seq.zip variableNames
+        |> Seq.filter (fun (n,t) -> n <> "caseid")
         |> Seq.map
             (fun (n,t) -> 
                 n,
-                match t with 
-                | "a0" -> 0.f 
-                | "a1" -> 1.f
-                | "a2" -> 2.f
-                | "a3" -> 3.f
-                | _ -> EventValue.NaN 
+                EventValue.Parse(t)
             )
         |> Map.ofSeq
         |> fun s -> new Observation(s)
@@ -55,22 +51,24 @@ let private ParseSample (variableNames:seq<String>) (row:String) =
 let LoadFromFile filePath =
     
     let name = System.IO.Path.GetFileNameWithoutExtension filePath
-    
-    let fileAsString:String = File.ReadAllText filePath
-    
+        
     let rows = 
-        fileAsString.Split '\n'
-        |> Seq.map (fun r -> r.Trim ())
+        File.ReadLines filePath
 
     let header =
         rows
         |> Seq.head
-        |> fun s -> s.Split ' '
+        |> fun s -> s.Split ','
+        |> Seq.map (fun h -> match (h.Chars 0) with 
+                                            | 'i' ->  h.Substring(1)
+                                            | 'd' ->  h.Substring(1)
+                                            | _   -> h)
         |> Seq.toArray
 
     let samplesAsStrings = 
         rows
         |> Seq.skip 1
+        |> Seq.take 10000
 
     let samples =
         samplesAsStrings
@@ -78,13 +76,35 @@ let LoadFromFile filePath =
         |> Seq.map (fun r -> ParseSample header r)
         |> Seq.toArray
 
-    let defaultSpace = 
-        Space.Discrete 
-            (Map.ofList [ 0.f,"none" ; 1.f,"light" ; 2.f,"medium" ; 3.f,"heavy" ])
+    // Build spaces.
+    let mutable mins = Map.empty
+    let mutable maxs = Map.empty
+
+    let header = header |> Seq.filter (fun h -> h <> "caseid") |> Seq.cache
+
+    for s in samples do
+        for h in header do
+            let ifNotFound def exp = defaultArg exp def
+            let value = Option.get <| s.TryValueForVariable h
+            let min' = mins |> Map.tryFind h |> ifNotFound EventValue.MaxValue
+            let max' = maxs |> Map.tryFind h |> ifNotFound EventValue.MinValue
+            if value < min' then
+                mins <- mins |> Map.add h value
+            else if value > max' then
+                maxs <- maxs |> Map.add h value
+            ()
+
+    let mins = mins
+    let maxs = maxs
+
+    let makeSpace variableName = 
+        let min = mins |> Map.tryFind variableName |> Option.get
+        let max = maxs |> Map.tryFind variableName |> Option.get
+        Space.MakeIntegerSpace min max
 
     let allSpaces = 
         header
-        |> Seq.map (fun variableName -> variableName,defaultSpace)
+        |> Seq.map (fun variableName -> variableName, (makeSpace variableName) )
         |> Map.ofSeq
         
     new InMemoryObservationSet (name, allSpaces, samples, filePath)

@@ -21,8 +21,11 @@ namespace FAI.Bayesian
 /// An identifier for a random variable.
 type Identifier = System.String
 
-/// A continous-valued number. NaN if missing.
-type Real = System.Double
+/// A probability mass.
+type ProbabilityMass = System.Double
+
+/// An event's numerical value. NaN <=> not measured.
+type EventValue = System.Single
 
 /// An integer.
 type Integer = System.Int32

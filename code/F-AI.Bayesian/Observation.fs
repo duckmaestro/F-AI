@@ -130,9 +130,9 @@ type public Observation(variableValues) =
     ///
     /// Support for IEnumerable.
     ///
-    interface IEnumerable<KeyValuePair<Identifier, Real>> with
+    interface IEnumerable<KeyValuePair<Identifier, EventValue>> with
         member self.GetEnumerator () =
-            let vv = self._variableValues :> IEnumerable<KeyValuePair<Identifier, Real>>
+            let vv = self._variableValues :> IEnumerable<KeyValuePair<Identifier, EventValue>>
             vv.GetEnumerator ()
 
     interface IEnumerable with

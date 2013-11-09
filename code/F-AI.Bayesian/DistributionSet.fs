@@ -34,7 +34,7 @@ type DistributionSet(?distributions) =
     // Helper. Ensures the observation has no null variable names or missing 
     // values.
     let ensureStrictObservation (observation:Observation) =
-        if observation |> Seq.exists (fun kvp -> Real.IsNaN kvp.Value) then
+        if observation |> Seq.exists (fun kvp -> EventValue.IsNaN kvp.Value) then
             failwith "Observation value cannot be missing." 
         else
             ()

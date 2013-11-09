@@ -20,17 +20,17 @@ open FAI.Bayesian
 
 let Run =
     let obs1 = new Observation()
-    let obs1x = obs1 .+. ("X", 2.0)
+    let obs1x = obs1 .+. ("X", 2.0f)
 
     let obs2 = new Observation()
-    let obs2x = obs2 .+. ("X", 2.00)
+    let obs2x = obs2 .+. ("X", 2.0f)
 
     let obs2nx = obs2x .-. "X"
 
-    let obs3xy = new Observation() .+. ("X", 3.00) .+. ("Y", 0.00)
+    let obs3xy = new Observation() .+. ("X", 3.0f) .+. ("Y", 0.0f)
     let obs3nxny = obs3xy .-. "X" .-. "Y"
 
-    let obs1xx = obs1x .+. ("X", 33.0)
+    let obs1xx = obs1x .+. ("X", 33.0f)
 
     assert (obs1 = obs2)
     assert (obs1x = obs2x)

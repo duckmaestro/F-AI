@@ -25,7 +25,7 @@ open System.Collections.Generic
 /// Describes a space of permitted values.
 ///
 type Space = 
-    | Discrete of Map<Real,String>      // A list of valid values and their labels.
+    | Discrete of Map<EventValue,String>      // A list of valid values and their labels.
 
     member public self.Size
         with get() = 
@@ -46,4 +46,9 @@ type Space =
         | Some map'     -> map' |> Map.find value
         | None          -> ""
             
+    static member public MakeIntegerSpace min max =
+        let values = { min .. 1.0f .. max }
+        let names = values |> Seq.map (fun v -> v.ToString())
+        let map = Map.ofSeq (Seq.zip values names)
+        Discrete map
         

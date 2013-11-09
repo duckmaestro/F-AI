@@ -24,7 +24,7 @@ open System.Collections.Generic
 ///
 /// A dirichlet distribution.
 ///
-type DirichletDistribution (parameters:Map<Real,Real>) = 
+type DirichletDistribution (parameters:Map<EventValue,ProbabilityMass>) = 
 
     //
     // The parameters, indexed by event value.
@@ -42,7 +42,7 @@ type DirichletDistribution (parameters:Map<Real,Real>) =
     /// Assigns a Dirichlet parameter for the given event value.
     ///
     member public self.SetParameter value parameter =
-        if Real.IsNaN value then 
+        if EventValue.IsNaN value then 
             invalidArg "value" "Value must not be missing." 
         else if parameter <= 0. then
             invalidArg "parameter" "Parameter must be positive."

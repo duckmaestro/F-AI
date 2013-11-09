@@ -72,7 +72,7 @@ let public learnConditionalDistribution
 
     // Given a map of variable values to counts (which may be fractional due to 
     // effects of a prior), forms a discrete distribution.
-    let makeDistribution (counts:Map<Real,Real>) =
+    let makeDistribution (counts:Map<EventValue,float>) =
         let totalFromData = counts |> Map.fold (fun s k v -> s + float v) 0.0
         let total = totalFromData
         

@@ -30,7 +30,7 @@ type private StructureSearchAction =
 
 type private StructureSearchRecord = { 
         Variables : Map<Identifier, RandomVariable>
-        FamilyScores : Map<Identifier, Real>
+        FamilyScores : Map<Identifier, float>
     }
 
 
