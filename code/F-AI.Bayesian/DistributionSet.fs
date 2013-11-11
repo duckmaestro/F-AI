@@ -79,14 +79,19 @@ type DistributionSet(?distributions) =
     ///
     /// Stores a conditional distribution for the given observation.
     ///
-    member public self.CloneAndAddDistribution (conditionedOnObservation)
+    member public self.CloneAndAddDistribution (conditionedOn)
                                                (distribution:DiscreteDistribution) =
-        
         // Check observation.
-        ensureStrictObservation conditionedOnObservation
+        ensureStrictObservation conditionedOn
 
         // Create new.
-        new DistributionSet(distributions |> Map.add conditionedOnObservation distribution)
+        new DistributionSet(distributions |> Map.add conditionedOn distribution)
+
+    ///
+    /// Removes a conditional distribution from the set, returning a new set.
+    ///
+    member public self.CloneAndRemoveDistribution conditionedOn =
+        new DistributionSet(distributions |> Map.remove conditionedOn)
 
     ///
     /// Returns a sequence over the distributions in this table.

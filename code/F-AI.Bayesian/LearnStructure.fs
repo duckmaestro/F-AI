@@ -24,13 +24,26 @@ open GraphAlgorithms
 /// structure.
 ///
 type private StructureSearchAction =
-        | AddEdge of Identifier * Identifier
-        | RemoveEdge of Identifier * Identifier
-        | ReverseEdge of Identifier * Identifier
+    | AddEdge of Identifier * Identifier
+    | RemoveEdge of Identifier * Identifier
+    | ReverseEdge of Identifier * Identifier
+
+    member self.Variables =
+        match self with
+        | AddEdge (a,b)     -> [| a; b; |]
+        | RemoveEdge (a,b)  -> [| a; b; |]
+        | ReverseEdge (a,b) -> [| a; b; |]
+
 
 type private StructureSearchRecord = { 
+        // The variables and their relationships at this stage of search.
         Variables : Map<Identifier, RandomVariable>
+        // The computed family scores for each variable at this stage of search.
         FamilyScores : Map<Identifier, float>
+        // The total score of this structure.
+        TotalScore : float
+        // Cache of actions to delta improvement to total score.
+        ActionScoresCache : Map<StructureSearchAction, float>
     }
 
 
@@ -384,26 +397,22 @@ let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>)
             |> Set.ofSeq
         GraphAlgorithms.isAcyclicDirected vertices edges
 
+    // Helper: Tallies total family score.
+    let computeTotalScore familyScores =
+        familyScores |> Map.toSeq |> Seq.sumBy (fun v_s -> snd v_s)
 
-    // Helper: Computes new structure record given a traversal action.
-    //         Returns none if the action would result in an invalid DAG.
-    let computeStructureRecord structureOld action = 
+    // Helper: Creates a new set of variables after applying the specified action,
+    //         or returns None if the application results in a cyclic graph.
+    let computeActionApplication action (variables:Map<Identifier,RandomVariable>) =
         
-        // Grab input.
-        let variablesOld = structureOld.Variables
-        let scoresOld = structureOld.FamilyScores
-        
-        // Prepare output.
-        let mutable dirtyVariables = []
-        let mutable variablesNew = variablesOld
-        let mutable scoresNew = scoresOld
+        let mutable variablesNew = variables
         let mutable isAcyclic = false
-
+        
         // Alter structure.
         match action with
         | AddEdge (a,b) ->
-            let va = variablesOld |> Map.find a
-            let vb = variablesOld |> Map.find b
+            let va = variables |> Map.find a
+            let vb = variables |> Map.find b
 
             let va' = va.CloneAndAddChild b
             let vb' = vb.CloneAndAddParent a
@@ -412,11 +421,10 @@ let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>)
             variablesNew <- variablesNew |> Map.add b vb'
 
             isAcyclic <- computeIsAcyclic variablesNew
-            dirtyVariables <- a :: b :: []
 
         | RemoveEdge (a,b) ->
-            let va = variablesOld |> Map.find a
-            let vb = variablesOld |> Map.find b
+            let va = variables |> Map.find a
+            let vb = variables |> Map.find b
 
             let va' = va.CloneAndRemoveChild b
             let vb' = vb.CloneAndRemoveParent a
@@ -425,11 +433,10 @@ let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>)
             variablesNew <- variablesNew |> Map.add b vb'
 
             isAcyclic <- computeIsAcyclic variablesNew
-            dirtyVariables <- a :: b :: []
 
         | ReverseEdge (a,b) ->
-            let va = variablesOld |> Map.find a
-            let vb = variablesOld |> Map.find b
+            let va = variables |> Map.find a
+            let vb = variables |> Map.find b
 
             // Remove edge from a to b.
             let va' = va.CloneAndRemoveChild b
@@ -443,78 +450,155 @@ let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>)
             variablesNew <- variablesNew |> Map.add b vb'
 
             isAcyclic <- computeIsAcyclic variablesNew
-            dirtyVariables <- a :: b :: []
 
-
-        // If cyclic, quit now.
-        if isAcyclic <> true then
-            None
+        // Done.
+        if isAcyclic then
+            Some variablesNew
         else
-            // Compute updated scores for variables involved.
-            for variableName in dirtyVariables do
-                let variable = variablesNew |> Map.find variableName
-                let parents = variable.GetParentVariables variablesNew
-                let score = computeFamilyScore variable parents sufficientStatistics
-                scoresNew <- scoresNew |> Map.add variableName score
+            None
 
-            // Done.
-            Some { Variables = variablesNew; FamilyScores = scoresNew }
+    // Helper: Computes updated family scores.
+    let computeUpdatedFamilyScores (familyScoresOld) 
+                                   (action:StructureSearchAction) 
+                                   (structure:Map<Identifier,RandomVariable>) =
+    
+        let mutable familyScoresNew = familyScoresOld
 
+        // Compute updated scores for variables involved.
+        for variableName in action.Variables do
+            let variable = structure |> Map.find variableName
+            let parents = variable.GetParentVariables structure
+            let score = computeFamilyScore variable parents sufficientStatistics
+            familyScoresNew <- familyScoresNew |> Map.add variableName score
 
-    // Helper: Tallies total family score.
-    let computeTotalScore searchRecord =
-        searchRecord.FamilyScores |> Map.toSeq |> Seq.sumBy (fun v_s -> snd v_s)
-
+        familyScoresNew
+        
     // Helper: Given the current search state, picks the next best move.
     let computeNextBestAction searchRecord = 
+        
         let variables = searchRecord.Variables
-        let totalScoreOld = computeTotalScore searchRecord
-        let candidates = ref Map.empty // Sorted by negative total score.
+        let familyScoresOld = searchRecord.FamilyScores
+        let totalScoreOld = searchRecord.TotalScore
         let variablesAsSeq = variables |> Map.toSeq |> Seq.map (fun (k,v) -> v)
+        let mutable actionScoresCache = searchRecord.ActionScoresCache
+        
+        let mutable bestAction = None
+        let mutable bestActionFamilyScores = None
+        let mutable bestActionActionScore = 0.0
+        let mutable bestActionTotalScore = None
+        let mutable bestActionStructure = None
 
         // For each variable in the network, consider options.
-        for v1 in variablesAsSeq do
-
-            // Helper: Adds a candidate if not empty, to the 'candidates' map.
-            let addCandidateChecked candidate =
-                match candidate with
-                    | None          ->  () // Invalid DAG.
-                    | Some record   ->  
-                        let score = computeTotalScore record
-                        candidates := !candidates |> Map.add (-score) record
-
-            // Candidate edge additions.
-            for v2 in variablesAsSeq do
-                if v1.HasChild v2.Name 
-                    || v1.HasParent v2.Name 
-                    || v1.Name = v2.Name 
-                    || v2.Parents |> Seq.length >= parentLimit then ()
-                else
-                    let candidate = computeStructureRecord searchRecord (AddEdge (v1.Name, v2.Name))
-                    addCandidateChecked candidate
-            
-            // Candidate edge removals.
-            for v2Name in v1.Children do
-                let candidate = computeStructureRecord searchRecord (RemoveEdge (v1.Name, v2Name))
-                addCandidateChecked candidate
-
-            // Candidate edge reversals.
-            if v1.Children |> Seq.length >= parentLimit then ()
-            else
+        let candidateActions = seq {
+            for v1 in variablesAsSeq do
+                // Candidate edge additions.
+                for v2 in variablesAsSeq do
+                    if v1.HasChild v2.Name 
+                        || v1.HasParent v2.Name 
+                        || v1.Name = v2.Name 
+                        || v2.Parents |> Seq.length >= parentLimit then ()
+                    else
+                        let action = AddEdge (v1.Name, v2.Name)
+                        yield action
+           
+                // Candidate edge removals.
                 for v2Name in v1.Children do
-                    let candidate = computeStructureRecord searchRecord (ReverseEdge (v1.Name, v2Name))
-                    addCandidateChecked candidate
-        
+                    let action = RemoveEdge (v1.Name, v2Name)
+                    yield action
 
-        // Given the candidates, pick the best.
-        let bestCandidateScore,bestCandidateRecord = !candidates |> Map.toSeq |> Seq.head
-        let bestCandidateScore = -bestCandidateScore // Undo score negation.
+                // Candidate edge reversals.
+                if v1.Children |> Seq.length >= parentLimit then ()
+                else
+                    for v2Name in v1.Children do
+                        let action = ReverseEdge (v1.Name, v2Name)
+                        yield action
+        }
 
-        // Check score, and return best choice if better than present.
-        if bestCandidateScore > totalScoreOld then
-            Some bestCandidateRecord
-        else
+        // Choose best candidate action.
+        for action in candidateActions do
+            let structure = computeActionApplication action searchRecord.Variables
+
+            // If structure is not cyclic.
+            if structure.IsSome then
+                let structure = structure.Value
+
+                // Check action score cache for this action.
+                let actionScore = actionScoresCache |> Map.tryFind action
+
+                // Action score previously computed.
+                if actionScore.IsSome then
+
+                    let actionScore = actionScore.Value
+
+                    // Better action?
+                    if actionScore > bestActionActionScore then
+                        bestAction <- Some action
+                        bestActionActionScore <- actionScore
+                        bestActionStructure <- Some structure
+                        bestActionTotalScore <- None    // Computed later if truly best.
+                        bestActionFamilyScores <- None  // Computed later if truly best.
+
+                // Action score not previously computed.
+                else
+                    let familyScoresNew = computeUpdatedFamilyScores familyScoresOld action structure
+                        
+                    let totalScoreNew = computeTotalScore familyScoresNew
+                    let actionScore = totalScoreNew - totalScoreOld
+
+                    // Better action?
+                    if actionScore > bestActionActionScore
+                    then
+                        bestAction <- Some action
+                        bestActionActionScore <- actionScore
+                        bestActionStructure <- Some structure
+                        bestActionFamilyScores <- Some familyScoresNew
+                        bestActionTotalScore <- Some totalScoreNew
+                    else
+                        // Store work in action cache.
+                        actionScoresCache <- 
+                            actionScoresCache 
+                            |> Map.add action actionScore
+
+        // Decide how to return.
+        if bestAction.IsNone then
+            
+            // No better action. Done.
             None
+
+        else
+            // Gather info about the action.
+            let bestAction = bestAction.Value
+            let bestActionStructure = bestActionStructure.Value
+            let bestActionFamilyScores =
+                match bestActionFamilyScores with
+                | Some s    ->  s
+                | None      ->  computeUpdatedFamilyScores familyScoresOld bestAction bestActionStructure
+            let bestActionTotalScore =
+                match bestActionTotalScore with
+                | Some s    ->  s
+                | None      ->  computeTotalScore bestActionFamilyScores
+
+            // Check.
+            assert (System.Math.Abs ((bestActionActionScore + totalScoreOld) - bestActionTotalScore) < 0.01)
+
+            // Cleanup action scores cache.
+            // Remove cached action scores for actions involving the variables of the current action.
+            for a,s in actionScoresCache |> Map.toSeq do
+                let vs1 = a.Variables
+                let vs2 = bestAction.Variables
+                if     vs1.[0] = vs2.[0] || vs1.[0] = vs2.[1]
+                    || vs1.[1] = vs2.[0] || vs1.[1] = vs2.[1] 
+                then
+                    actionScoresCache <- actionScoresCache |> Map.remove a
+
+            // Done. Return new search state record.
+            Some    { 
+                        Variables = bestActionStructure;
+                        FamilyScores = bestActionFamilyScores;
+                        TotalScore = bestActionTotalScore;
+                        ActionScoresCache = actionScoresCache
+                    }
+
 
     //
     // Algorithm.
@@ -526,8 +610,14 @@ let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>)
         let score = computeFamilyScore rv parents sufficientStatistics
         startScores <- startScores |> Map.add rv.Name score
 
-    let mutable searchState = { Variables = rvs; FamilyScores = startScores; }
+    let mutable searchState = { 
+                                Variables = rvs; 
+                                FamilyScores = startScores; 
+                                TotalScore = computeTotalScore startScores;
+                                ActionScoresCache = Map.empty;
+                            }
     let mutable continueSearch = true
+
     while continueSearch do
         let searchStateNew = computeNextBestAction searchState
         

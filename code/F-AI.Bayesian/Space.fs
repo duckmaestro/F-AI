@@ -37,6 +37,9 @@ type Space =
             match self with
             | Discrete map      -> map |> Map.toSeq |> Seq.map (fun (k,v) -> k)
 
+    ///
+    /// Returns the label associated with the given value from this space.
+    ///
     member public self.GetLabel value =
         let map = 
             match self with
@@ -45,6 +48,16 @@ type Space =
         match map with
         | Some map'     -> map' |> Map.find value
         | None          -> ""
+
+    ///
+    /// Returns true if the given value is defined in this space.
+    ///
+    member public self.IsDefined value =
+        let map = 
+            match self with
+            | Discrete (labels)     -> labels
+
+        map |> Map.containsKey value
             
     static member public MakeIntegerSpace min max =
         let values = { min .. 1.0f .. max }

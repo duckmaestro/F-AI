@@ -32,6 +32,13 @@ type public InMemoryObservationSet (name,
     let observations = observations |> Seq.toArray
     let sourceUri = defaultArg sourceUri ""
 
+    do
+        // Check values.
+        for obs in observations do
+            let hasDefinedValues = obs.CheckValues variables
+            if hasDefinedValues <> true then
+                failwith "Observation has undefined values.";
+
     interface IObservationSet with
         member self.Size with get() = Some observations.Length
         member self.Name with get() = name

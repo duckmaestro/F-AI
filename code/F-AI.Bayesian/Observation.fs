@@ -100,7 +100,7 @@ type public Observation(variableValues) =
     ///
     static member (.&.) (o1:Observation, name:Identifier) =
         o1 .&. Seq.singleton name
-        
+
     ///
     /// If both observations have the same keys and values, then they are equal.
     ///
@@ -155,6 +155,23 @@ type public Observation(variableValues) =
         match value' with
             | None          ->  false
             | Some value'   ->  value' = value
+
+    ///
+    /// Performs a check of the observation values against the variable
+    /// spaces, return true if all values are well-defined.
+    ///
+    member self.CheckValues (spaces:Map<Identifier,Space>) =
+        let undefinedCheck (key,value) =
+            let space = spaces |> Map.tryFind key |> Option.get
+            let defined = space.IsDefined value
+            defined <> true
+
+        let undefined = 
+            self._variableValues
+            |> Map.toSeq
+            |> Seq.exists undefinedCheck
+
+        undefined = false
 
     ///
     /// Returns the list of variable names in this observation
