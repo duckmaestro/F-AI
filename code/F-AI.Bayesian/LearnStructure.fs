@@ -185,19 +185,32 @@ let computeFamilyScore
         |> Seq.map (fun p -> p.Name, p.Space)
         |> List.ofSeq
 
+    // Compute mutual information of x with its parents.
     let mutualInformation = 
             computeEmpiricalMutualInformation 
                 x
                 parents
                 sufficientStatistics
 
+    // Compute the entropy of x.
     let entropy =
         computeEmpiricalEntropy
             rv.Name
             rv.Space
             sufficientStatistics
 
-    let familyScore = M * (mutualInformation - entropy)
+    // Compute complexity penalty.
+    let freeParameterCount = 
+        let paramsPerPermutation = rv.Space.Size - 1
+        let permutations =
+            parents
+            |> Seq.map (fun (r,s) -> s.Size)
+            |> Seq.fold (fun a s -> a * s) 1
+        float <| permutations * paramsPerPermutation
+    let complexityPenalty = (log M) * 0.5 * freeParameterCount
+
+    // Compute family score.
+    let familyScore = M * (mutualInformation - entropy) - complexityPenalty
     familyScore
 
 
@@ -507,7 +520,7 @@ let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>)
                     yield action
 
                 // Candidate edge reversals.
-                if v1.Children |> Seq.length >= parentLimit then ()
+                if v1.Parents |> Seq.length >= parentLimit then ()
                 else
                     for v2Name in v1.Children do
                         let action = ReverseEdge (v1.Name, v2Name)
@@ -583,11 +596,20 @@ let learnGeneralStructure (rvs:Map<Identifier,RandomVariable>)
 
             // Cleanup action scores cache.
             // Remove cached action scores for actions involving the variables of the current action.
+            let actionScoreVariablesToInvalidate = 
+                match bestAction with
+                | AddEdge (f, t) -> [| t |]
+                | RemoveEdge (f, t) -> [| t |]
+                | ReverseEdge (f, t) -> [| f; t; |]
+            let contains v vs = 
+                if Array.length vs = 2 then
+                    vs.[0] = v || vs.[1] = v
+                else 
+                    vs.[0] = v
             for a,s in actionScoresCache |> Map.toSeq do
-                let vs1 = a.Variables
-                let vs2 = bestAction.Variables
-                if     vs1.[0] = vs2.[0] || vs1.[0] = vs2.[1]
-                    || vs1.[1] = vs2.[0] || vs1.[1] = vs2.[1] 
+                let vs = a.Variables
+                if actionScoreVariablesToInvalidate |> contains vs.[0]
+                    || actionScoreVariablesToInvalidate |> contains vs.[1]
                 then
                     actionScoresCache <- actionScoresCache |> Map.remove a
 
