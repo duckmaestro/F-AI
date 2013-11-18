@@ -94,7 +94,7 @@ let LoadFromFile filePath =
     let samplesAsStrings = 
         rows
         |> Seq.skip 1
-        |> Seq.take 10000   // TEMPORARY LIMIT.
+        |> Seq.take 20000   // TEMPORARY LIMIT.
 
     let samples =
         samplesAsStrings

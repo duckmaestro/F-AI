@@ -27,7 +27,10 @@ type public InferenceQuery (network, evidence) =
     // Memoized posteriors.
     let mutable posteriors = Map.empty
     
-    let mutable particleHistory = [ ]
+    let mutable previousParticle = new Observation()
+    let mutable sampleCountRaw = 0
+    let mutable sampleCountKept = 0
+    let mutable valueCounts = Map.empty
     let mutable warmupSize = 250
     let mutable particleSeparation = 1
 
@@ -49,13 +52,14 @@ type public InferenceQuery (network, evidence) =
         with get () : Observation   = evidence
 
     ///
-    /// The results.
+    /// The resulting sample distributions.
     ///
     member public self.Results
         with get () =   posteriors
 
     ///
-    /// The size of the warmup period.
+    /// The size of the warmup period. The warmup period is unaffected by choice of particle
+    /// separation.
     ///
     member public self.WarmupSize
         with get ()     =   warmupSize
@@ -73,12 +77,8 @@ type public InferenceQuery (network, evidence) =
     /// The refinement count. Returns zero until the warmup period is past.
     ///
     member public self.RefinementCount
-        with get () =   
-            let rawHistoryLength = particleHistory.Length
-            if rawHistoryLength <= warmupSize then
-                0
-            else
-                rawHistoryLength - warmupSize
+        with get ()     =   sampleCountKept
+
 
     ///
     /// Computes or refines results for this query.
@@ -95,7 +95,7 @@ type public InferenceQuery (network, evidence) =
         let rvs = network.Variables
 
         // Init with first particle.
-        if particleHistory = [ ] then
+        if previousParticle.IsEmpty then
             let rvsNames = rvs |> Seq.map (fun kvp -> kvp.Key)
             let rvsSpaces = rvs |> Seq.map (fun kvp -> kvp.Value.Space)
             let particleValues =
@@ -106,34 +106,40 @@ type public InferenceQuery (network, evidence) =
                 |> Map.ofSeq
                 |> fun p -> new Observation(p)
 
-            particleHistory <- [ firstParticle ]
+            previousParticle <- firstParticle
 
-        // Generate new particles.
-        let mutable previousParticle = particleHistory.Head
-        for step in { 1..steps } do
-            let nextParticle =
-                GibbsSampler.getNextSample rvs previousParticle self.Evidence
-
-            if step % separationPeriod = 0 then            
-                particleHistory <- nextParticle :: particleHistory
-            else
+        // Warmup.
+        if sampleCountRaw < warmupSize then
+            for _ in { sampleCountRaw .. warmupSize } do
+                previousParticle <- GibbsSampler.getNextSample rvs previousParticle self.Evidence
+                sampleCountRaw <- sampleCountRaw + 1
                 ()
 
+        // Generate new particles.
+        for localStepNumber in { 1 .. steps } do
+            let nextParticle = GibbsSampler.getNextSample rvs previousParticle self.Evidence
             previousParticle <- nextParticle
+            sampleCountRaw <- sampleCountRaw + 1
 
-        // Decide how many recent particles to use.
-        let numParticlesToUse = 
-            if particleHistory.Length > warmupSize * 2 then
-                particleHistory.Length - warmupSize
-            else if particleHistory.Length > warmupSize then
-                warmupSize
-            else
-                particleHistory.Length
-            
+            // Keep the particle. Increase counts.
+            if localStepNumber % separationPeriod = 0 then            
+                for vv in nextParticle do
+                    let countsForVariable = valueCounts |> Map.tryFind vv.Key
+                    let countsForVariable = defaultArg countsForVariable Map.empty
+                    let countForValue = countsForVariable |> Map.tryFind vv.Value
+                    let countForValue = defaultArg countForValue 0
+
+                    let countsForVariable = countsForVariable |> Map.add vv.Value (countForValue + 1)
+                    valueCounts <- valueCounts |> Map.add vv.Key countsForVariable
+
+                sampleCountKept <- sampleCountKept + 1
+
         // Recompute marginal distributions.
+        let sampleCount = float sampleCountKept
         for rv in rvs |> Seq.map (fun kvp -> kvp.Value) do            
             
             let rvValueInEvidence = evidence.TryValueForVariable rv.Name
+            let rvValueCountsSampled = valueCounts |> Map.find rv.Name
 
             let postieror = 
                 
@@ -150,21 +156,6 @@ type public InferenceQuery (network, evidence) =
 
                 // If this variable does not have a value from evidence.
                 else
-
-                    // Prepare count query.
-                    let valueCounts = // A sequence of value,count tuples.
-                        particleHistory
-                        |> Seq.take numParticlesToUse
-                        |> Seq.map (fun p -> Option.get (p.TryValueForVariable rv.Name))
-                        |> Seq.groupBy (fun value -> value)
-                        |> Seq.map (fun (key,group) -> (key, group |> Seq.length |> float))
-                        |> Seq.cache
-
-                    // Adjusted value count.
-                    let totalCount = float numParticlesToUse
-            
-                    // Build a posterior distribution from particle value counts.
-
                     // Start with 0 counts.
                     let mutable distribution = 
                         rv.Space.Values 
@@ -172,16 +163,15 @@ type public InferenceQuery (network, evidence) =
                         |> Map.ofSeq 
 
                     // Add non-zero counts.
-                    for (value,count) in valueCounts do
-                        let mass = count / totalCount
-                        distribution <- distribution |> Map.add value mass
+                    for vc in rvValueCountsSampled do
+                        let mass = (float vc.Value) / sampleCount
+                        distribution <- distribution |> Map.add vc.Key mass
 
                     assert ((distribution |> Seq.length) = (rv.Space.Values |> Seq.length))
             
                     new DiscreteDistribution(distribution)
 
-
-            // Store postieror for this variable
+            // Store public results.
             posteriors <- posteriors |> Map.add rv.Name postieror
 
         // Done.
