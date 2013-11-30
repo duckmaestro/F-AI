@@ -1,0 +1,164 @@
+﻿<UserControl
+    x:Class="Bevisuali.UX.Graph.GraphNode"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    xmlns:bv="clr-namespace:Bevisuali.UX"
+    xmlns:bvg="clr-namespace:Bevisuali.UX.Graph"
+    xmlns:bvgen="clr-namespace:Bevisuali.UX.General"
+    Width="0"
+    Height="0"
+    mc:Ignorable="d" 
+>
+    <Canvas>
+        <bv:CenteredGrid 
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+        >
+            <!-- SELECTION INDICATOR -->
+            <Ellipse 
+                x:Name="xSelectionIndicator" 
+                Margin="-17" 
+                Width="118"
+                Height="118"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Stroke="#FF9E9E9E" 
+                StrokeThickness="1" 
+                StrokeDashArray="6 6"
+            >
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#00CCCCCC" Offset="0"/>
+                        <GradientStop Color="#EEEEEEEE" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+
+            </Ellipse>
+            
+            <!-- OUTER SHADOW -->
+            <Ellipse
+                Name="xOuterShadow"
+                StrokeThickness="0" 
+                Margin="-8"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="72"
+                Height="72" 
+            >
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#22000000" Offset="0.171"/>
+                        <GradientStop Color="#00000000" Offset="1"/>
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+            </Ellipse>
+                        
+            <!-- MAIN CIRCLE + LABEL -->
+            <Grid 
+                x:Name="xCircleGroup" 
+                AllowDrop="True"
+                Width="60"
+                Height="60"
+            >
+                <Ellipse
+                    Name="xCircle"
+                    Fill="LightGray"
+                    Width="60"
+                    Height="60"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                />
+                <bvgen:Pie
+                    x:Name="xSlices"
+                    Width="58"
+                    Height="58"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"                  
+                />
+                <Ellipse
+                    Name="xInnerShadow"
+                    StrokeThickness="0" 
+                    Stroke="Black"
+                    Width="60"
+                    Height="60"
+                >
+                    <Ellipse.Fill>
+                        <RadialGradientBrush>
+                            <GradientStop Color="#1A000000" Offset="1"/>
+                            <GradientStop Color="#00000000" Offset="0.801"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+
+                <TextBlock 
+                    Name="xLabel"
+                    VerticalAlignment="Center" 
+                    HorizontalAlignment="Center"
+                    FontSize="21"
+                    IsHitTestVisible="False"
+                >
+                    X
+                    </TextBlock>
+                <TextBlock 
+                    Name="xLabelSubscript"
+                    FontSize="12"
+                    VerticalAlignment="Center" 
+                    HorizontalAlignment="Center"
+                    Margin="36,30,9,14"
+                    TextAlignment="Left"
+                    Width="15"
+                    IsHitTestVisible="False"
+                >
+                    <Run BaselineAlignment="Subscript">1</Run>
+                </TextBlock>
+            </Grid>
+
+            <!-- SCENARIO II RING -->
+            <bvg:GraphNodeRing 
+                x:Name="xScenarioRing2"
+                InnerRadius="34" 
+                OuterRadius="48" 
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Label=""
+                Background="LightGray"
+                Visibility="Collapsed"
+                AllowDrop="True"
+            />
+
+            <!-- EVIDENCE CHOICES RING -->
+            <bvg:GraphNodeRing 
+                x:Name="xChoiceRing"
+                InnerRadius="120" 
+                OuterRadius="150" 
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Label=""
+                DashedStroke="True"
+                AllowDrop="True"
+                Arrows="True"
+                StrokeThickness="1"
+            />
+
+            <!-- SMALL MODE -->
+            <Grid x:Name="xCircleGroupSmallMode"
+                Width="18"
+                Height="18"
+            >
+                <Ellipse
+                    Name="xCircleSmallMode"
+                    Fill="White"
+                    Stroke="LightGray"
+                    StrokeThickness="1"
+                    Width="18"
+                    Height="18"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                />
+            </Grid>
+
+        </bv:CenteredGrid>
+    </Canvas>
+</UserControl>

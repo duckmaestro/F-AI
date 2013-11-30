@@ -1,0 +1,79 @@
+﻿<UserControl 
+    x:Class="Bevisuali.UX.Graph.GraphNodeRing"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    mc:Ignorable="d" 
+    Height="0" 
+    Width="0"
+    xmlns:bv="clr-namespace:Bevisuali.UX"
+    xmlns:bvgen="clr-namespace:Bevisuali.UX.General"
+>
+    <Canvas>
+        <Canvas.Clip>
+            <CombinedGeometry GeometryCombineMode="Exclude">
+                <CombinedGeometry.Geometry1>
+                    <EllipseGeometry 
+                        x:Name="xOuterHole"
+                        Center="0,0" 
+                        RadiusX="500" 
+                        RadiusY="500" 
+                    />
+                </CombinedGeometry.Geometry1>
+                <CombinedGeometry.Geometry2>
+                    <EllipseGeometry 
+                        x:Name="xInnerHole"
+                        Center="0,0" 
+                        RadiusX="25" 
+                        RadiusY="25" 
+                    />
+                </CombinedGeometry.Geometry2>
+            </CombinedGeometry>
+        </Canvas.Clip>
+
+        <bv:CenteredGrid 
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+        >
+            <Grid x:Name="xGrid" Background="White">
+                <bvgen:Pie
+                    x:Name="xSlices"   
+                    AllowDrag="True"
+                />
+                
+                <Ellipse
+                    Name="xOuterBorder"
+                    Fill="Transparent"
+                    Stroke="Black"
+                    StrokeThickness="2"
+                    Width="180"
+                    Height="180"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsHitTestVisible="False"
+                >
+                </Ellipse>
+                <Ellipse
+                    x:Name="xInnerBorder"
+                    Fill="Transparent"
+                    Stroke="Black"
+                    StrokeThickness="2" 
+                    Width="54"
+                    Height="54"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsHitTestVisible="False"
+                />
+                <TextBlock
+                    x:Name="xLabel"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    IsHitTestVisible="False"
+                >
+                    Ring Label
+                </TextBlock>
+            </Grid>
+        </bv:CenteredGrid>
+    </Canvas>
+</UserControl>

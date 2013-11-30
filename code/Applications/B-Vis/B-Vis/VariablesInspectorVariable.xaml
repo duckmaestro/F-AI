@@ -1,0 +1,25 @@
+﻿<UserControl x:Class="Bevisuali.UX.VariablesInspectorVariable"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="100" d:DesignWidth="250"
+>
+    <Grid Margin="0 0 0 10">
+        <TextBlock 
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+        >
+            <Run x:Name="xNameLetter">V</Run><Run x:Name="xNameSubscript" FontSize="10" BaselineAlignment="Subscript">1</Run>
+        </TextBlock>
+        
+        <Grid Margin="70 0 0 0">
+            <TextBlock x:Name="xFullName">Variable Name</TextBlock>
+            <StackPanel x:Name="xSpace" Margin="0 15 0 0">
+                
+            </StackPanel>
+        </Grid>
+        
+    </Grid>
+</UserControl>

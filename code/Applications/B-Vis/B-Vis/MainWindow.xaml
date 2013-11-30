@@ -1,0 +1,173 @@
+﻿<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:bv="clr-namespace:Bevisuali.UX"
+    xmlns:bvg="clr-namespace:Bevisuali.UX.Graph"
+    xmlns:bvd="clr-namespace:Bevisuali.UX.Distribution"
+    xmlns:bvo="clr-namespace:Bevisuali.UX.Observation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    mc:Ignorable="d" 
+    x:Class="Bevisuali.UX.MainWindow"
+    Title="B-Vis" 
+    Width="1280"
+    Height="600"
+    Loaded="Window_Loaded"
+    Closing="Window_Closing"
+    Initialized="Window_Initialized"
+>
+    <Window.CommandBindings>
+        <CommandBinding
+            Command="ApplicationCommands.Open" 
+            Executed="Window_CommandOpen"
+        />
+    </Window.CommandBindings>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="270"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="270"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Center Region -->
+        <bvg:GraphInspector
+            x:Name="xGraphInspector" Grid.ColumnSpan="3"
+        />
+
+        <!-- Left Region -->
+        <TabControl
+            x:Name="xLeftTabs"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Margin="8,8,8,8" 
+            Grid.Column="0"
+            TabStripPlacement="Bottom" 
+            BorderBrush="Black"
+            BorderThickness="1"       
+            MouseEnter="LeftTabs_MouseEnter" 
+            MouseLeave="LeftTabs_MouseLeave"
+        >
+            <TabControl.Background>
+                <SolidColorBrush Color="White" Opacity="0.9"/>
+            </TabControl.Background>
+
+            <TabItem Header="C">
+                <Grid>
+                    <bvd:DistributionInspector
+                        x:Name="xConditionalDistributions"
+                        InspectorTitle="Conditional Probability Table"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                    />
+                </Grid>
+            </TabItem>
+            <TabItem Header="P">
+                <Grid>
+                    <bvd:DistributionInspector
+                        x:Name="xMarginalPosteriorDistributions"
+                        InspectorTitle="Marginal Posterior"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                    />
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- Right Region -->
+        <TabControl 
+            x:Name="xRightTabs"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Margin="8,8,8,8" 
+            Grid.Column="2"
+            TabStripPlacement="Bottom" 
+            BorderBrush="Black"
+            BorderThickness="1" 
+            MouseEnter="RightTabs_MouseEnter"  
+            MouseLeave="RightTabs_MouseLeave"  
+        >
+            <TabControl.Background>
+                <SolidColorBrush Color="White" Opacity="0.9"/>
+            </TabControl.Background>
+
+            <TabItem Header="O">
+                <Grid>
+                    <bvo:ObservationSetInspector x:Name="xObservationSetInspector" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="L">
+                <Grid>
+                    <bv:LearningInspector x:Name="xLearningInspector" />
+                </Grid>
+            </TabItem>
+            <TabItem x:Name="xTabVariables" Header="V">
+                <Grid>
+                    <bv:VariablesInspector x:Name="xVariablesInspector" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="E">
+                <Grid>
+                    <bv:EvidenceInspector x:Name="xEvidenceInspector" />
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Bottom Sliders -->
+        <Slider x:Name="xSliderZoom" 
+                VerticalAlignment="Bottom" 
+                HorizontalAlignment="Right" 
+                Orientation="Vertical"
+                Grid.Column="1" 
+                Height="100"
+                Margin="0,0,12,30"
+                Opacity="0.80"
+                Minimum="-1"
+                Maximum="2"
+                Value="0.5"
+                LargeChange="0.2"
+                SmallChange="0.05"
+                ValueChanged="SliderZoom_Changed"
+                MouseEnter="xSliderZoom_MouseEnter"
+                MouseLeave="xSliderZoom_MouseLeave"
+        ></Slider>
+
+        <Slider x:Name="xSliderDetail"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Right"
+                Grid.Column="1"
+                Width="100"
+                Margin="0,0,28,10"
+                Opacity="0.80"
+                Minimum="0"
+                Maximum="1"
+                Value="0.20"
+                LargeChange="0.2"
+                SmallChange="0.05"
+                ValueChanged="SliderDetail_Changed"
+                MouseEnter="xSliderDetail_MouseEnter"
+                MouseLeave="xSliderDetail_MouseLeave"
+        ></Slider>
+
+        <!-- Bottom Region -->
+        <Border 
+            Margin="-40,0,-40,8" 
+            VerticalAlignment="Bottom" 
+            Height="27"
+            HorizontalAlignment="Center"
+            BorderBrush="Black"
+            BorderThickness="1" Grid.Column="1" Width="310"
+        >
+            <Border.Background>
+                <SolidColorBrush Color="White" Opacity="0.9"/>
+            </Border.Background>
+            <TextBlock 
+                x:Name="xStatus" 
+                VerticalAlignment="Center"
+                HorizontalAlignment="Center"
+                Margin="20 0 20 0"
+            ><Run Text="Network Name &amp; Status Messages"/></TextBlock>
+        </Border>
+
+    </Grid>
+</Window>

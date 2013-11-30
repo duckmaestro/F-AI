@@ -1,0 +1,37 @@
+﻿<UserControl 
+    x:Class="Bevisuali.UX.Distribution.DistributionMass"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    mc:Ignorable="d" 
+    Width="128"
+>
+    <Grid>
+        <Rectangle 
+            x:Name="xColor"
+            HorizontalAlignment="Left" 
+            Margin="2,2,0,2" 
+            Fill="LightBlue" 
+            Width="16" 
+            Height="16"
+        >
+        </Rectangle>
+        <TextBlock 
+            x:Name="xValue"
+            Foreground="Gray"
+            HorizontalAlignment="Left" 
+            Margin="21,0,0,0"
+        >
+            True
+        </TextBlock>
+        <TextBlock
+            x:Name="xMass"
+            Foreground="Gray"
+            HorizontalAlignment="Right"
+            Margin="0,0,0,0"
+        >
+            0.52
+        </TextBlock>
+    </Grid>
+</UserControl>

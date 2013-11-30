@@ -1,0 +1,36 @@
+﻿<UserControl 
+    x:Class="Bevisuali.UX.VariablesInspector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    mc:Ignorable="d" 
+    d:DesignHeight="300" 
+    d:DesignWidth="300"
+>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="46"/>
+            <RowDefinition Height="209*"/>
+            <RowDefinition Height="46"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock VerticalAlignment="Top" Margin="10,8,10,0" TextAlignment="Center">Variables</TextBlock>
+
+        
+        <ScrollViewer 
+            Grid.Row="1"
+        >
+            <StackPanel
+                x:Name="xVariableList"
+                Margin="24 4 4 4"
+            >
+
+            </StackPanel>
+        </ScrollViewer>
+
+
+        <Button x:Name="xButtonOpen" Content="Open" Margin="10,10,0,10" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Click="xButtonOpen_Click" />
+        <Button x:Name="xButtonSave" Content="Save" Margin="85,0,0,10" Grid.Row="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Click="xButtonSave_Click" />
+    </Grid>
+</UserControl>

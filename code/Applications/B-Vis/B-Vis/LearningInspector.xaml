@@ -1,0 +1,48 @@
+﻿<UserControl 
+    x:Class="Bevisuali.UX.LearningInspector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+    mc:Ignorable="d" d:DesignWidth="411" d:DesignHeight="585" Initialized="UserControl_Initialized"
+>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="46"/>
+            <RowDefinition/>
+            <RowDefinition Height="46"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock VerticalAlignment="Top" Margin="10,8,10,0" TextAlignment="Center" Height="14">Learn</TextBlock>
+
+        <ScrollViewer Grid.Row="1">
+            <Grid x:Name="xGridOptions">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="80"/>
+                    <RowDefinition Height="119"/>
+                    <RowDefinition Height="67"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Margin="10,10,10,0" TextWrapping="Wrap" Text="Training Set" VerticalAlignment="Top" Height="14"/>
+                <TextBlock x:Name="xTrainingSetSource" Margin="18,29,10,10" TextWrapping="Wrap" Text="source"/>
+
+
+                <RadioButton x:Name="xRadStructureDisconnected" Content="Disconnected" HorizontalAlignment="Left" Margin="18,29,0,0" VerticalAlignment="Top" GroupName="Structure" IsChecked="True" Grid.Row="1" Height="15" Width="91"/>
+                <TextBlock Margin="10,10,10,0" TextWrapping="Wrap" Text="Structure Class" VerticalAlignment="Top" Grid.Row="1" Height="14" />
+                <RadioButton x:Name="xRadStructureTree" Content="Tree" HorizontalAlignment="Left" Margin="18,69,0,0" VerticalAlignment="Top" GroupName="Structure" Grid.Row="1" Height="15" Width="42" />
+                <RadioButton x:Name="xRadStructureRandom" Content="Random" HorizontalAlignment="Left" Margin="18,49,0,0" VerticalAlignment="Top" GroupName="Structure" IsChecked="True" Grid.Row="1" Height="15" Width="64"/>
+                <RadioButton x:Name="xRadStructureGeneral" Content="General" HorizontalAlignment="Left" Margin="18,89,0,0" VerticalAlignment="Top" GroupName="Structure" Grid.Row="1" Height="15" Width="60" />
+
+                <TextBlock Margin="10,10,10,0" TextWrapping="Wrap" Text="Distribution Prior" VerticalAlignment="Top" Grid.Row="3" Height="14" />
+                <TextBlock Margin="20,29,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="3" Height="14" HorizontalAlignment="Left" Width="89" ><Run Text="Dirichlet "/><Run Language="el-gr" Text="α"/></TextBlock>
+                <TextBox x:Name="xTxtDirichletAlpha" HorizontalAlignment="Left" Height="23" Margin="114,24,0,0" Grid.Row="3" TextWrapping="Wrap" Text="1.0" VerticalAlignment="Top" Width="70" TextChanged="xTxtDirichletAlpha_TextChanged" MaxLines="1" MaxLength="20" TextAlignment="Right"/>
+                <TextBlock Margin="10,10,10,0" TextWrapping="Wrap" Text="Structure Constraints" VerticalAlignment="Top" Grid.Row="2" Height="14" />
+                <TextBlock Margin="20,34,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Grid.Row="2" Height="14" HorizontalAlignment="Left" Width="89" Text="Parent Limit" />
+                <TextBox x:Name="xTxtParentLimit" HorizontalAlignment="Left" Height="23" Margin="114,29,0,0" Grid.Row="2" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="70" TextAlignment="Right" MaxLength="2" MaxLines="1" TextChanged="xTxtParentLimit_TextChanged"/>
+            </Grid>
+        </ScrollViewer>
+
+        <Button x:Name="xButtonLearn" Content="Learn" Margin="10,0,0,10" Grid.Row="2" HorizontalAlignment="Left"  Click="xButtonLearn_Click" VerticalAlignment="Bottom"/>
+    </Grid>
+</UserControl>
