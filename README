@@ -19,3 +19,7 @@ TBD:
  * k-means clustering
  * PCA
  * GMM
+
+Example Applications:
+ * B-Vis
+ ** Trains and visualizes Bayesian networks.
