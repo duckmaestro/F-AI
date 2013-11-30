@@ -84,6 +84,14 @@ let LoadFromFile filePath =
                                 | "rvetserv"    -> "vetserv_rm"
                                 | "rwrkr89"     -> "wrkr89_rm"
                                 | "rtaxamt"     -> "taxamt_rm"
+                                | "income1"     -> "Income1 - Wages 1989"
+                                | "income2"     -> "Income2 - Self-employment 1989"
+                                | "income3"     -> "Income3 - Farm self-employment 1989"
+                                | "income4"     -> "Income4 - Interest, dividends, rent 1989"
+                                | "income5"     -> "Income5 - Social security 1989"
+                                | "income6"     -> "Income6 - Public assistance 1989"
+                                | "income7"     -> "Income7 - Retirement 1989"
+                                | "income8"     -> "Income8 - Other 1989"
                                 | _             -> h
                     )
         |> Seq.toArray
@@ -94,7 +102,7 @@ let LoadFromFile filePath =
     let samplesAsStrings = 
         rows
         |> Seq.skip 1
-        |> Seq.take 20000   // TEMPORARY LIMIT.
+        |> Seq.take 50000   // TEMPORARY LIMIT.
 
     let samples =
         samplesAsStrings
@@ -246,7 +254,12 @@ let LoadFromFile filePath =
                                         "Bicycle";
                                         "Walked";
                                         "Worked at home";
-                                        "Other"; ]
+                                        "Other"; ] 
+        | "military" -> labelList 0 4 [ "N/A (less than 16 yrs old)";
+                                        "Active duty now";
+                                        "Active duty past";
+                                        "Reserves or nat. guard";
+                                        "No service"; ]
         | _ ->
             let min = mins |> Map.tryFind variableName |> Option.get
             let max = maxs |> Map.tryFind variableName |> Option.get
