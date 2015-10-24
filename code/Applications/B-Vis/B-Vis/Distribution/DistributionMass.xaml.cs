@@ -1,4 +1,5 @@
 ﻿
+using Bevisuali.Util;
 using System.Windows.Controls;
 using System.Windows.Media;
 
@@ -14,7 +15,7 @@ namespace Bevisuali.UX.Distribution
             }
             set
             {
-                xValue.Text = value;
+                xValue.Text = value.Truncate(10);
             }
         }
 
