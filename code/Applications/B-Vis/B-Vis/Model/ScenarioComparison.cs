@@ -25,5 +25,11 @@ namespace Bevisuali.Model
             get;
             set;
         }
+
+        public ComparisonMetric ComparisonMetric
+        {
+            get;
+            set;
+        }
     }
 }

@@ -30,6 +30,12 @@ namespace Bevisuali.Model
         CompoundFDP,
     }
 
+    internal enum ComparisonMetric
+    {
+        SymmetricKLDivergence,
+        ErrorSum,
+    }
+
     internal class LearningOptions
     {
         public enum StructureEnum
@@ -158,6 +164,11 @@ namespace Bevisuali.Model
         IScenario Scenario2 { get; }
 
         /// <summary>
+        /// What comparison metric was used.
+        /// </summary>
+        ComparisonMetric ComparisonMetric { get; }
+
+        /// <summary>
         /// The variables with most change between the two scenarios,
         /// in order from greatest change to least change.
         /// </summary>
@@ -206,7 +217,7 @@ namespace Bevisuali.Model
         /// </summary>
         INetworkLayout NetworkLayout { get; }
         event Action<IWorkbench> NetworkLayoutUpdated;
-       
+
         /// <summary>
         /// The active scenarios.
         /// </summary>
@@ -223,6 +234,11 @@ namespace Bevisuali.Model
         /// of all variables, chosen by those which have greatest difference.
         /// </summary>
         double ComparisonResultsLevel { get; set; }
+
+        /// <summary>
+        /// What metric to use for comparisons.
+        /// </summary>
+        ComparisonMetric ComparisonMetric { get; set; }
 
         /// <summary>
         /// Raised when the comparison results are updated.

@@ -9,6 +9,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="46"/>
             <RowDefinition/>
+            <RowDefinition Height="Auto" MinHeight="53"/>
             <RowDefinition Height="46"/>
         </Grid.RowDefinitions>
 
@@ -22,7 +23,7 @@
         </TextBlock>
 
         <ScrollViewer 
-            Grid.Row="1"
+            Grid.Row="1" Grid.RowSpan="2"
         >
             <StackPanel
                 x:Name="xEvidenceList"
@@ -31,10 +32,13 @@
                 
             </StackPanel>
         </ScrollViewer>
+        <Label Content="Comparison Metric" Grid.Row="2" Height="24" VerticalAlignment="Top"/>
+        <RadioButton x:Name="xRadioButtonComparisonMetricKL" GroupName="ComparisonMetric" Content="KL" Grid.Row="2" HorizontalAlignment="Left" Width="114" Margin="5,0,0,0" Height="24" VerticalAlignment="Bottom" Checked="OnComparisonMetricChecked"/>
+        <RadioButton x:Name="xRadioButtonComparisonMetricES" GroupName="ComparisonMetric" Content="Error Sum" Grid.Row="2" HorizontalAlignment="Left" Width="114" Margin="124,0,0,0" Height="24" VerticalAlignment="Bottom" Checked="OnComparisonMetricChecked"/>
 
         <Button x:Name="xButtonReset" 
                 Content="Reset" 
-                Grid.Row="2" 
+                Grid.Row="3" 
                 Click="xButtonReset_Click" 
                 Margin="10,0,0,10" 
                 HorizontalAlignment="Left" 

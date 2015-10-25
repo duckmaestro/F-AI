@@ -1,4 +1,5 @@
 ﻿
+using Bevisuali.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +18,9 @@ namespace Bevisuali.UX
             InitializeComponent();
         }
 
-        public void SetEvidence(
-            IDictionary<string, Tuple<FObservation,FRandomVariable[]>> evidences,
-            IDictionary<string,string> abbreviations)
+        internal void SetEvidence(
+            IDictionary<string, Tuple<FObservation, FRandomVariable[]>> evidences,
+            IDictionary<string, string> abbreviations)
         {
             var evidencesSorted
                 = evidences.OrderBy(kvp => kvp.Key);
@@ -43,9 +44,44 @@ namespace Bevisuali.UX
             }
         }
 
+        internal void SetComparisonMetric(ComparisonMetric comparisonMetric)
+        {
+            if (comparisonMetric == ComparisonMetric.ErrorSum)
+            {
+                _noReentry = true;
+                this.xRadioButtonComparisonMetricES.IsChecked = true;
+                _noReentry = false;
+            }
+            else if (comparisonMetric == ComparisonMetric.SymmetricKLDivergence)
+            {
+                _noReentry = true;
+                this.xRadioButtonComparisonMetricKL.IsChecked = true;
+                _noReentry = false;
+            }
+        }
+
         private void xButtonReset_Click(object sender, RoutedEventArgs e)
         {
             App.Current.MainWindow.RequestResetEvidence(null);
         }
+
+        private void OnComparisonMetricChecked(object sender, RoutedEventArgs e)
+        {
+            if (_noReentry)
+            {
+                return;
+            }
+
+            if (e.Source == xRadioButtonComparisonMetricES)
+            {
+                App.Current.MainWindow.RequestSetComparisonMetric(ComparisonMetric.ErrorSum);
+            }
+            else if (e.Source == xRadioButtonComparisonMetricKL)
+            {
+                App.Current.MainWindow.RequestSetComparisonMetric(ComparisonMetric.SymmetricKLDivergence);
+            }
+        }
+
+        private bool _noReentry;
     }
 }

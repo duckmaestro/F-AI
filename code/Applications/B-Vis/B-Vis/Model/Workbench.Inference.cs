@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using FObservation = FAI.Bayesian.Observation;
@@ -35,7 +36,8 @@ namespace Bevisuali.Model
         protected List<ScenarioRecord> _scenariosInternal;
         protected ScenarioComparison _scenariosComparison;
         protected double _comparisonResultsLevel;
-        protected volatile bool _comparisonResultsLevelDirty;
+        protected ComparisonMetric _comparisonMetric;
+        protected volatile bool _comparisonOptionsDirty;
         protected Thread _scenariosThread;
         protected volatile bool _scenariosThreadCancel;
 
@@ -67,7 +69,19 @@ namespace Bevisuali.Model
                 }
 
                 _comparisonResultsLevel = value;
-                _comparisonResultsLevelDirty = true;
+                _comparisonOptionsDirty = true;
+            }
+        }
+        public ComparisonMetric ComparisonMetric
+        {
+            get
+            {
+                return this._comparisonMetric;
+            }
+            set
+            {
+                this._comparisonMetric = value;
+                this._comparisonOptionsDirty = true;
             }
         }
         public event Action<IScenarioComparison> ComparisonResultsUpdated;
@@ -171,24 +185,18 @@ namespace Bevisuali.Model
                 // Update comparison.
                 if (scenarios.Count == 2)
                 {
-                    if (didWork || _comparisonResultsLevelDirty)
+                    if (didWork || _comparisonOptionsDirty)
                     {
-                        _comparisonResultsLevelDirty = false;
+                        _comparisonOptionsDirty = false;
+
+                        var comparisonMetric = this._comparisonMetric;
 
                         ScenarioComparison oldComparison = _scenariosComparison;
 
                         ScenarioComparison comparison = new ScenarioComparison();
                         comparison.Scenario1 = scenarios[0].Scenario;
                         comparison.Scenario2 = scenarios[1].Scenario;
-
-                        // Compute comparison.
-                        Func<DiscreteDistribution, DiscreteDistribution, double> measureDissimilarity =
-                            (d1, d2) =>
-                            {
-                                var kl1 = d1.KLDivergence(d2);
-                                var kl2 = d2.KLDivergence(d1);
-                                return kl1 + kl2;
-                            };
+                        comparison.ComparisonMetric = comparisonMetric;
 
                         var posteriors1 = comparison.Scenario1.PosteriorMarginals;
                         var posteriors2 = comparison.Scenario2.PosteriorMarginals;
@@ -197,7 +205,20 @@ namespace Bevisuali.Model
                         {
                             var variableDist1 = posteriors1[variableName];
                             var variableDist2 = posteriors2[variableName];
-                            var dissimilarity = measureDissimilarity(variableDist1, variableDist2);
+                            double dissimilarity;
+                            if (comparisonMetric == Model.ComparisonMetric.SymmetricKLDivergence)
+                            {
+                                dissimilarity = this.MeasureDissimilarityKL(variableDist1, variableDist2);
+                            }
+                            else if (comparisonMetric == Model.ComparisonMetric.ErrorSum)
+                            {
+                                dissimilarity = this.MeasureDissimilarityES(variableDist1, variableDist2);
+                            }
+                            else
+                            {
+                                Debug.Fail("Unexpected state.");
+                                dissimilarity = 0;
+                            }
                             similarities.Add(new Tuple<string, double>(variableName, -dissimilarity));
                         }
 
@@ -222,7 +243,7 @@ namespace Bevisuali.Model
                             .Select(x => x.Item1)
                             .OrderBy(x => x)
                             .ToList();
-                        if (oldComparison == null || 
+                        if (oldComparison == null ||
                                 oldComparison
                                 .SignificantVariables
                                 .Select(x => x.Item1)
@@ -263,6 +284,18 @@ namespace Bevisuali.Model
                 }
             }
         }
-
+        protected double MeasureDissimilarityKL(DiscreteDistribution d1, DiscreteDistribution d2)
+        {
+            // Symmetric KL divergence.
+            var kl1 = d1.KLDivergence(d2);
+            var kl2 = d2.KLDivergence(d1);
+            return kl1 + kl2;
+        }
+        protected double MeasureDissimilarityES(DiscreteDistribution d1, DiscreteDistribution d2)
+        {
+            // Error sum.
+            var errorSum = d1.ErrorSum(d2);
+            return errorSum;
+        }
     }
 }

@@ -15,36 +15,38 @@ namespace Bevisuali.Model
     {
         public Workbench()
         {
-            _bayesianNetwork = new BayesianNetwork("Empty");
-            _bayesianNetworkVariableAbbreviations = new Dictionary<string, string>();
+            this._bayesianNetwork = new BayesianNetwork("Empty");
+            this._bayesianNetworkVariableAbbreviations = new Dictionary<string, string>();
 
-            _scenarios = new ObservableCollection<IScenario>();
-            _scenarios.CollectionChanged += ScenariosChanged;
-            _scenariosInternal = new List<ScenarioRecord>();
+            this._scenarios = new ObservableCollection<IScenario>();
+            this._scenarios.CollectionChanged += ScenariosChanged;
+            this._scenariosInternal = new List<ScenarioRecord>();
 
-            _scenariosThreadCancel = false;
-            _scenariosThread = new Thread(ThreadMainScenariosInference);
-            _scenariosThread.Name = "Inference";
-            _scenariosThread.Start();
+            this._scenariosThreadCancel = false;
+            this._scenariosThread = new Thread(ThreadMainScenariosInference);
+            this._scenariosThread.Name = "Inference";
+            this._scenariosThread.Start();
 
-            _learningTasks = new ObservableCollection<ILearningTask>();
-            _learningTasks.CollectionChanged += LearningTasksChanged;
-            _learningTasksInternal = new List<LearningTaskRecord>();
+            this._learningTasks = new ObservableCollection<ILearningTask>();
+            this._learningTasks.CollectionChanged += LearningTasksChanged;
+            this._learningTasksInternal = new List<LearningTaskRecord>();
 
-            _learningTasksThreadCancel = false;
-            _learningTasksThread = new Thread(ThreadMainLearningTasks);
-            _learningTasksThread.Name = "Learning";
-            _learningTasksThread.Start();
+            this._learningTasksThreadCancel = false;
+            this._learningTasksThread = new Thread(ThreadMainLearningTasks);
+            this._learningTasksThread.Name = "Learning";
+            this._learningTasksThread.Start();
 
             //NetworkLayoutAlgorithm = Model.NetworkLayoutAlgorithm.CompoundFDP;
-            NetworkLayoutAlgorithm = Model.NetworkLayoutAlgorithm.SugiyamaEfficient;
-            _networkLayout = new NetworkLayout();
-            _networkLayoutInternal = new NetworkLayoutRecord(_bayesianNetwork, _networkLayout, this.NetworkLayoutAlgorithm);
+            this.NetworkLayoutAlgorithm = Model.NetworkLayoutAlgorithm.SugiyamaEfficient;
+            this._networkLayout = new NetworkLayout();
+            this._networkLayoutInternal = new NetworkLayoutRecord(_bayesianNetwork, _networkLayout, this.NetworkLayoutAlgorithm);
 
-            _networkLayoutThreadCancel = false;
-            _networkLayoutThread = new Thread(ThreadMainNetworkLayout);
-            _networkLayoutThread.Name = "Layout";
-            _networkLayoutThread.Start();
+            this._networkLayoutThreadCancel = false;
+            this._networkLayoutThread = new Thread(ThreadMainNetworkLayout);
+            this._networkLayoutThread.Name = "Layout";
+            this._networkLayoutThread.Start();
+
+            this.ComparisonMetric = Model.ComparisonMetric.SymmetricKLDivergence;
         }
         public void Dispose()
         {
@@ -73,7 +75,7 @@ namespace Bevisuali.Model
                 _dataSet = value;
             }
         }
-        
+
         protected string _selectedVariable;
         public string SelectedVariable
         {
@@ -170,10 +172,10 @@ namespace Bevisuali.Model
 
                         // Add variables that have numerical suffixes first.
                         Regex regex = new Regex(@"^.*[^0-9]+([0-9]{1,2})$");
-                        foreach (var variableName in value.Variables.Select(rv=>rv.Key).OrderBy(n=>n))
+                        foreach (var variableName in value.Variables.Select(rv => rv.Key).OrderBy(n => n))
                         {
                             var match = regex.Match(variableName);
-                            if(!match.Success)
+                            if (!match.Success)
                             {
                                 continue;
                             }
@@ -198,13 +200,13 @@ namespace Bevisuali.Model
                         {
                             int groupCount = charGroup.Count();
 
-                            if(groupCount == 1 && !_bayesianNetworkVariableAbbreviations.ContainsKey(charGroup.First().Name))
+                            if (groupCount == 1 && !_bayesianNetworkVariableAbbreviations.ContainsKey(charGroup.First().Name))
                             {
                                 _bayesianNetworkVariableAbbreviations[charGroup.First().Name] = charGroup.Key.ToString();
                             }
 
                             int number = 1;
-                            foreach(var rv in charGroup)
+                            foreach (var rv in charGroup)
                             {
                                 string variableName = rv.Name;
                                 if (_bayesianNetworkVariableAbbreviations.ContainsKey(variableName))

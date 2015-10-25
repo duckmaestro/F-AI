@@ -308,10 +308,16 @@ namespace Bevisuali.UX
                         .Select(kvp => kvp.Item1)
                         .Union(evidenceVariables)
                     );
+
+                    // Update UI state for comparison metric.
+                    xEvidenceInspector.SetComparisonMetric(comparison.ComparisonMetric);
                 }
                 else
                 {
                     xGraphInspector.SetInterestVariables(null);
+
+                    // Update UI state for comparison metric.
+                    xEvidenceInspector.SetComparisonMetric(default(ComparisonMetric));
                 }
             });
         }
@@ -735,6 +741,11 @@ namespace Bevisuali.UX
 
             // Reset to simple node selection state.
             Model.SelectedVariableMode = Mode.Inspecting;
+        }
+
+        internal void RequestSetComparisonMetric(ComparisonMetric comparisonMetric)
+        {
+            this.Model.ComparisonMetric = comparisonMetric;
         }
 
         #endregion

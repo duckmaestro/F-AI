@@ -113,6 +113,27 @@ type DiscreteDistribution(?masses) =
 
             kl
 
+    member public self.ErrorSum (other:DiscreteDistribution) =
+        let eventsFromDist (dist:DiscreteDistribution) =
+            dist.Masses |> Seq.map (fun kvp -> kvp.Key) |> Set.ofSeq
+        
+        let eventsSelf = eventsFromDist self
+        let eventsOther = eventsFromDist other
+
+        if eventsSelf <> eventsOther then
+            // If event space is different, return NaN.
+            System.Double.NaN
+        else
+            // Sum the absolute error.
+            let errorSum = 
+                eventsSelf
+                |> Seq.map (fun event -> self.GetMass event |> Option.get, other.GetMass event |> Option.get)
+                |> Seq.map (fun (pi, qi) -> abs (pi - qi))
+                |> Seq.sum
+
+            errorSum
+
+
     ///
     /// Equality based on masses.
     ///
