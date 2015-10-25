@@ -41,7 +41,7 @@ namespace Bevisuali.Util
                 letter = input[0];
                 subscript = Regex.Match(input, @"([0-9]+)").Captures[0].Value;
             }
-            else if(input.Length == 1)
+            else if (input.Length == 1)
             {
                 letter = input[0];
                 subscript = "";
@@ -87,6 +87,21 @@ namespace Bevisuali.Util
             {
                 return false;
             }
+        }
+
+        public static string Truncate(this string @string, int maxLength)
+        {
+            if (@string.Length <= maxLength)
+            {
+                return @string;
+            }
+
+            if (@string.Length <= "...".Length)
+            {
+                return "...";
+            }
+
+            return @string.Substring(0, maxLength - 3) + "...";
         }
     }
 }
