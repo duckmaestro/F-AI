@@ -18,7 +18,7 @@
 module FAI.Bayesian.SimpleSampler
 
 // Randomizer.
-let private randomizer = new System.Random (0)
+let private randomizer = new System.Random (10)
 
 ///
 /// Generates a sample from a simple distribution.
@@ -29,7 +29,7 @@ let getSample (distribution:DiscreteDistribution) =
     let mutable accumulation = 0.
     let mutable event = None
 
-    for eventMass in distribution.Masses do
+    for eventMass in distribution.MassesSorted do
         if event.IsSome then ()
         else
             accumulation <- accumulation + eventMass.Value

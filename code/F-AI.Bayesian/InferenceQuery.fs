@@ -22,7 +22,7 @@ open System.Collections.Generic
 ///
 /// Contains a inference query against a Bayesian network, and its results.
 ///
-type public InferenceQuery (network, evidence) =
+type public InferenceQuery (network:BayesianNetwork, evidence) =
 
     // Memoized posteriors.
     let mutable posteriors = Map.empty
@@ -33,6 +33,14 @@ type public InferenceQuery (network, evidence) =
     let mutable valueCounts = Map.empty
     let mutable warmupSize = 250
     let mutable particleSeparation = 1
+
+    // Random orderings of the variables.
+    let variableOrders
+        = {1..100} 
+        |> Seq.map (fun _ -> network.VariablesOrdered 
+                            |> List.sortBy (fun _ -> SimpleSampler.getSampleUniformNatural 100))
+        |> Seq.toArray
+
 
     // Constructor
     do
@@ -93,6 +101,7 @@ type public InferenceQuery (network, evidence) =
             else steps
         
         let rvs = network.Variables
+        let getVariableOrder () = variableOrders.[SimpleSampler.getSampleUniformNatural variableOrders.Length - 1]
 
         // Init with first particle.
         if previousParticle.IsEmpty then
@@ -111,13 +120,15 @@ type public InferenceQuery (network, evidence) =
         // Warmup.
         if sampleCountRaw < warmupSize then
             for _ in { sampleCountRaw .. warmupSize } do
-                previousParticle <- GibbsSampler.getNextSample rvs previousParticle self.Evidence
+                let order = getVariableOrder ()
+                previousParticle <- GibbsSampler.getNextSample rvs previousParticle self.Evidence order
                 sampleCountRaw <- sampleCountRaw + 1
                 ()
 
         // Generate new particles.
         for localStepNumber in { 1 .. steps } do
-            let nextParticle = GibbsSampler.getNextSample rvs previousParticle self.Evidence
+            let order = getVariableOrder ()
+            let nextParticle = GibbsSampler.getNextSample rvs previousParticle self.Evidence order
             previousParticle <- nextParticle
             sampleCountRaw <- sampleCountRaw + 1
 

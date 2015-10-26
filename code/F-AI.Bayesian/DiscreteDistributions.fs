@@ -29,6 +29,7 @@ type DiscreteDistribution(?masses) =
     // Internal storage of the probability masses, indexed by
     // random variable value.
     let masses = defaultArg masses Map.empty
+    let mutable eventsSmallToLarge = None
 
     ///
     /// Initializes an empty distribution.
@@ -75,6 +76,19 @@ type DiscreteDistribution(?masses) =
     member public self.Masses 
         with get() = 
             masses :> IEnumerable<_>
+
+    ///
+    /// Events from small probably to large probably.
+    ///
+    member public self.MassesSorted =
+        if Option.isNone eventsSmallToLarge then
+            eventsSmallToLarge <- 
+                self.Masses 
+                |> Seq.sortBy (fun kvp -> kvp.Value) 
+                |> Seq.toArray
+                |> Option.Some
+
+        eventsSmallToLarge |> Option.get
 
     ///
     /// Computes the asymmetric KL-divergence D_kl(this||other). If the 

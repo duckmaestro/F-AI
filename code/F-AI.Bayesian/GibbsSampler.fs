@@ -19,15 +19,8 @@ module FAI.Bayesian.GibbsSampler
 
 let getNextSample (variables:Map<Identifier,RandomVariable>)
                   (currentSample:Observation)
-                  (evidence:Observation) = 
-
-    let variablesMap = variables
-
-    let variablesList = 
-        let nvariables = variables |> Seq.length
-        variables 
-        |> Seq.map (fun kvp -> kvp.Value)
-        |> Seq.sortBy (fun _ -> SimpleSampler.getSampleUniformNatural nvariables)
+                  (evidence:Observation)
+                  (updateOrder:List<RandomVariable>) = 
     
 
     // The working sample.
@@ -36,7 +29,7 @@ let getNextSample (variables:Map<Identifier,RandomVariable>)
     // For each variable in the network, generate a new value from the 
     // conditional distribution from defined by the remainder of the 
     // observation.
-    for rv in variablesList do
+    for rv in updateOrder do
 
         // Helper sampler.
         let getNewValue (fromSample:Observation) = 
@@ -60,7 +53,7 @@ let getNextSample (variables:Map<Identifier,RandomVariable>)
                 let mutable factors = [ ]
 
                 for childName in rv.Children do
-                    let child = variablesMap |> Map.find childName
+                    let child = variables |> Map.find childName
                     let childValue = Option.get <| fromSample.TryValueForVariable childName
                     let childParentsValues = fromSampleWithValue .&. child.Parents
                     let childDistribution = Option.get <| child.Distributions.TryGetDistribution childParentsValues
