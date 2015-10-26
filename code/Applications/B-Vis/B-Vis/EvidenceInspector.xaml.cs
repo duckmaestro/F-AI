@@ -1,5 +1,6 @@
 ﻿
 using Bevisuali.Model;
+using Bevisuali.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,26 @@ namespace Bevisuali.UX
                 obsControl.SetData(observation, observationVariables, abbreviations);
                 xEvidenceList.Children.Add(obsControl);
                 obsControl.Margin = new Thickness(0, 0, 0, 12);
+            }
+        }
+
+        internal void SetComparisonRelevantVariables(IScenarioComparison comparison, IDictionary<string, string> abbreviations)
+        {
+            this.xRelevantVariablesList.Children.Clear();
+
+            if (comparison == null)
+            {
+                return;
+            }
+
+            foreach (var v in comparison.SignificantVariables)
+            {
+                this.xRelevantVariablesList.Children.Add(
+                    new Label()
+                    {
+                        Content = string.Format("{0} ({1}): {2}", v.Item1.Truncate(20), abbreviations[v.Item1], v.Item2)
+                    }
+                );
             }
         }
 

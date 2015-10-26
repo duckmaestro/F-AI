@@ -311,6 +311,7 @@ namespace Bevisuali.UX
 
                     // Update UI state for comparison metric.
                     xEvidenceInspector.SetComparisonMetric(comparison.ComparisonMetric);
+                    xEvidenceInspector.SetComparisonRelevantVariables(comparison, this.Model.BayesianNetworkVariableAbbreviations);
                 }
                 else
                 {
@@ -318,6 +319,7 @@ namespace Bevisuali.UX
 
                     // Update UI state for comparison metric.
                     xEvidenceInspector.SetComparisonMetric(default(ComparisonMetric));
+                    xEvidenceInspector.SetComparisonRelevantVariables(null, null);
                 }
             });
         }

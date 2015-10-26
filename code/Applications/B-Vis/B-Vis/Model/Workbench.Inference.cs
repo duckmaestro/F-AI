@@ -219,13 +219,13 @@ namespace Bevisuali.Model
                                 Debug.Fail("Unexpected state.");
                                 dissimilarity = 0;
                             }
-                            similarities.Add(new Tuple<string, double>(variableName, -dissimilarity));
+                            similarities.Add(new Tuple<string, double>(variableName, dissimilarity));
                         }
 
                         // Put most different variables first in the list.
                         comparison.SignificantVariables
                             = similarities
-                            .OrderBy(s => s.Item2)
+                            .OrderByDescending(s => s.Item2)
                             .TakeFraction(this._comparisonResultsLevel)
                             .ToArray();
 

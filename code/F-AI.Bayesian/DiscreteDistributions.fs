@@ -109,6 +109,7 @@ type DiscreteDistribution(?masses) =
                 eventsSelf
                 |> Seq.map (fun event -> self.GetMass event |> Option.get, other.GetMass event |> Option.get)
                 |> Seq.map (fun (pi, qi) -> klSummand pi qi)
+                |> Seq.sort     // Small to large for maximium accuracy.
                 |> Seq.sum
 
             kl
@@ -129,6 +130,7 @@ type DiscreteDistribution(?masses) =
                 eventsSelf
                 |> Seq.map (fun event -> self.GetMass event |> Option.get, other.GetMass event |> Option.get)
                 |> Seq.map (fun (pi, qi) -> abs (pi - qi))
+                |> Seq.sort     // Small to large for maximium accuracy.
                 |> Seq.sum
 
             errorSum

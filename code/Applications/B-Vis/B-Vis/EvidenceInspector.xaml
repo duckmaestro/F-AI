@@ -7,9 +7,10 @@
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="46"/>
-            <RowDefinition/>
-            <RowDefinition Height="Auto" MinHeight="53"/>
+            <RowDefinition Height="27"/>
+            <RowDefinition Height="73*"/>
+            <RowDefinition Height="101*"/>
+            <RowDefinition Height="53"/>
             <RowDefinition Height="46"/>
         </Grid.RowDefinitions>
 
@@ -23,26 +24,36 @@
         </TextBlock>
 
         <ScrollViewer 
-            Grid.Row="1" Grid.RowSpan="2"
+            Grid.Row="1"
         >
             <StackPanel
                 x:Name="xEvidenceList"
                 Margin="4"
             >
-                
+
             </StackPanel>
         </ScrollViewer>
-        <Label Content="Comparison Metric" Grid.Row="2" Height="24" VerticalAlignment="Top"/>
-        <RadioButton x:Name="xRadioButtonComparisonMetricKL" GroupName="ComparisonMetric" Content="KL" Grid.Row="2" HorizontalAlignment="Left" Width="114" Margin="5,0,0,0" Height="24" VerticalAlignment="Bottom" Checked="OnComparisonMetricChecked"/>
-        <RadioButton x:Name="xRadioButtonComparisonMetricES" GroupName="ComparisonMetric" Content="Error Sum" Grid.Row="2" HorizontalAlignment="Left" Width="114" Margin="124,0,0,0" Height="24" VerticalAlignment="Bottom" Checked="OnComparisonMetricChecked"/>
+
+
+        <Label Content="Comparison Metric" Grid.Row="3" Height="24" VerticalAlignment="Top"/>
+        <RadioButton x:Name="xRadioButtonComparisonMetricKL" GroupName="ComparisonMetric" Content="KL" Grid.Row="3" HorizontalAlignment="Left" Width="114" Margin="5,0,0,0" Height="24" VerticalAlignment="Bottom" Checked="OnComparisonMetricChecked"/>
+        <RadioButton x:Name="xRadioButtonComparisonMetricES" GroupName="ComparisonMetric" Content="Error Sum" Grid.Row="3" HorizontalAlignment="Left" Width="114" Margin="124,0,0,0" Height="24" VerticalAlignment="Bottom" Checked="OnComparisonMetricChecked"/>
 
         <Button x:Name="xButtonReset" 
                 Content="Reset" 
-                Grid.Row="3" 
+                Grid.Row="4" 
                 Click="xButtonReset_Click" 
                 Margin="10,0,0,10" 
                 HorizontalAlignment="Left" 
                 VerticalAlignment="Bottom"
         />
+        <ScrollViewer 
+        	Grid.Row="2" Margin="0,24,0,0"
+        >
+            <StackPanel
+        		x:Name="xRelevantVariablesList" Width="296"
+            />
+        </ScrollViewer>
+        <Label Content="Comparison Largest Differences" Grid.Row="2" Height="24" VerticalAlignment="Top"/>
     </Grid>
 </UserControl>
