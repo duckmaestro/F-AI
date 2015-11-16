@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="Bevisuali.UX.LayoutInspector"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="27"/>
+            <RowDefinition/>
+            <RowDefinition Height="46"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock 
+            VerticalAlignment="Top" 
+            Margin="10,8,10,0" 
+            TextAlignment="Center" 
+            Height="14"
+        >
+            Layout
+        </TextBlock>
+        <Button x:Name="xButtonApply" 
+        	Content="Apply" 
+        	Grid.Row="2" 
+        	Click="xButtonApply_Click" 
+        	Margin="10,0,0,10" 
+        	HorizontalAlignment="Left" 
+        	VerticalAlignment="Bottom"
+        />
+        <Label Content="Node Separation Target" Grid.Row="1" Height="24" VerticalAlignment="Top"/>
+        <TextBox x:Name="xNodeSeparationTargetTextBox" HorizontalAlignment="Left" Height="23" Margin="10,24,0,0" Grid.Row="1" Text="2.0" VerticalAlignment="Top" Width="120" MaxLines="1" PreviewTextInput="OnNumericalOnlyTextBoxPreviewTextInput" />
+        <Label Content="Epochs" Grid.Row="1" Height="24" VerticalAlignment="Top" Margin="0,52,0,0"/>
+        <TextBox x:Name="xEpochsTextBox" HorizontalAlignment="Left" Height="23" Margin="10,76,0,0" Grid.Row="1" Text="2" VerticalAlignment="Top" Width="120" MaxLines="1" PreviewTextInput="OnNumericalOnlyTextBoxPreviewTextInput" />
+
+
+    </Grid>
+</UserControl>

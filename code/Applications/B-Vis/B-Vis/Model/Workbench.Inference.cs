@@ -254,7 +254,7 @@ namespace Bevisuali.Model
                                 _bayesianNetwork,
                                 _networkLayout,
                                 significantVariables,
-                                NetworkLayoutAlgorithm
+                                NetworkLayoutOptions
                             );
                         }
 

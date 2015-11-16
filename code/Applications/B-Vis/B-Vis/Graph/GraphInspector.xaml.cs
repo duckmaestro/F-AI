@@ -8,6 +8,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using FRandomVariable = FAI.Bayesian.RandomVariable;
 
 namespace Bevisuali.UX.Graph
@@ -18,6 +19,7 @@ namespace Bevisuali.UX.Graph
         const int LayerUnimportantNodes = 1;
         const int LayerSelectedNodes = 2;
         const int LayerSelectedNodesEdges = 3;
+        const double NodeScale = 1.4f;
 
         public GraphInspector()
         {
@@ -65,6 +67,7 @@ namespace Bevisuali.UX.Graph
                 node.Label = variableAbbreviations[variable.Name];
                 node.Tag = variable;
                 node.ColorSpace = variable.Space.Values.Select(v => variable.Space.GetColor(v)).ToArray();
+                node.RenderTransform = new ScaleTransform(NodeScale, NodeScale);
 
                 var cpt = variable.Distributions;
                 AddNode(node);

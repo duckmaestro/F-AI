@@ -111,6 +111,11 @@
                     <bv:EvidenceInspector x:Name="xEvidenceInspector" />
                 </Grid>
             </TabItem>
+            <TabItem Header="A">
+                <Grid>
+                    <bv:LayoutInspector x:Name="xLayoutInspector" />
+                </Grid>
+            </TabItem>
         </TabControl>
 
         <!-- Bottom Sliders -->

@@ -18,12 +18,20 @@ namespace Bevisuali.Model
     {
         protected class NetworkLayoutRecord
         {
+            public BayesianNetwork Network { get; protected set; }
             public NetworkLayout NetworkLayout { get; protected set; }
             public LayoutAlgorithm AlgorithmState { get; protected set; }
+            public NetworkLayoutOptions Options { get; protected set; }
+            public IList<string> InterestVertices { get; protected set; }
 
-            public NetworkLayoutRecord(BayesianNetwork network, NetworkLayout layout, NetworkLayoutAlgorithm algorithm)
+            public NetworkLayoutRecord(
+                BayesianNetwork network,
+                NetworkLayout layout,
+                NetworkLayoutOptions options)
             {
-                NetworkLayout = layout;
+                this.Network = network;
+                this.NetworkLayout = layout;
+                this.Options = options;
 
                 // Manually specify sizes.
                 Dictionary<string, float> sizes = new Dictionary<string, float>();
@@ -33,7 +41,7 @@ namespace Bevisuali.Model
                 }
 
                 // Instantiate algorithm.
-                AlgorithmState = new LayoutAlgorithm(network.Clone(), sizes, algorithm);
+                AlgorithmState = new LayoutAlgorithm(network.Clone(), sizes, options);
 
                 // Copy existing positions over.
                 if (layout != null && layout.Positions != null && layout.Positions.Count > 0)
@@ -45,9 +53,15 @@ namespace Bevisuali.Model
                 }
             }
 
-            public NetworkLayoutRecord(BayesianNetwork network, NetworkLayout existingLayout, IEnumerable<string> interestVertices, NetworkLayoutAlgorithm algorithm)
+            public NetworkLayoutRecord(
+                BayesianNetwork network,
+                NetworkLayout existingLayout,
+                IList<string> interestVertices,
+                NetworkLayoutOptions options)
             {
-                NetworkLayout = existingLayout;
+                this.Network = network;
+                this.NetworkLayout = existingLayout;
+                this.InterestVertices = interestVertices.ToList();
 
                 // Manually specify sizes.
                 Dictionary<string, float> sizes = new Dictionary<string, float>();
@@ -63,7 +77,7 @@ namespace Bevisuali.Model
                     }
                 }
 
-                AlgorithmState = new LayoutAlgorithm(network.Clone(), sizes, algorithm);
+                this.AlgorithmState = new LayoutAlgorithm(network.Clone(), sizes, options);
 
                 // Copy existing positions over.
                 if (existingLayout != null && existingLayout.Positions != null && existingLayout.Positions.Count > 0)
@@ -78,20 +92,23 @@ namespace Bevisuali.Model
 
         protected class LayoutAlgorithm
         {
-            public int IterationCount { get; set; }
-            public BayesianNetwork BayesianNetwork { get; set; }
-            public IDictionary<string, Point> Positions { get; set; }
-            
-            private Dictionary<string, Size> _sizes;
-            private NetworkLayoutAlgorithm _algorithm;
+            public int IterationCount { get; private set; }
+            public BayesianNetwork BayesianNetwork { get; private set; }
+            public IDictionary<string, Point> Positions { get; private set; }
 
-            public LayoutAlgorithm(BayesianNetwork network, IDictionary<string, float> sizes, NetworkLayoutAlgorithm algorithm)
+            private Dictionary<string, Size> _sizes;
+            private NetworkLayoutOptions _options;
+
+            public LayoutAlgorithm(
+                BayesianNetwork network,
+                IDictionary<string, float> sizes,
+                NetworkLayoutOptions options)
             {
                 this.BayesianNetwork = network;
                 this.Positions = new Dictionary<string, Point>();
-                
+
                 this._sizes = new Dictionary<string, Size>();
-                this._algorithm = algorithm;
+                this._options = options;
 
                 foreach (var kvp in sizes)
                 {
@@ -131,7 +148,7 @@ namespace Bevisuali.Model
                     // alg by putting pure parents at top and pure children at 
                     // bottom.
                     if (Positions.Count != 0)
-                    {                    
+                    {
                         // We have existing layout. Start with it but add slight
                         // randomness.
 
@@ -162,9 +179,10 @@ namespace Bevisuali.Model
 
                 ILayoutAlgorithm<string, IEdge<string>, IBidirectionalGraph<string, IEdge<string>>> layoutAlgorithm;
 
+                var algorithm = this._options.Algorithm;
 
                 // Hack: SugiyamaEfficient breaks if no edges.
-                if (_algorithm == NetworkLayoutAlgorithm.KK || graph.Edges.Count() == 0)
+                if (algorithm == NetworkLayoutOptions.AlgorithmEnum.KK || graph.Edges.Count() == 0)
                 {
                     var layoutParameters = new KKLayoutParameters();
                     layoutParameters.Height = 1000;
@@ -176,18 +194,18 @@ namespace Bevisuali.Model
 
                     layoutAlgorithm = layoutAlgorithms.CreateAlgorithm("KK", layoutContext, layoutParameters);
                 }
-                else if(_algorithm == NetworkLayoutAlgorithm.SugiyamaEfficient)
+                else if (algorithm == NetworkLayoutOptions.AlgorithmEnum.SugiyamaEfficient)
                 {
                     var layoutParameters = new EfficientSugiyamaLayoutParameters();
                     layoutParameters.MinimizeEdgeLength = true;
                     layoutParameters.OptimizeWidth = true;
-                    layoutParameters.WidthPerHeight = 1.6;
-                    layoutParameters.VertexDistance = 10.0;
-                    layoutParameters.LayerDistance = 1.0;
+                    layoutParameters.WidthPerHeight = 1.65;
+                    layoutParameters.VertexDistance = this._options.NodeSeparationTarget;
+                    layoutParameters.LayerDistance = 5.0;
 
                     layoutAlgorithm = layoutAlgorithms.CreateAlgorithm("EfficientSugiyama", layoutContext, layoutParameters);
                 }
-                else if (_algorithm == NetworkLayoutAlgorithm.Sugiyama)
+                else if (algorithm == NetworkLayoutOptions.AlgorithmEnum.Sugiyama)
                 {
                     var layoutParameters = new SugiyamaLayoutParameters();
                     layoutParameters.MaxWidth = 1024;
@@ -196,7 +214,7 @@ namespace Bevisuali.Model
 
                     layoutAlgorithm = layoutAlgorithms.CreateAlgorithm("Sugiyama", layoutContext, layoutParameters);
                 }
-                else if(_algorithm == NetworkLayoutAlgorithm.CompoundFDP)
+                else if (algorithm == NetworkLayoutOptions.AlgorithmEnum.CompoundFDP)
                 {
                     var layoutParameters = new CompoundFDPLayoutParameters();
                     layoutParameters.GravitationFactor = 0.8;
@@ -225,16 +243,52 @@ namespace Bevisuali.Model
         }
 
         protected readonly int NetworkLayoutIterationChunkSize = 256;
-        protected readonly int NetworkLayoutIterationLimit = 1;
         protected const float NetworkLayoutVertexSizeMinimized = 24.0f;
         protected const float NetworkLayoutVertexSizeNormal = 125.0f;
 
+        protected NetworkLayoutOptions _networkLayoutOptions;
         protected NetworkLayout _networkLayout;
         protected NetworkLayoutRecord _networkLayoutInternal;
         protected Thread _networkLayoutThread;
         protected volatile bool _networkLayoutThreadCancel;
 
-        public NetworkLayoutAlgorithm NetworkLayoutAlgorithm { get; set; }
+        public NetworkLayoutOptions NetworkLayoutOptions
+        {
+            get
+            {
+                return this._networkLayoutOptions;
+            }
+            set
+            {
+                this._networkLayoutOptions = value;
+                if (this.NetworkLayoutOptionsUpdated != null)
+                {
+                    this.NetworkLayoutOptionsUpdated(this);
+                }
+
+                // Reset algorithm state.
+                var record = this._networkLayoutInternal;
+                if (record.InterestVertices == null)
+                {
+                    this._networkLayoutInternal
+                        = new NetworkLayoutRecord(
+                            record.Network,
+                            record.NetworkLayout,
+                            value);
+                }
+                else
+                {
+                    this._networkLayoutInternal
+                        = new NetworkLayoutRecord(
+                            record.Network,
+                            record.NetworkLayout,
+                            record.InterestVertices,
+                            value);
+                }
+            }
+        }
+        public event Action<IWorkbench> NetworkLayoutOptionsUpdated;
+
         public INetworkLayout NetworkLayout
         {
             get
@@ -261,7 +315,7 @@ namespace Bevisuali.Model
 
                 // If there is work to do.
                 if (record != null
-                    && record.AlgorithmState.IterationCount < NetworkLayoutIterationLimit)
+                    && record.AlgorithmState.IterationCount < record.Options.Iterations)
                 {
                     // Mark as computing.
                     record.NetworkLayout.ComputationState = ComputationState.Computing;
@@ -282,7 +336,7 @@ namespace Bevisuali.Model
                     didWork = true;
                 }
                 // We're finished. Mark done.
-                else if (record.AlgorithmState.IterationCount == NetworkLayoutIterationLimit
+                else if (record.AlgorithmState.IterationCount == record.Options.Iterations
                     && record.NetworkLayout.ComputationState != ComputationState.Done)
                 {
                     record.NetworkLayout.ComputationState = ComputationState.Done;

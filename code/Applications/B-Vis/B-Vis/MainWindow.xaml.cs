@@ -4,6 +4,7 @@ using FAI.Bayesian;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -748,6 +749,12 @@ namespace Bevisuali.UX
         internal void RequestSetComparisonMetric(ComparisonMetric comparisonMetric)
         {
             this.Model.ComparisonMetric = comparisonMetric;
+        }
+
+        internal void RequestLayoutOptions(NetworkLayoutOptions options)
+        {
+            Debug.Assert(options != null);
+            this.Model.NetworkLayoutOptions = options;
         }
 
         #endregion

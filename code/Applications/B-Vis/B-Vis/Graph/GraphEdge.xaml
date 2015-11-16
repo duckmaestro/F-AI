@@ -17,14 +17,15 @@
             <Line 
                 Name="xLine"
                 Stroke="DarkGray" 
+                StrokeThickness="1.5"
                 X1="0" Y1="0" 
                 X2="0" Y2="300"
             />
             <Polygon Name="xTip" Fill="DarkGray">
                 <Polygon.Points>
                     <Point X="0" Y="0" />
-                    <Point X="5" Y="10" />
-                    <Point X="-5" Y="10" />
+                    <Point X="6" Y="12" />
+                    <Point X="-6" Y="12" />
                 </Polygon.Points>
             </Polygon>
         </Canvas>
@@ -32,14 +33,15 @@
             <Line 
                 Name="xLineMinimized"
                 Stroke="LightGray" 
+                StrokeThickness="1.5"
                 X1="0" Y1="0" 
                 X2="0" Y2="300" StrokeDashArray="8 5"
             />
             <Polygon Fill="LightGray">
                 <Polygon.Points>
                     <Point X="0" Y="0" />
-                    <Point X="3" Y="6" />
-                    <Point X="-3" Y="6" />
+                    <Point X="4" Y="9" />
+                    <Point X="-4" Y="9" />
                 </Polygon.Points>
             </Polygon>
         </Canvas>

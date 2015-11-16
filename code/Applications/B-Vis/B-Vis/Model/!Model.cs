@@ -22,12 +22,52 @@ namespace Bevisuali.Model
         Editing,
     }
 
-    public enum NetworkLayoutAlgorithm
+    internal class NetworkLayoutOptions : ICloneable
     {
-        KK,
-        SugiyamaEfficient,
-        Sugiyama,
-        CompoundFDP,
+        public enum AlgorithmEnum
+        {
+            KK,
+            SugiyamaEfficient,
+            Sugiyama,
+            CompoundFDP,
+        }
+
+        public AlgorithmEnum Algorithm { get; protected set; }
+        public float NodeSeparationTarget { get; protected set; }
+        public int Iterations { get; protected set; }
+
+        public NetworkLayoutOptions()
+        {
+            this.Algorithm = AlgorithmEnum.SugiyamaEfficient;
+            this.NodeSeparationTarget = 10;
+            this.Iterations = 1;
+        }
+
+        public NetworkLayoutOptions(
+            AlgorithmEnum algorithm,
+            float nodeSeparationTarget,
+            int iterations)
+        {
+            if (nodeSeparationTarget <= 0)
+            {
+                throw new ArgumentException();
+            }
+
+            if (iterations <= 1)
+            {
+                throw new ArgumentException();
+            }
+
+            this.Algorithm = algorithm;
+            this.Iterations = iterations;
+            this.NodeSeparationTarget = nodeSeparationTarget;
+        }
+
+        public object Clone()
+        {
+            var clone = this.MemberwiseClone();
+            return (NetworkLayoutOptions)clone;
+        }
     }
 
     internal enum ComparisonMetric
@@ -36,6 +76,7 @@ namespace Bevisuali.Model
         ErrorSum,
     }
 
+    // TODO: Make immutable?
     internal class LearningOptions
     {
         public enum StructureEnum
@@ -210,7 +251,9 @@ namespace Bevisuali.Model
         /// <summary>
         /// The desired network layout algorithm.
         /// </summary>
-        NetworkLayoutAlgorithm NetworkLayoutAlgorithm { get; set; }
+        NetworkLayoutOptions NetworkLayoutOptions { get; set; }
+        event Action<IWorkbench> NetworkLayoutOptionsUpdated;
+
         /// <summary>
         /// The graph layout for the Bayesian network. This is automatically
         /// kept up-to-date with changes to the current Bayesian network.

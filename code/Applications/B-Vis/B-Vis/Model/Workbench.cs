@@ -36,10 +36,9 @@ namespace Bevisuali.Model
             this._learningTasksThread.Name = "Learning";
             this._learningTasksThread.Start();
 
-            //NetworkLayoutAlgorithm = Model.NetworkLayoutAlgorithm.CompoundFDP;
-            this.NetworkLayoutAlgorithm = Model.NetworkLayoutAlgorithm.SugiyamaEfficient;
+            this._networkLayoutOptions = new NetworkLayoutOptions();
             this._networkLayout = new NetworkLayout();
-            this._networkLayoutInternal = new NetworkLayoutRecord(_bayesianNetwork, _networkLayout, this.NetworkLayoutAlgorithm);
+            this._networkLayoutInternal = new NetworkLayoutRecord(_bayesianNetwork, _networkLayout, this.NetworkLayoutOptions);
 
             this._networkLayoutThreadCancel = false;
             this._networkLayoutThread = new Thread(ThreadMainNetworkLayout);
@@ -164,7 +163,7 @@ namespace Bevisuali.Model
                     _networkLayoutInternal = new NetworkLayoutRecord(
                         value,
                         _networkLayout,
-                        this.NetworkLayoutAlgorithm);
+                        this.NetworkLayoutOptions);
 
                     // Build abbreviations.
                     {
@@ -255,7 +254,7 @@ namespace Bevisuali.Model
             _networkLayoutInternal = new NetworkLayoutRecord(
                 network,
                 _networkLayout,
-                this.NetworkLayoutAlgorithm);
+                this.NetworkLayoutOptions);
         }
     }
 }

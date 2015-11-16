@@ -69,6 +69,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="LayoutInspector.xaml.cs">
+      <DependentUpon>LayoutInspector.xaml</DependentUpon>
+    </Compile>
     <Compile Include="EvidenceInspector.xaml.cs">
       <DependentUpon>EvidenceInspector.xaml</DependentUpon>
     </Compile>
@@ -138,6 +141,10 @@
     <Page Include="Distribution\DistributionTable.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LayoutInspector.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="EvidenceInspector.xaml">
       <SubType>Designer</SubType>
