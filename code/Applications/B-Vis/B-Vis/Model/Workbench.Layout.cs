@@ -29,6 +29,8 @@ namespace Bevisuali.Model
                 NetworkLayout layout,
                 NetworkLayoutOptions options)
             {
+                Debug.Assert(options != null, "Layout options cannot be null.");
+
                 this.Network = network;
                 this.NetworkLayout = layout;
                 this.Options = options;

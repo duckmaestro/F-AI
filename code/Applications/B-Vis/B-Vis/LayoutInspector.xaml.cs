@@ -24,12 +24,16 @@ namespace Bevisuali.UX
             var algorithm = NetworkLayoutOptions.AlgorithmEnum.SugiyamaEfficient;
             float nodeSeparationTarget = float.Parse(this.xNodeSeparationTargetTextBox.Text);
             int epochs = (int)Math.Round(float.Parse(this.xEpochsTextBox.Text));
+            float nodeSize = float.Parse(this.xNodeSizeTextBox.Text);
+            float edgeThickness = float.Parse(this.xEdgeThickness.Text);
 
             var layoutOptions
                 = new NetworkLayoutOptions(
                     algorithm,
                     nodeSeparationTarget,
-                    epochs);
+                    epochs,
+                    nodeSize,
+                    edgeThickness);
 
             App.Current.MainWindow.RequestLayoutOptions(layoutOptions);
         }

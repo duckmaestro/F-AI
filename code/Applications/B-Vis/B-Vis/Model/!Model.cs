@@ -35,32 +35,50 @@ namespace Bevisuali.Model
         public AlgorithmEnum Algorithm { get; protected set; }
         public float NodeSeparationTarget { get; protected set; }
         public int Iterations { get; protected set; }
+        public float NodeSize { get; protected set; }
+        public float EdgeThickness { get; protected set; }
 
         public NetworkLayoutOptions()
         {
             this.Algorithm = AlgorithmEnum.SugiyamaEfficient;
             this.NodeSeparationTarget = 10;
             this.Iterations = 1;
+            this.NodeSize = 50;
+            this.EdgeThickness = 1;
         }
 
         public NetworkLayoutOptions(
             AlgorithmEnum algorithm,
             float nodeSeparationTarget,
-            int iterations)
+            int iterations,
+            float nodeSize,
+            float edgeThickness)
         {
             if (nodeSeparationTarget <= 0)
             {
-                throw new ArgumentException();
+                throw new ArgumentOutOfRangeException();
             }
 
             if (iterations <= 1)
             {
-                throw new ArgumentException();
+                throw new ArgumentOutOfRangeException();
+            }
+
+            if (nodeSize < 1.0)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            if (edgeThickness <= 0)
+            {
+                throw new ArgumentOutOfRangeException();
             }
 
             this.Algorithm = algorithm;
             this.Iterations = iterations;
             this.NodeSeparationTarget = nodeSeparationTarget;
+            this.NodeSize = nodeSize;
+            this.EdgeThickness = edgeThickness;
         }
 
         public object Clone()

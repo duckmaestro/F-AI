@@ -15,6 +15,18 @@ namespace Bevisuali.UX.Graph
             Minimized,
         }
 
+
+
+        public double LineThickness
+        {
+            get { return (double)GetValue(LineThicknessProperty); }
+            set { SetValue(LineThicknessProperty, value); }
+        }
+
+        public static readonly DependencyProperty LineThicknessProperty =
+            DependencyProperty.Register("LineThickness", typeof(double), typeof(GraphEdge), new PropertyMetadata(1.5, LineThicknessPropertyChanged));
+
+
         public GraphEdge()
         {
             InitializeComponent();
@@ -151,6 +163,13 @@ namespace Bevisuali.UX.Graph
             transform.Angle = angle * 180.0 / (Math.PI) + 90;
         }
 
+        protected static void LineThicknessPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
+        {
+            GraphEdge senderTyped = (GraphEdge)sender;
+            double thickness = (double)args.NewValue;
+            senderTyped.xLine.StrokeThickness = thickness;
+            senderTyped.xLineMinimized.StrokeThickness = thickness;
+        }
 
         private GraphNode _from;
         private GraphNode _to;

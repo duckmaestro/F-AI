@@ -234,12 +234,13 @@ namespace Bevisuali.UX
             var network = workbench.BayesianNetwork;
             var positions = workbench.NetworkLayout.Positions;
             var abbreviations = workbench.BayesianNetworkVariableAbbreviations;
+            var options = workbench.NetworkLayoutOptions;
 
             // Init graph inspector.
             Dispatcher.Invoke(delegate
             {
                 // Update graph inspector.
-                xGraphInspector.SetGraphLayout(positions);
+                xGraphInspector.SetGraphLayout(positions, options.NodeSize, options.EdgeThickness);
 
                 // Update network inspector.
                 {

@@ -32,6 +32,10 @@
         <TextBox x:Name="xNodeSeparationTargetTextBox" HorizontalAlignment="Left" Height="23" Margin="10,24,0,0" Grid.Row="1" Text="2.0" VerticalAlignment="Top" Width="120" MaxLines="1" PreviewTextInput="OnNumericalOnlyTextBoxPreviewTextInput" />
         <Label Content="Epochs" Grid.Row="1" Height="24" VerticalAlignment="Top" Margin="0,52,0,0"/>
         <TextBox x:Name="xEpochsTextBox" HorizontalAlignment="Left" Height="23" Margin="10,76,0,0" Grid.Row="1" Text="2" VerticalAlignment="Top" Width="120" MaxLines="1" PreviewTextInput="OnNumericalOnlyTextBoxPreviewTextInput" />
+        <Label Content="Node Size" HorizontalAlignment="Left" Margin="10,104,0,0" Grid.Row="1" VerticalAlignment="Top"/>
+        <TextBox x:Name="xNodeSizeTextBox" HorizontalAlignment="Left" Height="23" Margin="10,128,0,0" Grid.Row="1" Text="60" VerticalAlignment="Top" Width="120" MaxLines="1" PreviewTextInput="OnNumericalOnlyTextBoxPreviewTextInput" />
+        <Label Content="Edge Thickness" HorizontalAlignment="Left" Margin="10,156,0,0" Grid.Row="1" VerticalAlignment="Top"/>
+        <TextBox x:Name="xEdgeThickness" HorizontalAlignment="Left" Height="23" Margin="10,180,0,0" Grid.Row="1" Text="2" VerticalAlignment="Top" Width="120" MaxLines="1" PreviewTextInput="OnNumericalOnlyTextBoxPreviewTextInput" />
 
 
     </Grid>

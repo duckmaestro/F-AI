@@ -19,7 +19,6 @@ namespace Bevisuali.UX.Graph
         const int LayerUnimportantNodes = 1;
         const int LayerSelectedNodes = 2;
         const int LayerSelectedNodesEdges = 3;
-        const double NodeScale = 1.4f;
 
         public GraphInspector()
         {
@@ -41,7 +40,9 @@ namespace Bevisuali.UX.Graph
         /// must be updated separately.
         /// </summary>
         /// <param name="network"></param>
-        public void SetGraph(BayesianNetwork network, IDictionary<string, string> variableAbbreviations)
+        public void SetGraph(
+            BayesianNetwork network,
+            IDictionary<string, string> variableAbbreviations)
         {
             bool isNewNetwork = _network != network;
 
@@ -67,7 +68,6 @@ namespace Bevisuali.UX.Graph
                 node.Label = variableAbbreviations[variable.Name];
                 node.Tag = variable;
                 node.ColorSpace = variable.Space.Values.Select(v => variable.Space.GetColor(v)).ToArray();
-                node.RenderTransform = new ScaleTransform(NodeScale, NodeScale);
 
                 var cpt = variable.Distributions;
                 AddNode(node);
@@ -151,8 +151,16 @@ namespace Bevisuali.UX.Graph
         /// Provides a graph layout for this inspector to use.
         /// </summary>
         /// <param name="layout"></param>
-        public void SetGraphLayout(IDictionary<string, Point> layout)
+        public void SetGraphLayout(
+            IDictionary<string, Point> layout,
+            float nodeSize,
+            float edgeThickness)
         {
+            if (nodeSize <= 0)
+            {
+                throw new ArgumentOutOfRangeException("NodeSize");
+            }
+
             // Shift layout into view.
             Point vertexShift;
             Size canvasSize;
@@ -193,6 +201,12 @@ namespace Bevisuali.UX.Graph
                 if (layout.TryGetValue(variable.Name, out position))
                 {
                     node.Position = position.Add(vertexShift);
+                    double localSize = node.Radius * 2;
+                    if (localSize != 0)
+                    {
+                        double scaleNeeded = nodeSize / localSize;
+                        node.RenderTransform = new ScaleTransform(scaleNeeded, scaleNeeded);
+                    }
                 }
                 else
                 {
@@ -203,6 +217,12 @@ namespace Bevisuali.UX.Graph
             // Update canvas.
             xRoot.Width = canvasSize.Width * xRootScaleTransform.ScaleX;
             xRoot.Height = canvasSize.Height * xRootScaleTransform.ScaleY;
+
+            // Edge thickness.
+            foreach (var edge in _edges)
+            {
+                edge.LineThickness = edgeThickness;
+            }
         }
 
         public void SetZoom(double zoom)
