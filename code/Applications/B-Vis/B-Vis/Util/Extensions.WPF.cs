@@ -72,6 +72,19 @@ namespace Bevisuali.UX
 
             return new Tuple<double, double>(t.ScaleX, t.ScaleY);
         }
+
+        public static void SetRenderScale(this FrameworkElement element, double x, double y)
+        {
+            ScaleTransform t = element.RenderTransform as ScaleTransform;
+            if (t == null)
+            {
+                t = new ScaleTransform();
+                element.RenderTransform = t;
+            }
+
+            t.ScaleX = x;
+            t.ScaleY = y;
+        }
         #endregion
 
     }

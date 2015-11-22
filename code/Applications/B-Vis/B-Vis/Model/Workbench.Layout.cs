@@ -61,9 +61,12 @@ namespace Bevisuali.Model
                 IList<string> interestVertices,
                 NetworkLayoutOptions options)
             {
+                Debug.Assert(options != null, "Layout options cannot be null.");
+
                 this.Network = network;
                 this.NetworkLayout = existingLayout;
                 this.InterestVertices = interestVertices.ToList();
+                this.Options = options;
 
                 // Manually specify sizes.
                 Dictionary<string, float> sizes = new Dictionary<string, float>();

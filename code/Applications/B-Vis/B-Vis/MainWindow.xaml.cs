@@ -240,7 +240,8 @@ namespace Bevisuali.UX
             Dispatcher.Invoke(delegate
             {
                 // Update graph inspector.
-                xGraphInspector.SetGraphLayout(positions, options.NodeSize, options.EdgeThickness);
+                xGraphInspector.SetLayoutOptions(options);
+                xGraphInspector.SetGraphLayout(positions);
 
                 // Update network inspector.
                 {

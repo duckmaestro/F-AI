@@ -120,7 +120,7 @@ namespace Bevisuali.UX.Graph
         /// <summary>
         /// Returns the current radius of the node.
         /// </summary>
-        public double Radius
+        public double ActualRadius
         {
             get
             {

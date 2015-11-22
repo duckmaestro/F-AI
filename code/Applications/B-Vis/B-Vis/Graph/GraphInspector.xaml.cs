@@ -1,4 +1,5 @@
 ﻿
+using Bevisuali.Model;
 using Bevisuali.Util;
 using FAI.Bayesian;
 using System;
@@ -32,6 +33,19 @@ namespace Bevisuali.UX.Graph
         private void xRoot_MouseUp(object sender, MouseButtonEventArgs e)
         {
             App.Current.MainWindow.RequestSelectVariable(null);
+        }
+
+        public void SetLayoutOptions(object options)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException();
+            }
+
+            // HACK
+            this._layoutOptions = (NetworkLayoutOptions)options;
+
+            this.UpdateNodeSizes();
         }
 
         /// <summary>
@@ -115,6 +129,7 @@ namespace Bevisuali.UX.Graph
                         if (node.State == GraphNode.StateEnum.Minimized)
                         {
                             node.State = GraphNode.StateEnum.Idling;
+
                         }
                     }
                     else
@@ -151,16 +166,8 @@ namespace Bevisuali.UX.Graph
         /// Provides a graph layout for this inspector to use.
         /// </summary>
         /// <param name="layout"></param>
-        public void SetGraphLayout(
-            IDictionary<string, Point> layout,
-            float nodeSize,
-            float edgeThickness)
+        public void SetGraphLayout(IDictionary<string, Point> layout)
         {
-            if (nodeSize <= 0)
-            {
-                throw new ArgumentOutOfRangeException("NodeSize");
-            }
-
             // Shift layout into view.
             Point vertexShift;
             Size canvasSize;
@@ -201,12 +208,6 @@ namespace Bevisuali.UX.Graph
                 if (layout.TryGetValue(variable.Name, out position))
                 {
                     node.Position = position.Add(vertexShift);
-                    double localSize = node.Radius * 2;
-                    if (localSize != 0)
-                    {
-                        double scaleNeeded = nodeSize / localSize;
-                        node.RenderTransform = new ScaleTransform(scaleNeeded, scaleNeeded);
-                    }
                 }
                 else
                 {
@@ -221,7 +222,34 @@ namespace Bevisuali.UX.Graph
             // Edge thickness.
             foreach (var edge in _edges)
             {
-                edge.LineThickness = edgeThickness;
+                edge.LineThickness = this._layoutOptions.EdgeThickness;
+            }
+
+            // Sizes.
+            this.UpdateNodeSizes();
+        }
+
+        private void UpdateNodeSizes()
+        {
+            var nodeSize = this._layoutOptions.NodeSize;
+
+            foreach (var node in this._nodes)
+            {
+                if (node.State == GraphNode.StateEnum.Minimized)
+                {
+                    node.SetRenderScale(1, 1);
+                    continue;
+                }
+
+                double localSize = node.ActualRadius * 2;
+                if (localSize != 0)
+                {
+                    // HACK: Apply node size as a render transform. 
+                    // TODO: Modify a property on the node itself instead, so it can handle
+                    //       minimized and normal sizes correctly.
+                    double scaleNeeded = nodeSize / localSize;
+                    node.RenderTransform = new ScaleTransform(scaleNeeded, scaleNeeded);
+                }
             }
         }
 
@@ -245,7 +273,10 @@ namespace Bevisuali.UX.Graph
             // TODO: maintain center point of view.
         }
 
-        public void SetInferenceResults(IDictionary<string, DiscreteDistribution> results, int scenarioId, FAI.Bayesian.Observation evidence)
+        public void SetInferenceResults(
+            IDictionary<string, DiscreteDistribution> results,
+            int scenarioId,
+            FAI.Bayesian.Observation evidence)
         {
             if (scenarioId <= 0)
             {
@@ -491,10 +522,11 @@ namespace Bevisuali.UX.Graph
         }
 
 
-        BayesianNetwork _network;
-        List<GraphNode> _nodes;
-        List<GraphEdge> _edges;
-        List<string> _interestVariables;
-        string _selectedVariableName;
+        private BayesianNetwork _network;
+        private List<GraphNode> _nodes;
+        private List<GraphEdge> _edges;
+        private List<string> _interestVariables;
+        private string _selectedVariableName;
+        private NetworkLayoutOptions _layoutOptions;
     }
 }

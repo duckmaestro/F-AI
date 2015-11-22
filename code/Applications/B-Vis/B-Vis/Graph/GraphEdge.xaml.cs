@@ -144,8 +144,8 @@ namespace Bevisuali.UX.Graph
 
             // Trim according to radii.
             var directionUnit = direction.Multiply(1.0 / length);
-            var fromRadius = _from.Radius * _from.GetRenderScale().Item1;
-            var toRadius = _to.Radius * _from.GetRenderScale().Item1;
+            var fromRadius = _from.ActualRadius * _from.GetRenderScale().Item1;
+            var toRadius = _to.ActualRadius * _from.GetRenderScale().Item1;
             from = from.Add(directionUnit.Multiply(fromRadius));
             to = to.Subtract(directionUnit.Multiply(toRadius));
             length = Math.Max(length - fromRadius - toRadius, 0.0);
