@@ -50,7 +50,7 @@ let private ParseSample (variableNames:seq<String>) (ignoreList) (row:String) =
 
 let LoadFromFile filePath =
     
-    let name = System.IO.Path.GetFileNameWithoutExtension filePath
+    let name = System.IO.Path.GetFileNameWithoutExtension(filePath:string)
         
     let rows = 
         File.ReadLines filePath

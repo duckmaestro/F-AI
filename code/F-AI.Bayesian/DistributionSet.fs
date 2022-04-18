@@ -60,7 +60,7 @@ type DistributionSet(?distributions) =
     new(distributions:seq<System.Tuple<Observation,DiscreteDistribution>>) =
         let distributions =
             distributions
-            |> Seq.map (fun t -> t.Item1, t.Item2)
+            |> Seq.map (fun t -> fst t, snd t)
             |> Map.ofSeq
         DistributionSet(distributions)
         

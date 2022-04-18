@@ -46,17 +46,17 @@ type PCARegressionPredictor() =
             let samplesAsMatrix = matrixFromRows (samples |> Seq.map (fun s -> s.Features))
 
             // calculate covariance matrix
-            let covarianceMatrix = Statistics.CovarianceMatrix(samplesAsMatrix.RowEnumerator() |> Seq.map (fun r -> snd r))
+            let covarianceMatrix = Statistics.CovarianceMatrix(samplesAsMatrix.EnumerateRows())
 
             // calculate eigen vectors/values
-            let eigenDecomposition = new MathNet.Numerics.LinearAlgebra.Double.Factorization.DenseEvd(samplesAsMatrix)
+            let eigenDecomposition = samplesAsMatrix.Evd()
 
-            assert (eigenDecomposition.EigenValues() |> Seq.forall (fun e -> e.Imaginary = 0.0))
+            assert (eigenDecomposition.EigenValues |> Seq.forall (fun e -> e.Imaginary = 0.0))
 
-            let eigenPairs = Seq.zip (eigenDecomposition.EigenValues()) (eigenDecomposition.EigenVectors().RowEnumerator())
+            let eigenPairs = Seq.zip (eigenDecomposition.EigenValues) (eigenDecomposition.EigenVectors.EnumerateRows())
             let orderedEigenPairs = eigenPairs |> Seq.sortBy (fun p -> -(fst p).Real)
             eigenValues <- orderedEigenPairs |> Seq.map (fun p -> (fst p).Real) |> Seq.toArray
-            eigenVectors <- orderedEigenPairs |> Seq.map (fun p -> (snd (snd p))) |> Seq.toArray
+            eigenVectors <- orderedEigenPairs |> Seq.map (fun p -> (snd p)) |> Seq.toArray
 
             () // todo
 

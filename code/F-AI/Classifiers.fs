@@ -86,7 +86,7 @@ let MeasureConfusion (classifier:IClassifier) samples labels =
     // divide by true label count
     for j in [0 .. 1 .. labelsCount-1] do
         let columnJ = confusionMatrix.Column(j)
-        let sampleCountForLabelJ = sampleCountByLabel |> Seq.nth j
+        let sampleCountForLabelJ = sampleCountByLabel |> Seq.item j
         let columnJDivided = columnJ.Multiply(1.0 / (float)sampleCountForLabelJ)
         confusionMatrix.SetColumn(j, columnJDivided)
 

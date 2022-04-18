@@ -43,7 +43,7 @@ type DiscreteDistribution(?masses) =
     new(masses:seq<System.Tuple<EventValue,ProbabilityMass>>) =
         let masses = 
             masses 
-            |> Seq.map (fun t -> t.Item1 ,t.Item2)
+            |> Seq.map (fun t -> fst t, snd t)
             |> Map.ofSeq
         DiscreteDistribution(masses)
   

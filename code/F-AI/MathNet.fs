@@ -26,8 +26,8 @@ module MathNet
 
 // namespaces
 
-open MathNet.Numerics.FSharp
-open MathNet.Numerics.LinearAlgebra.Generic
+open MathNet.Numerics
+open MathNet.Numerics.LinearAlgebra
 open MathNet.Numerics.LinearAlgebra.Double
 
 
@@ -50,8 +50,8 @@ let matrix rows columns =
     new DenseMatrix(rows, columns) :> Matrix
 
 /// Creates a new vector using the provided sequence.
-let vector (values:float seq) =
-    DenseVector.ofSeq values :> Vector
+let vector (values:float seq) : Vector =
+    DenseVector.ofSeq values
 
 /// Creates a new vector using the provided dimension.
 let vectorFromCount (count:int) = 

@@ -54,7 +54,7 @@ let private ParseSample (variableNames:seq<String>) (row:String) =
 
 let LoadFromFile filePath =
     
-    let name = System.IO.Path.GetFileNameWithoutExtension filePath
+    let name = System.IO.Path.GetFileNameWithoutExtension(filePath:string)
     
     let fileAsString:String = File.ReadAllText filePath
     
