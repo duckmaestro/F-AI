@@ -26,14 +26,8 @@ module Classifiers
 // namespaces
 
 open MathNet
-open Primitives
+open FAI
 
-
-// interfaces
-
-type IClassifier =
-    abstract member Train : seq<Sample> -> unit
-    abstract member Classify : Sample -> int
 
 
 // private functions

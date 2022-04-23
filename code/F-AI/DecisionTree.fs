@@ -27,7 +27,7 @@ module DecisionTree
 
 open System
 open MathNet
-open Primitives
+open FAI
 open Classifiers
 
 

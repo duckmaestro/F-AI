@@ -1,4 +1,5 @@
 ﻿
+
 //    This file is part of F-AI.
 //
 //    F-AI is free software: you can redistribute it and/or modify
@@ -14,33 +15,10 @@
 //    You should have received a copy of the GNU Lesser General Public License
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace FAI
 
 
-//
-//    Common functions and types for unlabeled  
-//
-
-module Predictors
-
-
-// namespaces
-
-open MathNet
-open FAI
-
-
-// interfaces
-
-type IPredictor =
+/// A classifier.
+type public IClassifier =
     abstract member Train : seq<Sample> -> unit
-    abstract member Predict : Sample -> Sample
-
-
-// types
-
-type NullRegressionPredictor() = 
-    interface IPredictor with
-        member self.Train samples =
-            ()
-        member self.Predict sample =
-            failwith "Not implemented"
+    abstract member Classify : Sample -> int

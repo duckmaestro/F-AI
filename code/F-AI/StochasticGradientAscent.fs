@@ -26,7 +26,6 @@ module StochasticGradientAscent
 // namespaces
 
 open MathNet
-open Primitives
 
 
 // functions

@@ -20,7 +20,7 @@ module Unsupervised
 // namespaces
 
 open System
-open Primitives
+open FAI
 open Classifiers
 open Predictors
 open kNN

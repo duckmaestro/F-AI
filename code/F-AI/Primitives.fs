@@ -15,20 +15,14 @@
 //    along with F-AI.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-//
-//    Common primitives.
-//
-
-module Primitives
-
-
-// namespaces
+namespace FAI
 
 open MathNet
 
 
-// records
+//
+//    Common primitives.
+//
 
 /// A sample.
 type Sample = {

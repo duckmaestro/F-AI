@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>FAI</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +11,7 @@
     <Compile Include="Primitives.fs" />
     <Compile Include="LogProbabilities.fs" />
     <Compile Include="Statistics.fs" />
+    <Compile Include="IClassifier.fs" />
     <Compile Include="Classifiers.fs" />
     <Compile Include="Predictors.fs" />
     <Compile Include="StochasticGradientAscent.fs" />

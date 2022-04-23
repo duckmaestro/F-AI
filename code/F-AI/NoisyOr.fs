@@ -29,7 +29,7 @@ open System
 open System.Linq
 open System.Collections.Generic
 open MathNet
-open Primitives
+open FAI
 open Classifiers
 
 

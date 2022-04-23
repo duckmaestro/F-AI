@@ -27,7 +27,6 @@ module Statistics
 
 open System
 open MathNet
-open Primitives
 
 
 // private methods
