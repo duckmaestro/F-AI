@@ -170,7 +170,7 @@ let doDemoSupervised =
     for c in classifiers do
         Console.WriteLine(
             "Classifier: {0}. 
-            \tTraining Error: {1:P3}. \tTest Error: {2:P3}. \tTraining Time:{3:G}", c.Name, c.TrainingError, c.TestError, c.TrainingTime)
+            \tTraining Error: {1:P3}. \tTest Error: {2:P3}. \tTraining Time: {3:G}", c.Name, c.TrainingError, c.TestError, c.TrainingTime)
         Console.WriteLine()
     
 
