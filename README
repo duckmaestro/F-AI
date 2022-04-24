@@ -1,25 +1,26 @@
-******************************
-**          F-AI            **
-******************************
+╔══════════════════════╗
+║         F-AI         ║
+╚══════════════════════╝
 
-F-AI is an artificial intelligence library for F#, currently in its early stages.
+F-AI is a casually-written artificial intelligence library for .NET written in F#.
 
-Completed but not robustly tested:
- * kNN
- * Perceptron
- * Decision Tree
- * Noisy-Or Classifier
- * Bayesian Networks
- ** CPT learning from discrete-valued, complete training data
- ** Inference queries using Gibbs sampling
- ** Tree structure learning
- ** General structure learning
+Completed:
+ ▧ kNN
+ ▧ Perceptron
+ ▧ Decision Tree
+ ▧ Noisy-Or Classifier
+ ▧ Bayesian Networks
+    ▧ CPT learning from discrete-valued, complete training data
+    ▧ Inference queries using Gibbs sampling
+    ▧ Tree structure learning
+    ▧ General structure learning
 
-TBD:
- * k-means clustering
- * PCA
- * GMM
+Backlog:
+ ▧ Multilayer Neural Networks
+ ▧ k-means clustering
+ ▧ PCA
+ ▧ GMM
 
-Example Applications:
- * B-Vis
- ** Trains and visualizes Bayesian networks.
+Tools:
+ ▧ B-Vis
+   ▧ Constructs, queries, and visualizes Bayesian networks.
