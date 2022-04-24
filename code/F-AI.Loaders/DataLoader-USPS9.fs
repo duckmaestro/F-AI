@@ -21,10 +21,8 @@ module FAI.Loaders.LoaderUSPS9
 
 open System
 open System.IO
-open System.Text
 open MathNet
-open Primitives
-open Classifiers
+open FAI
 
 
 // private functions
