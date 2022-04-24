@@ -30,7 +30,6 @@ open System.Linq
 open System.Collections.Generic
 open MathNet
 open FAI
-open Classifiers
 
 
 /// Calculates the probability of y given x and noisy-or parameters p.
@@ -177,9 +176,8 @@ type NoisyOrClassifier(?maxIterations, ?haltIfConvergent, ?initialProbabilities:
                             // p(Z_i=1|X_i=1). Let's try to pick a reasonable value, like 1/numFeatures.
                             piNew <- 1.0 / (float numFeatures)
                         else
-                            // Sum over all samples
-                            for sample in samplesForLearning do
-                
+                            // Helper to compute contribution to piNew.
+                            let compute_piNewContribution sample = 
                                 let y = float sample.Label
                                 let x = sample.Features
                                 let xi = x.[i-1]
@@ -189,8 +187,15 @@ type NoisyOrClassifier(?maxIterations, ?haltIfConvergent, ?initialProbabilities:
                                 let denominator = ProbOfYGivenX 1.0 x pCurr
                                 let denominatorAdjusted = if denominator = 0.0 then Double.Epsilon else denominator
                             
-                                piNew <- piNew + (numerator / denominatorAdjusted)        
-        
+                                (numerator / denominatorAdjusted)        
+
+                            // Sum over all samples.
+                            // TODO: Do this in a more elegant F# way.
+                            piNew <- samplesForLearning
+                                        |> Linq.ParallelEnumerable.AsParallel
+                                        |> fun sequence -> Linq.ParallelEnumerable.Select(sequence,(fun (s:Sample) -> compute_piNewContribution s))
+                                        |> Linq.ParallelEnumerable.Sum
+
                             // Normalize
                             piNew <- piNew / occurancesOfIeq1
 
