@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>FAI.NeuralNetworks</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="BasicTypes.fs" />
+    <Compile Include="Helpers.fs" />
+    <Compile Include="ActivationFunctions.fs" />
+    <Compile Include="Layer.fs" />
+    <Compile Include="Network.fs" />
+    <Compile Include="MulticlassClassifier.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\F-AI\F-AI.fsproj" />
+  </ItemGroup>
+
+</Project>
