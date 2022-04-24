@@ -17,6 +17,7 @@
 module ActivationFunctions
 
 open FAI.NeuralNetworks
+open Helpers
 
 /// Standard interface into activation functions.
 [<Interface>]
@@ -43,3 +44,18 @@ type ActivationReLU() =
         member self.Evaluate (x:Vector) =
             x.PointwiseMaximum(0)
             
+/// A sigmoid activator.
+type ActivationSigmoid() =
+    
+    let sigmoid x =
+        1.0 / (1.0 + (approximateExponential -x ))
+
+    interface IActivationFunction with
+        member self.Evaluate (x:float) =
+            sigmoid x
+
+        member self.Evaluate (x:Vector) =
+            let x' = x.Clone()
+            for i in 0..x'.Count-1 do
+                x'[i] <- sigmoid x[i]
+            x'

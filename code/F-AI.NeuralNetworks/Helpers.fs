@@ -18,6 +18,7 @@
 module Helpers
 
 open FAI.NeuralNetworks
+open System
 
 /// Generates a matrix populated with randomly valued elements.
 let randomizeMatrix rows cols min max randomizer =
@@ -33,3 +34,26 @@ let randomizeMatrix rows cols min max randomizer =
 
     matrix
     
+/// More accurate exponential.
+let exponential (x:float) = 
+    Math.Exp(x)
+
+/// Approximated exponential.
+let approximateExponential (x:float) =
+    // https://stackoverflow.com/questions/412019/math-optimization-in-c-sharp
+    // https://www.schraudolph.org/pubs/Schraudolph99.pdf
+
+    let clamp x a b = 
+        if x > a && x < b then x 
+        else if x < a then a
+        else b
+
+    let x' = clamp x -700.0 +700.0
+
+    let tmp = (int64)(1512775.0 * x' + 1072693248.0 - 60801.0)
+    let tmpShifted = tmp <<< 32
+    let converted = BitConverter.Int64BitsToDouble(tmpShifted)
+
+    //let test = exponential (x)
+   
+    converted

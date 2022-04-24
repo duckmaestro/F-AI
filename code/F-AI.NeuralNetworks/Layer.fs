@@ -25,6 +25,7 @@ type public Connectivity =
 
 type public Activation =
     | Linear
+    | Sigmoid
     | ReLU
 
 type public Weights =
@@ -55,6 +56,7 @@ type public Layer(
     let activation =
         match activationType with
         | Linear -> new ActivationLinear() :> IActivationFunction
+        | Sigmoid -> new ActivationSigmoid()
         | ReLU -> new ActivationReLU()
 
     /// Evaluates the layer.

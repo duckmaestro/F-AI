@@ -30,7 +30,7 @@ type public MulticlassClassifier(featureLength, classesSize, layers:int) =
 
     let connectivity = Connectivity.FullyConnected
     let weights = Weights.Random (-1.0, +1.0, 0)
-    let activationOutput = Activation.Linear
+    let activationOutput = Activation.Sigmoid
     let activationMiddle = Activation.ReLU
 
     let layers = 
