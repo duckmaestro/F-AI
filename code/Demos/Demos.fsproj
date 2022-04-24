@@ -36,6 +36,7 @@
   <ItemGroup>
     <ProjectReference Include="..\F-AI.Bayesian\F-AI.Bayesian.fsproj" />
     <ProjectReference Include="..\F-AI.Loaders\F-AI.Loaders.fsproj" />
+    <ProjectReference Include="..\F-AI.NeuralNetworks\F-AI.NeuralNetworks.fsproj" />
     <ProjectReference Include="..\F-AI\F-AI.fsproj" />
   </ItemGroup>
 
