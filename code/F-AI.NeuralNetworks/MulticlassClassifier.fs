@@ -17,8 +17,8 @@
 
 namespace FAI.NeuralNetworks
 
-open System
 open FAI
+open MathNet
 
 type public MulticlassClassifier(featureLength, classesSize, layers:int) =
 
@@ -32,19 +32,32 @@ type public MulticlassClassifier(featureLength, classesSize, layers:int) =
     let weights = Weights.Random (-1.0, +1.0, 0)
     let activationOutput = Activation.Sigmoid
     let activationMiddle = Activation.ReLU
-
     let layers = 
-        [new Layer(connectivity, weights, activationOutput, featureLength, classesSize)]
-        |> List.append 
-            (
-                [1..layers-1] |> List.map (fun _ -> new Layer(connectivity, weights, activationMiddle, featureLength, featureLength)) 
-            )
+        [for i in 1..layers-1 do new Layer(sprintf "Layer %u" i,  connectivity, weights, activationMiddle, featureLength, featureLength)]
+        @ [new Layer(sprintf "Layer %u" layers, connectivity, weights, activationOutput, featureLength, classesSize)]
 
     let network = new Network(layers)
 
     interface IClassifier with
+
+        ///
+        /// Train the network using the provided samples to minimize loss.
+        /// 
         member self.Train samples =
+            
+            let epochs = 2
+            let learningRate = 0.01
+            for e in 1..epochs do
+                for s in samples do
+                    network.MinimizeLoss(s.Features, vectorFromCount classesSize, learningRate)
+
             ()
+
+
+
+        ///
+        /// Classify the provided sample.
+        ///
         member self.Classify sample =
             assert (sample.Features.Count = featureLength)
             assert (sample.Label >= 0 && sample.Label < classesSize)

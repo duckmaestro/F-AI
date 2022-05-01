@@ -19,6 +19,7 @@ namespace FAI.NeuralNetworks
 
 open Helpers
 open ActivationFunctions
+open MathNet
 
 type public Connectivity =
     | FullyConnected
@@ -30,14 +31,21 @@ type public Activation =
 
 type public Weights =
     | Zero
-    | Random of min:float * max:float * seed:int
+    | Random of min:Scalar * max:Scalar * seed:int
     | Provided of matrix:Matrix
 
 
-    
+type public LayerEvaluationRecord = {
+    Input : Vector
+    WeightedOutput : Vector 
+    ActivatedOutput : Vector
+}
 
+///
 /// A single layer.
+///
 type public Layer(
+                name,
                 connectivity, 
                 weights,
                 activationType, 
@@ -46,10 +54,10 @@ type public Layer(
 
     // Weight-matrix for this layer. We will right-multiply 
     // the input against this.
-    let weightMatrix = 
+    let mutable weightMatrix = 
         match weights with
         | Provided (m) -> m
-        | Zero -> new Matrix(outputSize, inputSize)
+        | Zero -> matrix outputSize inputSize
         | Random (min, max, seed) -> randomizeMatrix outputSize inputSize min max (Some (new System.Random(seed)))
 
     // Activation function.
@@ -59,8 +67,30 @@ type public Layer(
         | Sigmoid -> new ActivationSigmoid()
         | ReLU -> new ActivationReLU()
 
+
+    //
+    // Basic stuff.
+    // 
+
+    override _.ToString() =
+        name
+
+    member public self.Name
+        with get() = name
+
+
+    ///
     /// Evaluates the layer.
-    member public self.Evaluate(input:Vector) : Vector =
+    ///
+    member public self.Evaluate(input:Vector) : Vector = 
+        let outputRecord = self.Evaluate2(input)
+        outputRecord.ActivatedOutput
+
+
+    ///
+    /// Evaluates the layer and returns the values of each step.
+    ///
+    member public self.Evaluate2(input:Vector)  =
         // Check dimensions.
         assert (input.Count = inputSize)
         assert (inputSize = weightMatrix.ColumnCount)
@@ -72,4 +102,24 @@ type public Layer(
         let outputScaled = activation.Evaluate(outputLinear)
         
         // Done
-        outputScaled
+        { Input = input; WeightedOutput = outputLinear; ActivatedOutput = outputScaled }
+
+
+    ///
+    /// Evaluates the gradiant from the layer weights.
+    ///
+    member public self.EvaluateGradiantFromWeights(input:Vector) : Matrix =
+        let weights = weightMatrix
+        let z = weights.Multiply input
+        //let a = activation.Evaluate z
+        let da_dz = activation.EvaluateDerivative(z).ToRowMatrix()
+        let gradiantFromWeights = da_dz.Multiply(weights)
+
+        gradiantFromWeights
+
+
+    ///
+    /// 
+    /// 
+    member public self.AdjustWeights(deltaMatrix) : unit =
+        weightMatrix <- weightMatrix + deltaMatrix

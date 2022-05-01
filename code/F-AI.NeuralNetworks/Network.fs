@@ -17,15 +17,68 @@
 
 namespace FAI.NeuralNetworks
 
+open MathNet
 
+///
 /// A network of connected layers.
+///
 type public Network(layers:Layer list) =
+
+    let layersRev = layers |> List.rev
+    
+    ///
+    /// Evaluate the network.
+    ///
     member public self.Evaluate(input:Vector) : Vector = 
     
-        let mutable in_v = input
-        let mutable out_v = input
+        let mutable v = input
     
         for layer in layers do
-            out_v <- layer.Evaluate(in_v)
+            v <- layer.Evaluate(v)
 
-        out_v
+        v
+
+
+    ///
+    /// Evaluate the gradiant of the network at the provided point with respect to its weights.
+    ///
+    member public self.EvaluateGradiantFromWeights(input:Vector) : Matrix =
+        
+        // For each layer moving forward in the network, evaluate.
+        let layer1 = List.head layers
+        let mutable valuesRev = [layer1.Evaluate2(input)]
+        for layer in List.tail layers do
+            let value = List.head valuesRev
+            valuesRev <- layer.Evaluate2(value.ActivatedOutput) :: valuesRev
+
+        // For each layer moving backward in the network we compute its gradiant.
+        let mutable gradiants = [ ]
+        for layer in layersRev do
+            // Pop off the last value.
+            let value = List.head valuesRev
+            valuesRev <- List.tail valuesRev
+
+            let gradiant = layer.EvaluateGradiantFromWeights(value.Input)
+            gradiants <- gradiant :: gradiants
+
+        // Combine for total gradiant.
+        let totalGradiant =
+            gradiants
+            |> List.reduce(fun x y -> x.PointwiseMultiply y)
+
+        totalGradiant
+
+
+    ///
+    /// 
+    ///
+    member public self.MinimizeLoss(input, output, rate:float) =
+        
+        let outputDesired = output
+        let outputComputed = self.Evaluate(input)
+        let gradiant = self.EvaluateGradiantFromWeights(input)
+
+        for layer in layers do
+            layer.AdjustWeights ( gradiant.Multiply( rate ))
+
+        ()

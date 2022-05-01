@@ -97,23 +97,23 @@ let doDemoSupervised =
         { defaultRecord with Name = "1-NN"; Classifier = new kNNClassifier(1) :> IClassifier; }
         { defaultRecord with Name = "5-NN"; Classifier = new kNNClassifier(5) :> IClassifier; }
 
-        // Perceptron
-        { defaultRecord with Name = "Perceptron Weighted (*\"Labels 0 vs. 6\")"; 
-                                Classifier = new PerceptronClassifier(0, 6, ClassificationMethod.Weighted) :> IClassifier; 
-                                SampleMapper = reduceSamplesToTwoClasses 0 6; }
+        //// Perceptron
+        //{ defaultRecord with Name = "Perceptron Weighted (*\"Labels 0 vs. 6\")"; 
+        //                        Classifier = new PerceptronClassifier(0, 6, ClassificationMethod.Weighted) :> IClassifier; 
+        //                        SampleMapper = reduceSamplesToTwoClasses 0 6; }
         
-        // Decision Tree
-        { defaultRecord with Name = "Decision Tree (Max Depth 2)"; Classifier = new DecisionTreeClassifier(2) :> IClassifier; }
-        { defaultRecord with Name = "Decision Tree (Max Depth 8)"; Classifier = new DecisionTreeClassifier(8) :> IClassifier; }
+        //// Decision Tree
+        //{ defaultRecord with Name = "Decision Tree (Max Depth 2)"; Classifier = new DecisionTreeClassifier(2) :> IClassifier; }
+        //{ defaultRecord with Name = "Decision Tree (Max Depth 8)"; Classifier = new DecisionTreeClassifier(8) :> IClassifier; }
         
-        // Noisy-Or
-        { defaultRecord with Name = "Noisy-Or (5 Iterations) (*\"Labels 0 vs. other\")"; 
-                                Classifier = new NoisyOrClassifier(5, true) :> IClassifier; 
-                                SampleMapper = reduceSamplesToBinary 0; }
+        //// Noisy-Or
+        //{ defaultRecord with Name = "Noisy-Or (5 Iterations) (*\"Labels 0 vs. other\")"; 
+        //                        Classifier = new NoisyOrClassifier(5, true) :> IClassifier; 
+        //                        SampleMapper = reduceSamplesToBinary 0; }
         
-        // Neural Network
-        { defaultRecord with Name = "1 Layer Neural Network"; 
-                                Classifier = new MulticlassClassifier(featureLength, classCount, 1); }
+        //// Neural Network
+        //{ defaultRecord with Name = "1 Layer Neural Network"; 
+        //                        Classifier = new MulticlassClassifier(featureLength, classCount, 1); }
         { defaultRecord with Name = "2 Layer Neural Network"; 
                                 Classifier = new MulticlassClassifier(featureLength, classCount, 2); }
     |]
