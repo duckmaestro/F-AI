@@ -42,18 +42,27 @@ type public Network(layers:Layer list) =
     ///
     /// Evaluate the gradiant of the network at the provided point with respect to its weights.
     ///
-    member public self.EvaluateGradiantFromWeights(input:Vector) : Matrix =
+    member public self.EvaluateGradiantFromWeights(input:Vector) : Matrix list =
         
         // For each layer moving forward in the network, evaluate.
+
+        // Compute our first layer's output.
         let layer1 = List.head layers
         let mutable valuesRev = [layer1.Evaluate2(input)]
         for layer in List.tail layers do
-            let value = List.head valuesRev
-            valuesRev <- layer.Evaluate2(value.ActivatedOutput) :: valuesRev
+            // Grab the most recent output value.
+            let valueLast = List.head valuesRev
+
+            // Feed forward into the next layer.
+            let valueNext = layer.Evaluate2(valueLast.Output)
+
+            // Store
+            valuesRev <- valueNext :: valuesRev
 
         // For each layer moving backward in the network we compute its gradiant.
         let mutable gradiants = [ ]
         for layer in layersRev do
+
             // Pop off the last value.
             let value = List.head valuesRev
             valuesRev <- List.tail valuesRev
@@ -61,12 +70,7 @@ type public Network(layers:Layer list) =
             let gradiant = layer.EvaluateGradiantFromWeights(value.Input)
             gradiants <- gradiant :: gradiants
 
-        // Combine for total gradiant.
-        let totalGradiant =
-            gradiants
-            |> List.reduce(fun x y -> x.PointwiseMultiply y)
-
-        totalGradiant
+        gradiants
 
 
     ///
@@ -78,7 +82,8 @@ type public Network(layers:Layer list) =
         let outputComputed = self.Evaluate(input)
         let gradiant = self.EvaluateGradiantFromWeights(input)
 
-        for layer in layers do
-            layer.AdjustWeights ( gradiant.Multiply( rate ))
+        for layer,gradiant in List.zip layers gradiant do
+
+            //layer.AdjustWeights ( gradiant.Multiply( rate ))
 
         ()

@@ -37,8 +37,8 @@ type public Weights =
 
 type public LayerEvaluationRecord = {
     Input : Vector
-    WeightedOutput : Vector 
-    ActivatedOutput : Vector
+    WeightedInput : Vector 
+    Output : Vector
 }
 
 ///
@@ -75,7 +75,7 @@ type public Layer(
     override _.ToString() =
         name
 
-    member public self.Name
+    member public _.Name
         with get() = name
 
 
@@ -84,13 +84,13 @@ type public Layer(
     ///
     member public self.Evaluate(input:Vector) : Vector = 
         let outputRecord = self.Evaluate2(input)
-        outputRecord.ActivatedOutput
+        outputRecord.Output
 
 
     ///
     /// Evaluates the layer and returns the values of each step.
     ///
-    member public self.Evaluate2(input:Vector)  =
+    member public _.Evaluate2(input:Vector)  =
         // Check dimensions.
         assert (input.Count = inputSize)
         assert (inputSize = weightMatrix.ColumnCount)
@@ -102,24 +102,25 @@ type public Layer(
         let outputScaled = activation.Evaluate(outputLinear)
         
         // Done
-        { Input = input; WeightedOutput = outputLinear; ActivatedOutput = outputScaled }
+        { Input = input; WeightedInput = outputLinear; Output = outputScaled }
 
 
     ///
     /// Evaluates the gradiant from the layer weights.
     ///
-    member public self.EvaluateGradiantFromWeights(input:Vector) : Matrix =
+    member public _.EvaluateGradiantFromWeights(input:Vector) : Matrix =
         let weights = weightMatrix
-        let z = weights.Multiply input
-        //let a = activation.Evaluate z
-        let da_dz = activation.EvaluateDerivative(z).ToRowMatrix()
-        let gradiantFromWeights = da_dz.Multiply(weights)
+        let weightedInput = weights.Multiply input
+        
+        let da_dz = activation.EvaluateDerivative(weightedInput).ToRowMatrix()
+        let accumulatedError = da_dz.Multiply(weights)
 
+        let gradiantFromWeights = accumulatedError.Multiply(input.ToRowMatrix())
         gradiantFromWeights
 
 
     ///
     /// 
     /// 
-    member public self.AdjustWeights(deltaMatrix) : unit =
+    member public _.AdjustWeights(deltaMatrix) : unit =
         weightMatrix <- weightMatrix + deltaMatrix
