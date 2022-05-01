@@ -16,46 +16,71 @@
 
 module ActivationFunctions
 
-open FAI.NeuralNetworks
 open Helpers
+open MathNet
 
+///
 /// Standard interface into activation functions.
+///
 [<Interface>]
 type IActivationFunction =
-    abstract Evaluate: x:float -> float 
-    abstract Evaluate: x:Vector -> Vector 
+    abstract Evaluate: x:#Vector -> Vector
+    abstract EvaluateDerivative: x:#Vector -> Vector 
 
+///
 /// A linear activator.
+///
 type ActivationLinear() =
     interface IActivationFunction with
-        member self.Evaluate (x:float) =
-            x
-
-        member self.Evaluate (x:Vector) =
+        member self.Evaluate (x:#Vector) =
             x.Clone()
 
+        member self.EvaluateDerivative (x:#Vector) =
+            // TODO: Don't do this every call. Cache or something.
+            vector([|for i in 1..x.Count do 1.0 |])
+
+///
 /// A ReLU activator.
+///
 type ActivationReLU() =
     interface IActivationFunction with
-        member self.Evaluate (x:float) =
-            if x < 0 then 0.0
-            else x
-
-        member self.Evaluate (x:Vector) =
+        member self.Evaluate (x:#Vector) =
             x.PointwiseMaximum(0)
-            
+
+        member self.EvaluateDerivative (x:#Vector) =
+            let d = vectorFromCount x.Count
+            for i in 0..d.Count-1 do
+                let v = x[i]
+                d[i] <-
+                    if v > 0 then 1
+                    elif v < 0 then 0
+                    else 0.5
+            d
+    
+///
 /// A sigmoid activator.
+///
 type ActivationSigmoid() =
     
+    // Sigmoid.
     let sigmoid x =
         1.0 / (1.0 + (approximateExponential -x ))
 
-    interface IActivationFunction with
-        member self.Evaluate (x:float) =
-            sigmoid x
+    // Derivative of sigmoid
+    let sigmoid' x =
+        let s = (sigmoid x)
+        s * (1.0 - s)
 
-        member self.Evaluate (x:Vector) =
+
+    interface IActivationFunction with
+        member self.Evaluate (x:#Vector) =
             let x' = x.Clone()
             for i in 0..x'.Count-1 do
                 x'[i] <- sigmoid x[i]
+            x'
+
+        member self.EvaluateDerivative (x:#Vector) = 
+            let x' = x.Clone() 
+            for i in 0..x'.Count-1 do 
+                x'[i] <- sigmoid' x[i]
             x'

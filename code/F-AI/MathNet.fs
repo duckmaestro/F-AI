@@ -21,17 +21,17 @@
 //    for interfacing with the MathNet library.
 //
 
+// TODO: Rename to MathNet types to avoid confusion with official namespace.
 module MathNet
-
-
-// namespaces
 
 open MathNet.Numerics
 open MathNet.Numerics.LinearAlgebra
 open MathNet.Numerics.LinearAlgebra.Double
 
 
-// type aliases
+//
+// Type aliases.
+// 
 
 type Vector = Vector<float>
 type Matrix = Matrix<float>
@@ -39,15 +39,15 @@ type MatrixDense = DenseMatrix
 type MatrixSparse = SparseMatrix
 
 
-// types
+// 
+// Helper functions.
+// 
 
-
-// conversion functions
-
+// TODO: Move  into a 'MakeNew' static class for easier interop with LanguagePrimitives generic number values?
 
 /// Creates a new dense matrix using the provided dimensions.
 let matrix rows columns = 
-    new DenseMatrix(rows, columns) :> Matrix
+    new DenseMatrix(rows, columns)
 
 /// Creates a new vector using the provided sequence.
 let vector (values:float seq) : Vector =
@@ -55,7 +55,7 @@ let vector (values:float seq) : Vector =
 
 /// Creates a new vector using the provided dimension.
 let vectorFromCount (count:int) = 
-    new DenseVector(count) :> Vector
+    new DenseVector(count)
 
 /// Creates a new matrix using the provided sequence of rows.
 let matrixFromRows (rows:Vector seq) =

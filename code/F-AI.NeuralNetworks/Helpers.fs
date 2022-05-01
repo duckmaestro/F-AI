@@ -17,8 +17,8 @@
 
 module Helpers
 
-open FAI.NeuralNetworks
 open System
+open MathNet
 
 /// Generates a matrix populated with randomly valued elements.
 let randomizeMatrix rows cols min max randomizer =
@@ -27,12 +27,12 @@ let randomizeMatrix rows cols min max randomizer =
         | Some(rng_) -> rng_
         | None -> new System.Random(0)
 
-    let matrix = new Matrix(rows,cols)
+    let m = matrix rows cols
     let range = max - min
-    for i in 0..matrix.Values.Length-1 do
-        matrix.Values[i] <- rng.NextDouble() * range + min
+    for i in 0..m.Values.Length-1 do
+        m.Values[i] <- rng.NextDouble() * range + min
 
-    matrix
+    m
     
 /// More accurate exponential.
 let exponential (x:float) = 
@@ -42,6 +42,8 @@ let exponential (x:float) =
 let approximateExponential (x:float) =
     // https://stackoverflow.com/questions/412019/math-optimization-in-c-sharp
     // https://www.schraudolph.org/pubs/Schraudolph99.pdf
+    // TODO: Use generic numbers? (LanguagePrimitives.GenericOne)
+
 
     let clamp x a b = 
         if x > a && x < b then x 

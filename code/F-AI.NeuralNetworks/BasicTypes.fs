@@ -17,12 +17,17 @@
 
 namespace FAI.NeuralNetworks
 
+open MathNet
+
+/// A scalar.
+type Scalar = System.Double
 
 /// A vector.
-type Vector = MathNet.Vector
+type Vector = MathNet.Vector // MathNet.Numerics.LinearAlgebra.Vector<float32>
 
 /// A matrix.
-type Matrix =  MathNet.MatrixDense
+type Matrix =  MathNet.Matrix // Numerics.LinearAlgebra.Matrix<float32>
 
 /// An integer.
 type Integer = System.Int32
+
