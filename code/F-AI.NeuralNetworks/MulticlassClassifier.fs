@@ -63,7 +63,7 @@ type public MulticlassClassifier(featureLength, classesSize, layers:int) =
             assert (sample.Label >= 0 && sample.Label < classesSize)
 
             let output = network.Evaluate(sample.Features)
-            let maxIndex = output.MaximumIndex()
+            let maxIndex = output |> Array.last |> fun e -> e.Output.MaximumIndex()
 
             maxIndex
 

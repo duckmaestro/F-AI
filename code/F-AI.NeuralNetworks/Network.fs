@@ -29,23 +29,8 @@ type public Network(layers:Layer list) =
     ///
     /// Evaluate the network.
     ///
-    member public self.Evaluate(input:Vector) : Vector = 
+    member public self.Evaluate(input:Vector) : LayerEvaluationRecord array = 
     
-        let mutable v = input
-    
-        for layer in layers do
-            v <- layer.Evaluate(v)
-
-        v
-
-
-    ///
-    /// Evaluate the gradiant of the network at the provided point with respect to its weights.
-    ///
-    member public self.EvaluateGradiantFromWeights(input:Vector) : Matrix list =
-        
-        // For each layer moving forward in the network, evaluate.
-
         // Compute our first layer's output.
         let layer1 = List.head layers
         let mutable valuesRev = [layer1.Evaluate2(input)]
@@ -59,18 +44,27 @@ type public Network(layers:Layer list) =
             // Store
             valuesRev <- valueNext :: valuesRev
 
+        let results = valuesRev |> List.toArray |> Array.rev
+        results
+
+
+    ///
+    /// Evaluate the gradiant of the network at the provided point with respect to its weights.
+    ///
+    member public self.EvaluateGradiantFromWeights(evaluationRecords: LayerEvaluationRecord array, lossLocalGradiant) : Matrix list =
+
         // For each layer moving backward in the network we compute its gradiant.
         let mutable gradiants = [ ]
-        for layer in layersRev do
+        let mutable downstreamError =  lossLocalGradiant
 
-            // Pop off the last value.
-            let value = List.head valuesRev
-            valuesRev <- List.tail valuesRev
+        for layer, result  in Seq.zip layersRev (evaluationRecords |> Array.rev)  do
 
-            let gradiant = layer.EvaluateGradiantFromWeights(value.Input)
+            let gradiant = layer.EvaluateGradiantFromWeights(result.Input, result.WeightedInput, downstreamError )
             gradiants <- gradiant :: gradiants
+            downstreamError <- gradiant.LocalError
 
         gradiants
+        |> List.map (fun gr-> gr.Gradiant)
 
 
     ///
@@ -78,12 +72,14 @@ type public Network(layers:Layer list) =
     ///
     member public self.MinimizeLoss(input, output, rate:float) =
         
-        let outputDesired = output
-        let outputComputed = self.Evaluate(input)
-        let gradiant = self.EvaluateGradiantFromWeights(input)
+        let valueDesired = output
+        let valuesComputed = self.Evaluate(input)
+        let difference =  valuesComputed |> Array.last |> (fun f -> f.Output - valueDesired)
+        
+        let gradiant = self.EvaluateGradiantFromWeights(valuesComputed, difference)
 
         for layer,gradiant in List.zip layers gradiant do
 
-            //layer.AdjustWeights ( gradiant.Multiply( rate ))
+            layer.AdjustWeights ( gradiant.Multiply( rate ))
 
         ()

@@ -36,9 +36,15 @@ type public Weights =
 
 
 type public LayerEvaluationRecord = {
+    LayerName : System.String
     Input : Vector
     WeightedInput : Vector 
     Output : Vector
+}
+
+type public LayerGradiantEvaluationRecord = {
+    Gradiant : Matrix
+    LocalError : Vector
 }
 
 ///
@@ -102,22 +108,23 @@ type public Layer(
         let outputScaled = activation.Evaluate(outputLinear)
         
         // Done
-        { Input = input; WeightedInput = outputLinear; Output = outputScaled }
+        { LayerName = name; Input = input; WeightedInput = outputLinear; Output = outputScaled }
 
 
     ///
     /// Evaluates the gradiant from the layer weights.
     ///
-    member public _.EvaluateGradiantFromWeights(input:Vector) : Matrix =
-        let weights = weightMatrix
-        let weightedInput = weights.Multiply input
+    member public _.EvaluateGradiantFromWeights(input: Vector, weightedInput: Vector, downstreamError:Vector) : LayerGradiantEvaluationRecord =
         
-        let da_dz = activation.EvaluateDerivative(weightedInput).ToRowMatrix()
-        let accumulatedError = da_dz.Multiply(weights)
+        // We need to combine the downstream error with our upstream activation.
+        let da_dz = activation.EvaluateDerivative(weightedInput)
+        let weightMatrixT = weightMatrix.Transpose()
+        let w_d = weightMatrixT.Multiply(downstreamError)
+        let localError = w_d.PointwiseMultiply(da_dz)
+        let gradiant = input.OuterProduct(downstreamError)
 
-        let gradiantFromWeights = accumulatedError.Multiply(input.ToRowMatrix())
-        gradiantFromWeights
-
+        { Gradiant = gradiant; LocalError = localError }
+        
 
     ///
     /// 
