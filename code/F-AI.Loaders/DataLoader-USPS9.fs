@@ -27,7 +27,7 @@ open FAI
 
 // private functions
 
-let private ParseSample (row:String) = 
+let private ParseSample (row:String, normalize:Boolean) = 
     let components = row.Split(' ')
     let componentsNum = components |> Seq.length
 
@@ -41,6 +41,10 @@ let private ParseSample (row:String) =
             components 
             |> Seq.take (componentsNum - 1)
             |> Seq.map (fun c -> Double.Parse(c))
+            |> (
+                if normalize then Seq.map (fun d -> d / 256.0)
+                else  (fun x -> x)
+                )
             |> Seq.toArray
             |> vector
 
@@ -56,14 +60,14 @@ let private ParseSample (row:String) =
 
 // functions
 
-let LoadFromFile filename =
+let LoadFromFile filename normalize =
     
     let fileAsString:String = File.ReadAllText filename
     let samplesAsString = fileAsString.Split '\n' |> Seq.map (fun r -> r.Trim())
     let samples =
         samplesAsString
         |> Seq.filter (fun r -> r.Length <> 0)
-        |> Seq.map (fun r -> ParseSample(r))
+        |> Seq.map (fun r -> ParseSample(r, normalize))
         |> Seq.toArray
 
     samples

@@ -56,8 +56,8 @@ let defaultRecord = {
 let doDemoUnsupervised = 
 
     // load usps9 data set
-    let dataSetUSPS9Training = LoaderUSPS9.LoadFromFile "hw3train.txt" :> seq<Sample>
-    let dataSetUSPS9Test = LoaderUSPS9.LoadFromFile "hw3test.txt" :> seq<Sample>
+    let dataSetUSPS9Training = LoaderUSPS9.LoadFromFile "hw3train.txt" false :> seq<Sample>
+    let dataSetUSPS9Test = LoaderUSPS9.LoadFromFile "hw3test.txt" false :> seq<Sample>
 
 
     let mutable regressionPredictor = [|

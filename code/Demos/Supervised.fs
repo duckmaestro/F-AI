@@ -61,8 +61,8 @@ let doDemoSupervised =
 
 
     // Load usps9 data set.
-    let dataSetUSPS9Training = LoaderUSPS9.LoadFromFile "hw2train.txt" :> seq<Sample>
-    let dataSetUSPS9Test = LoaderUSPS9.LoadFromFile "hw2test.txt" :> seq<Sample>
+    let dataSetUSPS9Training = LoaderUSPS9.LoadFromFile "hw2train.txt" true :> seq<Sample>
+    let dataSetUSPS9Test = LoaderUSPS9.LoadFromFile "hw2test.txt" true :> seq<Sample>
     let featureLength = dataSetUSPS9Training |> Seq.head |> fun x -> x.Features.Count
     let classMin,classMax = 
         dataSetUSPS9Training 
@@ -93,9 +93,9 @@ let doDemoSupervised =
     // List of tests.
     // 
     let mutable classifiers = [|
-        // Nearest neighbor
-        { defaultRecord with Name = "1-NN"; Classifier = new kNNClassifier(1) :> IClassifier; }
-        { defaultRecord with Name = "5-NN"; Classifier = new kNNClassifier(5) :> IClassifier; }
+        //// Nearest neighbor
+        //{ defaultRecord with Name = "1-NN"; Classifier = new kNNClassifier(1) :> IClassifier; }
+        //{ defaultRecord with Name = "5-NN"; Classifier = new kNNClassifier(5) :> IClassifier; }
 
         //// Perceptron
         //{ defaultRecord with Name = "Perceptron Weighted (*\"Labels 0 vs. 6\")"; 
